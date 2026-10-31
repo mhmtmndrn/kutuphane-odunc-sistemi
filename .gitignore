@@ -7,3 +7,6 @@ var/
 __pycache__/
 .pytest_cache/
 .coverage
+
+# Local Claude Code agent worktrees
+.claude/worktrees/
