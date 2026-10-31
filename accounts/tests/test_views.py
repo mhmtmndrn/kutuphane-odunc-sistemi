@@ -348,7 +348,10 @@ def test_staff_detail_unknown_pk_is_404_for_admin(admin_client: Client) -> None:
 
 
 def test_self_deactivation_message(admin_client: Client, admin_user) -> None:
-    response = admin_client.post(f"/personel/{admin_user.pk}/pasif/", follow=True)
+    # Plan §4.0: a rule violation re-shows the same screen with HTTP 200.
+    response = admin_client.post(f"/personel/{admin_user.pk}/pasif/")
+    assert response.status_code == 200
+    assert "accounts/staff_form.html" in [t.name for t in response.templates]
     assert "Kendi hesabınızı pasifleştiremezsiniz" in response.content.decode()
     admin_user.refresh_from_db()
     assert admin_user.is_active

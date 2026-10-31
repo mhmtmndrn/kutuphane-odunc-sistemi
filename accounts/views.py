@@ -139,9 +139,11 @@ def staff_deactivate(request: HttpRequest, pk: int) -> HttpResponse:
     try:
         services.deactivate_staff(request.user, staff_user)
     except RuleViolation as exc:
+        # Plan §4.0: re-show the same screen with 200 and the message.
         messages.error(request, exc.message)
-    else:
-        messages.success(request, "Hesap pasifleştirildi")
+        staff_user.refresh_from_db()
+        return _detail_page(request, staff_user)
+    messages.success(request, "Hesap pasifleştirildi")
     return redirect("accounts:staff-detail", pk=pk)
 
 

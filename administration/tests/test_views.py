@@ -259,8 +259,10 @@ def test_add_closed_date_with_invalid_date_shows_error(admin_client: Client) -> 
 
 
 def test_remove_missing_closed_date_shows_message(admin_client: Client) -> None:
-    response = admin_client.post("/kapali-gunler/tarih/999/sil/", follow=True)
+    # Plan §4.0: a rule violation re-shows the same screen with HTTP 200.
+    response = admin_client.post("/kapali-gunler/tarih/999/sil/")
     assert response.status_code == 200
+    assert "administration/closed_days.html" in [t.name for t in response.templates]
     assert "Kapalı tarih bulunamadı" in _body(response)
 
 

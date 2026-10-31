@@ -95,9 +95,10 @@ def closed_date_remove(request: HttpRequest, pk: int) -> HttpResponse:
     try:
         services.remove_closed_date(request.user, pk)
     except RuleViolation as exc:
+        # Plan §4.0: re-show the same screen with 200 and the message.
         messages.error(request, exc.message)
-    else:
-        messages.success(request, "Kapalı tarih silindi")
+        return _closed_days_page(request)
+    messages.success(request, "Kapalı tarih silindi")
     return redirect("administration:closed-days")
 
 
