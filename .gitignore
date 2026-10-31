@@ -10,3 +10,6 @@ __pycache__/
 
 # Local Claude Code agent worktrees
 .claude/worktrees/
+
+# Local virtual environment
+.venv/
