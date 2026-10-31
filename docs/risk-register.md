@@ -1,0 +1,25 @@
+# Risk kaydı: Kütüphane Ödünç Sistemi
+
+- **Güncelleme:** 2026-10-31
+- **İlgili dokümanlar:** [Görev planı](plans/2026-10-31-kutuphane-odunc-sistemi.md), [SRS](srs.md), [Mimari](architecture.md)
+
+Olasılık ve etki üç düzeylidir: Düşük, Orta, Yüksek. Tablo önem sırasına göre dizilmiştir. Kapanan riskler tabloda kalır.
+
+| ID | Risk | Olasılık | Etki | Tetik / erken uyarı | Azaltma | Durum |
+|---|---|---|---|---|---|---|
+| R-04 | Sunucu ve harici yedek diski aynı binada; yangın ya da hırsızlıkta ikisi birden gider | Düşük | Yüksek | Bina olayı; dışa aktarma 7 günden eski uyarısı | Haftalık şifreli dışa aktarma ve USB rotasyonu, 7 günü geçince uyarı (ADR-0006, ADR-0011, FR-37, G14). Bina olayında RPO ≤ 7 gün | Açık |
+| R-10 | Windows'ta zoneinfo saat dilimi verisi eksik olursa "bugün" yanlış hesaplanır ve son tarih, ceza ve hatırlatma kayar | Düşük | Yüksek | `ZoneInfoNotFoundError`; gece yarısına yakın yanlış tarih | `tzdata` sabit sürümle eklenir (KL-18). G01'de `timezone.localdate()` için Europe/Istanbul testi. Kurulumda NTP | Açık |
+| R-13 | Uygulama çalışırken geri yükleme yapılırsa veritabanı bozulur | Düşük | Yüksek | Geri yükleme sonrası bütünlük hatası | Uygulama kilidi açıksa `restore_backup` reddeder (KL-4, G14). Geri yükleme öncesinde ve sonrasında `integrity_check`. Kurulum belgesinde yordam | Açık |
+| R-02 | Hatırlatma e-postaları spam'e düşüyor ya da zamanlanmış görev atlanıyor | Orta | Orta | Uygulama sürekli çalışmıyor; SPF/DKIM yok | Kurum SMTP hesabı (ADR-0004). Açılışta telafi ve pencereli hatırlatma (ADR-0007, G16). Elle hatırlatma ve geciken listesi (G13) | Açık |
+| R-05 | Varsayılan saklama süresi kurumun KVKK politikasıyla çelişiyor | Orta | Orta | Kurum teyidi farklı süre veriyor | Süre bir ayar olduğu için yalnız değer değişir (FR-23). Borçlu üyenin anonimleştirmesinin ertelenmesi (ADR-0045) de kurum teyidine bağlı. SRS açık soru 6 | Açık |
+| R-11 | Kurum, kurulumda SMTP gönderen hesabını sağlamıyor | Orta | Orta | Kurulum tarihinde hesap bilgisi yok | Kurulum ön koşulu (ADR-0004). Hesap gelene kadar `send_reminders` FAILED kaydı yazar, geciken listesi ve telefonla takip sürer | Açık |
+| R-15 | Bulut oturumları Linux'ta çalışır; Windows'a özgü kod (`msvcrt` kilidi, WinSW, `tzdata`) ve Python sürümü farkı bulutta doğrulanamaz (ADR-0048) | Orta | Orta | Bulutta geçen test yerelde düşer | Her oturumun başında `python --version` kontrolü (3.11). Platforma özgü testler yerelde de koşulur; grup `main`'e birleştirilmeden önce yerelde `python -m pytest -q` çalışır | Açık |
+| R-08 | SQLite'ın tek yazıcı kilidi 5 eşzamanlı personelde p95 > 500 ms'ye yol açar (NFR-01) | Düşük | Orta | Faz 6 yük ölçümünde p95 ya da `database is locked` hatası | Kısa IMMEDIATE işlemler ve `busy_timeout=5000` (ADR-0002). Hatırlatmada SMTP sırasında kilit tutulmaz. Ölçüm (ADR-0031, G18); aşılırsa `EXPLAIN QUERY PLAN` ve işlem kısaltma | Açık |
+| R-09 | İkinci bir uygulama süreci (elle başlatılan waitress, yanlış servis tanımı) zamanlayıcıyı iki kez çalıştırır; yedek ve hatırlatmalar tekrarlanır | Düşük | Orta | Logda iki "scheduler started" satırı | Uygulama kilidini alamayan `wsgi.py` açılışı hata vererek durur (KL-4, G16). Hatırlatma tekrarını benzersiz kısıt da engeller | Açık |
+| R-16 | Bulut kredisi uygulama bitmeden sıfırlanır (yaklaşık 2026-11-05) | Orta | Düşük | Onay kapısı 2026-11-02'ye kadar geçilmedi | Kalan görevler yerelde aynı planla sürer. Kredi öncelikle bağımsız grupların paralel uygulanmasına harcanır (ADR-0048) | Açık |
+| R-07 | Barkod çözme test araçları (zxing-cpp, pypdfium2) hedef Windows/Python sürümünde kurulamaz ya da beklenmeyen bir bağımlılık (ör. numpy) ister | Düşük | Düşük | G01'de `pip install -r requirements-dev.txt` hatası | Yalnız geliştirme bağımlılığıdır. Gerekirse geçişli bağımlılık sabitlenir. Son çare ADR-0030'daki 2. seçenek ve faz 6 elle tarama (kullanıcıya sorulur) | Açık |
+| R-03 | Kütüphanede barkod okuyucu ya da etiket yazıcısı yok | Düşük | Düşük | Kurulum sırasında donanım eksik | Elle kod girişi ve arama (FR-11, G11) | Açık |
+| R-12 | Barkod okuyucu Enter yerine Tab gönderiyor ya da klavye düzeni nedeniyle karakter bozuyor | Düşük | Düşük | Faz 6 elle taramada alan geçişi çalışmıyor | Kodlar yalnız rakamdan oluşur. Kurulum belgesinde okuyucunun "Enter son eki" ayarı anlatılır. Faz 6'da gerçek okuyucuyla denenir | Açık |
+| R-14 | Open Library API'si demo verisi bir kez çekilirken erişilemez ya da yanıt biçimi değişmiştir | Düşük | Düşük | `fetch_demo_books.py` hatası ya da 300'den az kayıt | Eksik kayıtlar sentetik kitaplarla tamamlanır (ADR-0033). Dosya bir kez üretilip depoya girer | Açık |
+| R-06 | Open Library'den gelen demo verisinde Türkçe karakter kaybı ve bozuk yayınevi alanı var; lisans belirsizliği orta güvende | Yüksek | Düşük | Ölçümde kayıtların ~1/3'ünde karakter kaybı | Bir kez çekme, beş adımlı otomatik filtre, yayınevi alınmaz, 300 kayıt, kaynak notu ve OL kimliği (ADR-0033) | Kapandı (2026-10-31, ADR-0033) |
+| R-01 | ISBN API'leri Türkçe kitapları yeterince kapsamıyor | Gerçekleşti | Düşük | Faz 2 ölçümünde düşük isabet (%52) | FR-30 Won't oldu; kitap girişi elle yapılıyor | Kapandı (2026-10-31) |
