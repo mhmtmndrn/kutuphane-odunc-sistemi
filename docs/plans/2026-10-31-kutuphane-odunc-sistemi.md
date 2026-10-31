@@ -504,7 +504,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Üye modelinde FR-01 dışında kişisel alan yoktur (NFR-08).
 - **Testler:** TC-44…TC-52, TC-57…TC-59, TC-254…TC-261 (20 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest members -q` → hepsi geçer.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, bulut oturumu, Linux, Python 3.11.18): `python -m pytest members -q` → 112 passed; `python -m pytest -q` → 379 passed (TC-31…TC-33 dahil; `uyeler/<int:member_no>/aktif/` görevli rolüyle korunuyor); `coverage report --include="*/domain.py" --fail-under=90` → %100 (dal; `members/domain.py` %100); `members/services.py` %100 (dal); `makemigrations --check --dry-run` → "No changes detected".
 
 ### Görev G07: Kitaplar ve nüshalar
 
@@ -1129,3 +1130,51 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - `parse_isbn` tireleri ve bütün boşluk karakterlerini (sekme dahil) atar, sonra büyük harfe çevirir (KL-40'taki küçük "x" böyle kabul edilir). Yalnız ASCII rakamlar kabul edilir; Python'un `isdigit()`'inin kabul ettiği başka rakamlar (ör. Arapça-Hint rakamları) reddedilir.
   - `IsbnInvalid.reason` seçimi: biçim hataları (10 ya da 13 karakter değil, ISBN-10'un son hanesi dışında harf, ISBN-13'te "X", boş giriş) "ISBN 10 ya da 13 haneli olmalı"; kontrol hanesi tutmayan 10 ya da 13 haneli giriş "ISBN kontrol hanesi hatalı" verir (TC-40…TC-43). Son hanesi "X" olan ve kontrol hanesi tutmayan ISBN-10'a öneri verilmez, çünkü "978" + "…X" bir ISBN-13 değildir.
   - `isbn10_to_13` ISBN-10 kontrol hanesini doğrulamaz (ilk dokuz haneyi alır ve ISBN-13 kontrol hanesini yeniden hesaplar); biçimi bozuk girişte `ValueError` fırlatır. Doğrulama `parse_isbn`'in işidir.
+- **2026-10-31, G06 — kullanıcı kararı: anonimleştirilmiş üye güncellenemez:** Plan anonimleştirilmiş üyenin düzenlenip düzenlenemeyeceğini söylemiyordu; düzenlemeye izin vermek, KVKK saklama süresinin sildiği kişisel veriyi geri yazmayı mümkün kılardı. Oturumda kullanıcıya soruldu, önerilen seçenek seçildi: `update_member` "Anonimleştirilmiş üye güncellenemez" mesajıyla `RuleViolation` fırlatır; düzenleme ekranı 200 ile mesajı gösterir; anonim üyenin ayrıntısında "Düzenle" bağlantısı ve rıza formu yoktur (ADR-0042'deki "Anonimleştirilmiş üye aktifleştirilemez" ile aynı yön).
+- **2026-10-31, G06 — uygulama ayrıntıları (bulut oturumu):**
+  - G06'nın dosya listesi dışında değişenler: `library_site/settings/base.py` (`members` app'i), `library_site/urls.py` (`members.urls`), `templates/base.html` (üst menüde "Üyeler") ve `administration/home.html` (modül bağlantısı; G03 §11'deki "her görev kendi ekranının bağlantısını ekler" kuralı).
+  - `search_key` ve `phone_digits`, `Member.save()` içinde tek noktada yazılır (ADR-0019'daki "model katmanında tek noktada"); servisler ve `make_member` bunları hesaplamaz. `update_fields` verilse de iki türetilmiş alan kayda eklenir. Anonim üyede `search_key` boş metin, `phone_digits` NULL olur.
+  - Üye alanı kuralları `members/domain.py: validate_member_fields(full_name, phone)` içindedir: ad soyad ve telefon zorunlu, ad soyad en fazla 200, telefon en fazla 30 karakter (data-design §2.2) ve telefonda 1–20 rakam (`phone_digits` varchar(20)). Değerler kırpılarak kaydedilir. E-posta Django `validate_email` ile denetlenir ve en fazla 254 karakterdir; boş e-posta NULL olur. Telefon biçimi ayrıca denetlenmez.
+  - `MemberQuery` frozen dataclass'tır: `digits` ve `text` alanları (biri dolu) ve `is_empty`. Temizlendikten sonra boş kalan sorgu boş sonuç verir; arama ekranı `q` boşken yalnız formu gösterir. Rakam sorgusunda üye no tam eşleşmesi önce, sonra üye no sırasıyla telefon eşleşmeleri gelir; 18 haneden uzun rakam dizisi yalnız telefonda aranır (SQLite tam sayı sınırı). Metin sorgusu `search_key`'e, sonra üye no'ya göre sıralanır. Django `contains` LIKE joker karakterlerini kaçırır (TC-50).
+  - `set_consent` denetim sırası: gelecek tarih, e-posta yokluğu (yalnız rıza verirken), geçerli durumu tekrarlama. Rızayı geri almak e-posta istemez. E-posta silinmeyip değiştirilirse rıza durumu değişmez (ADR-0047 yalnız silmeyi kapsar).
+  - Üye oluşturma, güncelleme ve rıza denetim kaydı yazmaz: faz 4 küçük karar 8'deki eylem listesinde üye oluşturma ve güncelleme yok, rıza olayları KL-36'ya göre kendi izidir. Yalnız `reactivate_member` `MEMBER_REACTIVATED` yazar.
+  - Okuma servisleri (`search_members`, `member_by_no`, `consent_dates`) aktör almaz ve `require_role` taşımaz (plan imzaları; G03'teki `get_settings` gibi); koruma view'dadır. Bilinmeyen üye no ayrıntı, düzenleme, aktifleştirme ve rıza yollarında 404 verir ("Üye bulunamadı"; G04'teki personel ayrıntısıyla aynı).
+  - `consent_dates` her eylem için en büyük `effective_on` değerini döndürür.
+  - Rıza formu tek formdur: gizli `given` alanı ("1" ver, "0" geri al) geçerli duruma uyan düğmeyle gelir; tarih varsayılanı bugündür (`clock.today()`), `YYYY-AA-GG` ve `GG.AA.YYYY` biçimleri kabul edilir. E-postası ve rızası olmayan üyede form yerine "Rıza için e-posta adresi gerekli." notu görünür. Rıza ve aktifleştirme hataları ayrıntı ekranını 200 ile yeniden gösterir (§4.0, G04 D4).
+  - `tests/support/factories.py: make_member(full_name, phone, email, *, member_no, is_active, deactivated_on, anonymized)` üyeyi ORM ile doğrudan kurar (aktör ve denetim yok); pasif üyede `deactivated_on` verilmezse 2026-10-01 olur.
+  - TC-52 (model alan listesi) veritabanı istemediği için `members/tests/test_domain.py`'dedir.
+- **2026-10-31, G05–G08 onay bekleyen metinler:** Plan, SRS, KL ya da ADR'nin vermediği ve uygulayıcının seçtiği kullanıcıya görünen metinler (2026-11-01 kullanıcı kararı; PR'da onaylanır). G02–G04 listesinde zaten onaylı olup aynen yeniden kullanılanlar "(G02–G04'te onaylı)" ile işaretlidir.
+  - G06:
+    - "Üyeler": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `members/search.html` sayfa başlığı; `members/form.html` ve `members/detail.html` geri bağlantısı.
+    - "Yeni üye": `members/search.html` bağlantı; `members/form.html` sayfa başlığı.
+    - "Üye no, ad soyad ya da telefon": `members/search.html`, arama alanı etiketi.
+    - "Ara": `members/search.html`, düğme.
+    - "Üye no": `members/search.html`, sütun başlığı.
+    - "Ad soyad" (G02–G04'te onaylı): `members/forms.py` `MemberForm` alan etiketi; `members/search.html` sütun başlığı; `members/detail.html` satır başlığı.
+    - "Telefon": `members/forms.py` `MemberForm` alan etiketi; `members/search.html` sütun başlığı; `members/detail.html` satır başlığı.
+    - "E-posta": `members/forms.py` `MemberForm` alan etiketi; `members/detail.html` satır başlığı.
+    - "Durum", "Aktif", "Pasif" (G02–G04'te onaylı): `members/search.html` ve `members/detail.html`; pasif üyede "Pasif (GG.AA.YYYY)" pasifleştirme tarihiyle.
+    - "Anonimleştirilmiş üye": `members/search.html` ad yerine; `members/detail.html` ("Anonimleştirilmiş üye · Pasif").
+    - "Sonuç yok.": `members/search.html`, boş sonuç.
+    - "Üye N": `members/detail.html` sayfa başlığı; `members/form.html` düzenleme ekranının `<title>`'ı ve geri bağlantısı.
+    - "Üyeyi düzenle": `members/form.html`, düzenleme ekranı başlığı.
+    - "Kaydet" (G02–G04'te onaylı): `members/form.html`, düğme.
+    - "Düzenle": `members/detail.html`, bağlantı.
+    - "—": `members/detail.html`, e-posta ya da rıza tarihi yoksa.
+    - "E-posta rızası": `members/detail.html`, bölüm başlığı.
+    - "Rıza: var" / "Rıza: yok": `members/detail.html`, geçerli durum.
+    - "Son verme:" ve "Son geri alma:": `members/detail.html`, rıza tarihleri.
+    - "Tarih" (G02–G04'te onaylı): `members/forms.py` `ConsentForm` alan etiketi.
+    - "Rıza ver" ve "Rızayı geri al": `members/detail.html` düğmeleri; `members/forms.py` `ConsentForm.given` seçenekleri.
+    - "Rıza verildi" ve "Rıza geri alındı": `members/models.py` `ConsentAction` etiketleri.
+    - "Üye kaydedildi": `members/views.py` `member_create`, başarı mesajı.
+    - "Üye bilgileri kaydedildi": `members/views.py` `member_edit`, başarı mesajı.
+    - "Üye aktifleştirildi": `members/views.py` `member_reactivate`, başarı mesajı.
+    - "Rıza kaydedildi" ve "Rıza geri alındı": `members/views.py` `member_consent`, başarı mesajları.
+    - "Ad soyad boş olamaz" (G02–G04'te onaylı): `members/domain.py` `validate_member_fields`, `RuleViolation`.
+    - "Ad soyad en fazla 200 karakter olabilir": `members/domain.py` `validate_member_fields`, `RuleViolation`.
+    - "Telefon boş olamaz": `members/domain.py` `validate_member_fields`, `RuleViolation`.
+    - "Telefon en fazla 30 karakter olabilir": `members/domain.py` `validate_member_fields`, `RuleViolation`.
+    - "Telefon 1 ile 20 rakam içermeli": `members/domain.py` `validate_member_fields`, `RuleViolation`.
+    - "Geçerli bir e-posta adresi girin": `members/services.py` `_clean_email`, `RuleViolation`.
+    - "Anonimleştirilmiş üye güncellenemez": `members/services.py` `update_member`, `RuleViolation` (davranış oturumda kullanıcı kararıyla; metin onay bekliyor).

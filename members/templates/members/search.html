@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Üyeler · Kütüphane{% endblock %}
+
+{% block content %}
+  <h1>Üyeler</h1>
+  <p><a href="{% url 'members:create' %}">Yeni üye</a></p>
+  <form method="get" action="{% url 'members:search' %}">
+    <p>
+      <label for="id_q">Üye no, ad soyad ya da telefon</label>
+      <input type="search" name="q" id="id_q" value="{{ q }}" autofocus>
+      <button type="submit">Ara</button>
+    </p>
+  </form>
+  {% if q %}
+    {% if results %}
+      <table>
+        <thead><tr><th>Üye no</th><th>Ad soyad</th><th>Telefon</th><th>Durum</th></tr></thead>
+        <tbody>
+          {% for member in results %}
+            <tr>
+              <td><a href="{% url 'members:detail' member.member_no %}">{{ member.member_no }}</a></td>
+              <td>{% if member.is_anonymized %}Anonimleştirilmiş üye{% else %}{{ member.full_name }}{% endif %}</td>
+              <td>{{ member.phone|default:"" }}</td>
+              <td>{% if member.is_active %}Aktif{% else %}Pasif{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>Sonuç yok.</p>
+    {% endif %}
+  {% endif %}
+{% endblock %}

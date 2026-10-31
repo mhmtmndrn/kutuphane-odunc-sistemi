@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}{% if member %}Üye {{ member.member_no }}{% else %}Yeni üye{% endif %} · Kütüphane{% endblock %}
+
+{% block content %}
+  {% if member %}
+    <p><a href="{% url 'members:detail' member.member_no %}">Üye {{ member.member_no }}</a></p>
+    <h1>Üyeyi düzenle</h1>
+  {% else %}
+    <p><a href="{% url 'members:search' %}">Üyeler</a></p>
+    <h1>Yeni üye</h1>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <p>
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+      </p>
+    {% endfor %}
+    <p><button type="submit">Kaydet</button></p>
+  </form>
+{% endblock %}
