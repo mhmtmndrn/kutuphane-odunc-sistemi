@@ -38,6 +38,9 @@ EMAIL_HOST_USER = env("LIBRARY_EMAIL_USER")
 EMAIL_HOST_PASSWORD = env("LIBRARY_EMAIL_PASSWORD")
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = env("LIBRARY_EMAIL_FROM")
+# Seconds; a silent SMTP server must not block a waitress thread or the
+# scheduler thread forever. A timeout is logged as FAILED (ADR-0052).
+EMAIL_TIMEOUT = 10
 
 # TLS is terminated by Caddy, which forwards the original scheme.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

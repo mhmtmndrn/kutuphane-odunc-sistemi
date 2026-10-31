@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "members",
     "circulation",
     "billing",
+    "notifications",
 ]
 
 AUTH_USER_MODEL = "accounts.StaffUser"

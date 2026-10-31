@@ -11,6 +11,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     # After catalog: "nushalar/etiket/" must win over "nushalar/<str:barcode>/".
     path("", include("circulation.urls")),
     path("", include("billing.urls")),
+    path("", include("notifications.urls")),
 ]
 
 # The admin panel exists only where the app is installed: dev settings

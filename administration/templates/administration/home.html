@@ -19,6 +19,7 @@
     <ul>
       <li><a href="{% url 'circulation:checkout' %}">Ödünç</a></li>
       <li><a href="{% url 'circulation:checkin' %}">İade</a></li>
+      <li><a href="{% url 'notifications:overdue' %}">Gecikenler</a></li>
       <li><a href="{% url 'members:search' %}">Üyeler</a></li>
       <li><a href="{% url 'catalog:search' %}">Kitaplar</a></li>
       {% if user.role == "ADMIN" %}

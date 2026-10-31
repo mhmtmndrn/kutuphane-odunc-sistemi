@@ -55,6 +55,8 @@ CLERK_ROUTES_NOT_ADMIN = {
     "parola/",
     "nushalar/<str:barcode>/bulundu/",
     "uyeler/<int:member_no>/aktif/",
+    "gecikenler/",
+    "gecikenler/hatirlat/",
 }
 
 _CONVERTER = re.compile(r"<(?:(?P<kind>\w+):)?\w+>")

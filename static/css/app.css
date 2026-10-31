@@ -99,8 +99,20 @@ button {
   color: var(--error);
 }
 
-.warning {
+.warning,
+.message-warning {
   background: var(--warning-bg);
+}
+
+.tag {
+  padding: 0 0.4rem;
+  border: 1px solid var(--border);
+  background: var(--warning-bg);
+  white-space: nowrap;
+}
+
+.num {
+  text-align: right;
 }
 
 .inline-form {
