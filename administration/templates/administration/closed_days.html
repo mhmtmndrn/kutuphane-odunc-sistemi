@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Kapalı günler · Kütüphane{% endblock %}
+
+{% block content %}
+  <h1>Kapalı günler</h1>
+
+  <h2>Haftalık kapalı günler</h2>
+  <form method="post" action="{% url 'administration:closed-days' %}">
+    {% csrf_token %}
+    {{ weekly_form.non_field_errors }}
+    {{ weekly_form.weekdays }}
+    {{ weekly_form.weekdays.errors }}
+    <p><button type="submit">Kaydet</button></p>
+  </form>
+
+  <h2>Kapalı tarihler</h2>
+  <form method="post" action="{% url 'administration:closed-date-add' %}">
+    {% csrf_token %}
+    {{ date_form.non_field_errors }}
+    {% for field in date_form %}
+      <p>
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+      </p>
+    {% endfor %}
+    <p><button type="submit">Ekle</button></p>
+  </form>
+
+  {% if closed_dates %}
+    <table>
+      <thead><tr><th>Tarih</th><th>Not</th><th></th></tr></thead>
+      <tbody>
+        {% for closed in closed_dates %}
+          <tr>
+            <td>{{ closed.date|date:"d.m.Y" }}</td>
+            <td>{{ closed.note|default:"" }}</td>
+            <td>
+              <form class="inline-form" method="post" action="{% url 'administration:closed-date-remove' closed.pk %}">
+                {% csrf_token %}
+                <button type="submit">Sil</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>Kapalı tarih yok.</p>
+  {% endif %}
+{% endblock %}

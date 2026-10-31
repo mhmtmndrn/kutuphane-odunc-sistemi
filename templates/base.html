@@ -8,7 +8,18 @@
 </head>
 <body>
   <header class="site-header">
-    {% block header %}{% endblock %}
+    {% block header %}
+      {% if user.is_authenticated %}
+        <nav>
+          <a href="{% url 'administration:home' %}">Ana sayfa</a>
+        </nav>
+        <span class="user">{{ user.get_username }}</span>
+        <form class="inline-form" method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit">Çıkış</button>
+        </form>
+      {% endif %}
+    {% endblock %}
   </header>
   <main class="content">
     {% if messages %}

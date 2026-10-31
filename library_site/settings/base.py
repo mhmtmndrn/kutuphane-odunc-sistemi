@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "axes",
     "accounts",
+    "administration",
 ]
 
 AUTH_USER_MODEL = "accounts.StaffUser"

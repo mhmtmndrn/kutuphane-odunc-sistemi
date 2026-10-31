@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Ayarlar · Kütüphane{% endblock %}
+
+{% block content %}
+  <h1>Ayarlar</h1>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <p>
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+      </p>
+    {% endfor %}
+    <p><button type="submit">Kaydet</button></p>
+  </form>
+  <p class="note">Değişiklikler yalnız sonraki ödünçlere uygulanır; mevcut ödünçlerin son tarihi ve ceza oranı değişmez.</p>
+{% endblock %}

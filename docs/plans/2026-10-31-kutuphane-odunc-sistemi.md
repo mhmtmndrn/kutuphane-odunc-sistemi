@@ -438,7 +438,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Ana sayfa bütün personele modül bağlantılarını gösterir. Yöneticiye ek olarak son dışa aktarma tarihini ve varsa uyarıları gösterir: önce yedek uyarısı (FR-42), sonra dışa aktarma uyarısı (KL-33).
 - **Testler:** TC-13…TC-26, TC-238…TC-247 (24 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest administration -q` → hepsi geçer.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, bulut oturumu, Linux, Python 3.11): `python -m pytest administration -q` → 118 passed; `python -m pytest -q` → 172 passed; `coverage report --include="*/domain.py" --fail-under=90` → %100 (dal); `makemigrations --check --dry-run` → "No changes detected".
 
 ### Görev G04: Personel yönetimi ve yetki testi (NFR-07)
 
@@ -988,3 +989,11 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - `StaffUser.role` varsayılanı `CLERK`'tir (en az yetki); `createsuperuser` `ADMIN` atar. Tablo adları data-design'daki gibidir (`db_table = "staff_user"`).
   - django-axes `axes.W006` uyarısı ("AXES_LOCKOUT_PARAMETERS 'ip_address' içermiyor") gerekçe yorumuyla `base.py`'de `SILENCED_SYSTEM_CHECKS` listesine alındı; `prod.py` bu listeyi genişletir. Gerekçe ADR-0009'daki kullanıcı adına göre kilit: Caddy arkasında bütün istekler 127.0.0.1'den gelir, IP'ye göre kilit bütün personeli birden kilitler. G01'deki `check --deploy` çıktısı bu yüzden "(3 silenced)" oldu.
   - Kilitli hesabın 5. hatalı denemesi de 429 alır (axes kilidi bu denemede koyar); TC-07 6. denemeyi doğrular.
+- **2026-10-31, G03 — uygulama ayrıntıları (bulut oturumu):**
+  - Plandaki arayüzlere ek servisler: `weekly_closed() -> set[int]`, `closed_date_list() -> list[ClosedDate]` (kapalı günler ekranı), `audit_events(actor)` (yönetici; denetim listesi) ve `admin_home(actor) -> AdminHome(last_export_on, warnings)` (yönetici; ana sayfa paneli). Böylece view'lar ORM'e ve `jobs` modülüne doğrudan dokunmaz.
+  - Ayar aralıkları `domain.validate_settings(values)` içindedir; servis bunu çağırır, form aynı sınırları alan düzeyinde de uygular. Bilinmeyen ayar adı `TypeError` verir (programlama hatası). Mesajlar SRS'te yoktu, uygulayıcı seçti: "Ödünç süresi 1 ile 365 gün arasında olmalı", "Ödünç limiti 1 ile 20 arasında olmalı", "Saklama süresi 1 ile 10 yıl arasında olmalı", "Günlük ceza negatif olamaz", "Ceza üst sınırı negatif olamaz", "Borç eşiği 0,00 TL'den büyük olmalı", "Kütüphane adı 1 ile 80 karakter arasında olmalı"; kapalı tarihte "Bu tarih zaten kapalı" ve "Kapalı tarih bulunamadı".
+  - `AuditAction` ve `Job` seçenekleri döngüsel import olmasın diye `administration/models.py`'de tanımlıdır; `audit.AuditAction` ve `jobs.Job` aynı sınıflardır.
+  - `record_audit`'in üye ve ödünç denetimi (küçük karar 10) `member`/`member_no`/`member_id` ile `loan`/`loan_id` anahtarlarına bakar; KL-15'teki ayrıntılar `member_no` kullanır.
+  - Denetim kaydı modeli güncellemeyi ve silmeyi reddeder (`save` ve `delete` `ValueError`). Ayar değişmezse ve haftalık kapalı günler aynıysa kayıt yazılmaz.
+  - Ana sayfadaki modül bağlantıları yalnız var olan ekranları gösterir; her görev kendi ekranının bağlantısını ekler. Denetim listesinde sayfa parametresi `?sayfa=`dır.
+  - Ayar ve kapalı gün işlemleri başarıda 302 ile aynı ekrana döner ve mesaj gösterir.

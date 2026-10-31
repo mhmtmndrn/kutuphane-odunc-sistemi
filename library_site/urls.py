@@ -5,6 +5,7 @@ from django.urls import URLPattern, URLResolver, include, path
 
 urlpatterns: list[URLPattern | URLResolver] = [
     path("", include("accounts.urls")),
+    path("", include("administration.urls")),
 ]
 
 # The admin panel exists only where the app is installed: dev settings
