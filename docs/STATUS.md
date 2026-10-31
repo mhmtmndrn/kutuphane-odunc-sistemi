@@ -1,12 +1,13 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-10-31 (faz 5, G02–G04 bulut oturumu)
-- **Aşama:** eng-process **faz 5**, grup `feature/foundation` (G01–G04) **tamam**; `main`'e birleştirme kullanıcı onayı bekliyor.
+- **Güncelleme:** 2026-10-31 (faz 5, PR #1 inceleme düzeltmeleri)
+- **Aşama:** eng-process **faz 5**, grup `feature/foundation` (G01–G04) **tamam**, PR #1 inceleme düzeltmeleri (D1–D4 ve küçük kararlar) yapıldı; `main`'e birleştirme kullanıcı onayı bekliyor.
   - **G01:** `69a7b33` (yerel Windows).
   - **G02:** `2af6d70`: personel modeli, giriş, oturum süresi, django-axes kilidi (ADR-0049, ADR-0050), `require_role`.
   - **G03:** `91cbb1c`: saat, para, ayarlar, kapalı günler, denetim kaydı, görev kaydı, yönetici ana sayfası.
   - **G04:** `b2047af`: personel yönetimi, zorunlu parola değişikliği, NFR-07 yetki taraması (`tests/test_authorization.py`). Ardından `4ddac8e` küçük şablon düzeltmesi.
-  - Sonuç (bulut, Linux, Python 3.11): `python -m pytest -q` → 216 passed; `domain.py` dal kapsamı %100; `accounts/permissions.py` ve `accounts/middleware.py` %100; `check --deploy` → "no issues (3 silenced)". Yerel Windows koşusu henüz yapılmadı (R-15).
+  - **İnceleme düzeltmeleri:** `8defa25` (ADR-0051, onaylı metin listesi), `f1edc59` (TC-32 bütün 19 yönetici yolu), `4610cde` (kural ihlalinde 200), `4dca151` (boşluklu kütüphane adı).
+  - Sonuç (bulut, Linux, Python 3.11.18): `python -m pytest -q` → 219 passed; `makemigrations --check --dry-run` → "No changes detected"; `check --deploy` → "no issues (3 silenced)" (ADR-0051); `accounts` ve `administration` dal kapsamı toplam %99, `domain.py`, `permissions.py`, `middleware.py` %100. **Yerel Windows koşusu (R-15) birleştirmeden önce yeniden yapılmalı.**
   - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G02–G04 kutuları kanıtıyla işaretli; uygulama ayrıntıları ve sapmalar §11'de. Test planında 46 TC "Geçti".
 - **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`c8a7a0b`) ve `feature/foundation`.
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
@@ -19,10 +20,10 @@
 
 `eng-process` faz 5'e devam et:
 
-1. **`feature/foundation` PR'ı:** İncele; yerelde Windows'ta `pip install -r requirements-dev.txt` (django-axes yeni tablolar getirir), `python manage.py migrate`, `python -m pytest -q` (R-15); birleştirme onayı al.
-   - Gözden geçirilecek uygulama seçimleri (plan §11, G02–G04): `axes.W006` susturuldu (IP'ye göre kilit Caddy arkasında bütün personeli kilitler); ek servisler (`admin_home`, `audit_events`, `staff_list`, `get_staff` vb.); SRS'te olmayan hata metinleri; TC-32 URL adları yerine desenleri karşılaştırıyor.
+1. **`feature/foundation` PR'ı (#1):** İnceleme düzeltmeleri yapıldı. Yerelde Windows'ta `git pull`, `pip install -r requirements-dev.txt`, `python manage.py migrate`, `python -m pytest -q` yeniden çalıştırılır (R-15; beklenen 219 passed); ardından kullanıcı birleştirir.
+   - PR #1'deki "Kullanıcıya sorular" yorumunda görev dışı gözlemler var (ör. ADR-0051'in plan §3 ve architecture §9 ADR listelerine işlenmesi); karar kullanıcının.
 2. **Onay bekleyen küçük temizlik:** Yerel `worktree-agent-a4c3b8e184eb5859a` dalı `main` ile aynı yerde (`c8a7a0b`), silinebilir (`git branch -d`). Boş `.claude/worktrees/agent-a4c3b8e184eb5859a` klasörü, oturum tuttuğu için silinemedi ("Permission denied"); oturum kapandıktan sonra elle silinir. Agent worktree'si git'ten kaldırıldı, `.gitignore`'a `.claude/worktrees/` eklendi (`4024c6b`).
-3. **Sonraki grup:** `feature/catalog-members` (G05–G08) istemi; o grubun açık noktaları istemden önce kullanıcıya sorulur. `tests/test_authorization.py`'deki `EXPECTED_ADMIN_ROUTES` her grubun yönetici yollarıyla genişletilir.
+3. **Sonraki grup:** `feature/catalog-members` (G05–G08) istemi; o grubun açık noktaları istemden önce kullanıcıya sorulur. `tests/test_authorization.py` §4.1'deki 19 yönetici yolunun hepsini zaten içerir; yeni yönetici yolu eklendiği anda ADMIN koruması denetlenir (D3).
    - Genel sıra: G01 → G08, **G10 → G09 → G11** → G12 (KL-39), G13…G19.
    - Not: Kum havuzu pytest'in geçici klasörünü engellerse `PYTEST_DEBUG_TEMPROOT` yalnız kabukta scratchpad'e yönlendirilir.
 
@@ -44,6 +45,13 @@
 - **Araştırma:** [ISBN meta veri](research/2026-10-31-isbn-meta-veri-apileri.md), [demo veri seti](research/2026-10-31-demo-kitap-veri-seti.md).
 
 ## Son güncellemeden bu yana yapılanlar
+
+- **2026-10-31, PR #1 inceleme düzeltmeleri (bulut oturumu):**
+  - D1: ADR-0051 (`axes.W006` susturulur); plan §11 ve `base.py` yorumundan bağlandı; G01 doğrulamasına "(3 silenced)" notu.
+  - D2: Uygulayıcının seçtiği bütün kullanıcıya görünen metinler (106 madde) plan §11'de, kullanıcı onayıyla; metin değişmedi.
+  - D3: TC-32 bütün 19 yönetici yolunu içerir; ADMIN korumalı yollar = beklenen ∩ var olan. Test planı TC-32 satırı ve plan G04 güncellendi.
+  - D4: `staff_deactivate` ve `closed_date_remove` kural ihlalinde ekranı 200 ile yeniden gösterir (TDD).
+  - Küçük kararlar: boşluklu kütüphane adı reddedilir (TDD); `tl` filtresi ve kilitli kullanıcı + boş parola davranışı değişmeden §11'e yazıldı.
 
 - **2026-10-31, faz 5, G02–G04 bulut oturumu:**
   - Kullanıcının açtığı bulut oturumu ("devam et") hazır istem olmadan plan §4.0, G02–G04, §11 ve ADR-0049/0050'den çalıştı. Python 3.11 sanal ortamı kuruldu, sabit bağımlılıklar PyPI'den geldi.
