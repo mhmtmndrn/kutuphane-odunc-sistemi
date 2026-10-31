@@ -8,14 +8,18 @@
   - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G01 sapmaları, remote-mod sapması ve G02 kararları §11'de.
 - **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`c8a7a0b`) ve `feature/foundation`.
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
-- **Bulut oturumu açma yolu:** Bulut oturumlarını kullanıcı kendisi açar (`claude --cloud` ya da claude.ai/code); Claude açılış istemini hazırlar (KL-38, plan §11). Agent aracının `isolation: "remote"` modu kullanılmaz, çünkü yerelde çalışıyor.
+- **Bulut oturumu açma yolu:** Bulut oturumlarını kullanıcı kendisi açar, Claude açılış istemini hazırlar (KL-38, plan §11). Agent aracının `isolation: "remote"` modu kullanılmaz, çünkü yerelde çalışıyor.
+  - **Tarayıcı (önerilen):** claude.ai/code. İlk seferde GitHub bağlanır ve Claude GitHub App özel repoya kurulur. Repo `mhmtmndrn/kutuphane-odunc-sistemi`, dal `feature/foundation`, ortam **Default** (Trusted ağ; pip için PyPI gerekir) seçilir; istem kutuya yapıştırılıp gönderilir.
+  - **Terminal:** depo klasöründe, `feature/foundation` checkout'luyken `claude --cloud "<istem>"`. Oturum GitHub'daki dalı klonlar; yerel commit'ler önce push edilmeli. Çok satırlı istem PowerShell'de argüman olarak zahmetli olduğu için tarayıcı yolu önerilir.
+  - Kaynak: https://code.claude.com/docs/en/claude-code-on-the-web (2026-10-31 okundu). Dokümana göre bulut oturumu soru sorup cevap bekleyebiliyor; ADR-0048'deki "soru soramaz" varsayımı fazla katı olabilir. İstem yine de "dur ve raporla" kuralını taşıyor. Doküman bulut oturumlarının plan kullanım limitinden düştüğünü söylüyor; 100 $ kredinin buna etkisi teyit edilmedi.
+- **Hazır istem (G02–G04):** `C:\Users\MEHMET~1\AppData\Local\Temp\claude\C--Users-Mehmet-Emin-AppData-Local-Temp-ai-config-evals-at-02-manual\3b64b7c5-70eb-4568-b8f4-ee400daa5eb9\scratchpad\cloud-prompt-foundation-G02-G04.md`. Depoda değil, 2. oturumun scratchpad'inde; silinmişse plan §4.0, G02–G04, §11 ve ADR-0049/0050'den yeniden yazılır.
 
 ## Sıradaki adım
 
 `eng-process` faz 5'e devam et:
 
-1. **G02–G04 bulut oturumu:** Kullanıcı, hazırlanan istemle `feature/foundation` için bulut oturumunu açar. İstem KL-38 şablonunu izler: Python 3.11 kontrolü (R-15), plan §4.0 kuralları, G02 → G04 TC listeleri, görev başına commit ve push, kritik kararda durup raporlama, sonda `main`'e PR (birleştirme yok).
-2. **Yerel temizlik:** `.claude/worktrees/agent-a4c3b8e184eb5859a` worktree'sinin kaldırılması ve `.claude/worktrees/` için `.gitignore` satırı; ikisi de onaya bağlı.
+1. **G02–G04 bulut oturumu:** Kullanıcı yukarıdaki istemle `feature/foundation` için bulut oturumunu açar (2. oturum sonunda henüz açılmamıştı). Açıldıysa oturum linkini ya da PR'ı sor, ilerlemeyi oradan izle. Kullanıcı açmakta zorlanırsa yukarıdaki adımları tek tek anlat.
+2. **Onay bekleyen küçük temizlik:** Yerel `worktree-agent-a4c3b8e184eb5859a` dalı `main` ile aynı yerde (`c8a7a0b`), silinebilir (`git branch -d`). Boş `.claude/worktrees/agent-a4c3b8e184eb5859a` klasörü, oturum tuttuğu için silinemedi ("Permission denied"); oturum kapandıktan sonra elle silinir. Agent worktree'si git'ten kaldırıldı, `.gitignore`'a `.claude/worktrees/` eklendi (`4024c6b`).
 3. **PR gelince:** incele, yerelde Windows'ta `python -m pytest -q` (R-15), birleştirme onayı al. Sonra `feature/catalog-members` (G05–G08) istemi; o grubun açık noktaları istemden önce kullanıcıya sorulur.
    - Genel sıra: G01 → G08, **G10 → G09 → G11** → G12 (KL-39), G13…G19.
    - Not: Kum havuzu pytest'in geçici klasörünü engellerse `PYTEST_DEBUG_TEMPROOT` yalnız kabukta scratchpad'e yönlendirilir.
