@@ -21,7 +21,7 @@
     </form>
   {% else %}
     <h1>{{ staff_user.username }}</h1>
-    <p>{{ staff_user.first_name }} · {{ staff_user.get_role_display }} ·
+    <p>{% if staff_user.first_name %}{{ staff_user.first_name }} · {% endif %}{{ staff_user.get_role_display }} ·
       {% if staff_user.is_active %}Aktif{% else %}Pasif{% endif %}</p>
 
     <h2>Rol</h2>
