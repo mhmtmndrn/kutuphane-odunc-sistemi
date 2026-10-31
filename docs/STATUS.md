@@ -1,21 +1,24 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-10-31
-- **Aşama:** eng-process **faz 5 (uygulama) başladı**. Onay kapısı 2026-10-31'de geçildi (kullanıcı: "Temiz oturumda uygula"). Plan, test planı (319 TC) ve KL-1…KL-46 onaylı. Henüz kod yok. Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md) (§10 onay kaydı).
-- **Dal:** Faz 4 dokümanları `feature/requirements` dalında commit'lendi; dal `main`'e `--no-ff` ile birleştirildi (ikisi de onaylı, 2026-10-31). Git remote yok.
-- **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16). G01–G19 özel GitHub reposundan bulut oturumlarıyla uygulanacak.
+- **Güncelleme:** 2026-10-31 (faz 5, 2. oturum)
+- **Aşama:** eng-process **faz 5**, grup `feature/foundation` (G01–G04).
+  - **G01 tamam:** `69a7b33 feat: add project skeleton and settings (G01)`, `origin/feature/foundation`'da. Plandaki kutu kanıtıyla işaretli; 19 test geçti; `check --deploy` sonucu "no issues (2 silenced)".
+  - **G02:** test ve kod yok. Uygulamadan önce gereken kararlar alındı: ADR-0049, ADR-0050 ve küçük kararlar (a)–(e) (plan §11).
+  - **G03 ve G04:** başlanmadı.
+  - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G01 sapmaları, remote-mod sapması ve G02 kararları §11'de.
+- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`c8a7a0b`) ve `feature/foundation`.
+- **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
+- **Bulut oturumu açma yolu:** Bulut oturumlarını kullanıcı kendisi açar (`claude --cloud` ya da claude.ai/code); Claude açılış istemini hazırlar (KL-38, plan §11). Agent aracının `isolation: "remote"` modu kullanılmaz, çünkü yerelde çalışıyor.
 
 ## Sıradaki adım
 
-`eng-process` skill'ini çalıştır, **faz 5**'e başla (`phases/05-implement.md`). Sırayla, her adım ayrıca kullanıcı onayıyla:
+`eng-process` faz 5'e devam et:
 
-1. ~~Faz 4 commit'i ve `main` birleştirmesi~~ (yapıldı, 2026-10-31).
-2. **Özel GitHub reposu ve push** (ADR-0048): repo oluşturma ve push dışa dönük işlemdir; onay al.
-3. **Uygulama:** Görev grupları ve dallar plan §4.0'da. Sıra G01 → G08, sonra **G10 → G09 → G11** → G12 (KL-39: `Loan` modeli G10'da), sonra G13…G19.
-   - Her görevde önce görevin **Testler** satırındaki TC'ler kırmızı yazılır (TDD); TC metinleri [docs/test-plan.md](test-plan.md) §6'da.
-   - Görev sonu: görevin doğrulama komutu, `python -m pytest -q`, model değişikliğinde `makemigrations --check --dry-run`; commit yalnız onayla (bulut istisnası ADR-0048: görev başına commit ve kendi dalına push, onay `main`'e birleştirmede).
-   - Bulut oturumu açılış istemi şablonu KL-38'de; oturum başında `python --version` → 3.11 (R-15).
-   - Kritik karar çıkarsa dur ve sor.
+1. **G02–G04 bulut oturumu:** Kullanıcı, hazırlanan istemle `feature/foundation` için bulut oturumunu açar. İstem KL-38 şablonunu izler: Python 3.11 kontrolü (R-15), plan §4.0 kuralları, G02 → G04 TC listeleri, görev başına commit ve push, kritik kararda durup raporlama, sonda `main`'e PR (birleştirme yok).
+2. **Yerel temizlik:** `.claude/worktrees/agent-a4c3b8e184eb5859a` worktree'sinin kaldırılması ve `.claude/worktrees/` için `.gitignore` satırı; ikisi de onaya bağlı.
+3. **PR gelince:** incele, yerelde Windows'ta `python -m pytest -q` (R-15), birleştirme onayı al. Sonra `feature/catalog-members` (G05–G08) istemi; o grubun açık noktaları istemden önce kullanıcıya sorulur.
+   - Genel sıra: G01 → G08, **G10 → G09 → G11** → G12 (KL-39), G13…G19.
+   - Not: Kum havuzu pytest'in geçici klasörünü engellerse `PYTEST_DEBUG_TEMPROOT` yalnız kabukta scratchpad'e yönlendirilir.
 
 ## Açık sorular ve riskler
 
@@ -35,6 +38,13 @@
 - **Araştırma:** [ISBN meta veri](research/2026-10-31-isbn-meta-veri-apileri.md), [demo veri seti](research/2026-10-31-demo-kitap-veri-seti.md).
 
 ## Son güncellemeden bu yana yapılanlar
+
+- **2026-10-31, faz 5, 2. oturum:**
+  - G02 kararları kullanıcıya soruldu. ADR-0049 (kilitli hesaba 429, giriş şablonu ve mesaj) ve ADR-0050 (kilit süresi uzamaz) yazıldı; küçük kararlar (a)–(e) onaylandı.
+  - Kararlar plan G02'ye, §11'e, test planındaki TC-07, TC-08 ve TC-12'ye, architecture §9 ADR tablosuna ve ADR-0009'a işlendi.
+  - Remote-mod sapması plan §11'e yazıldı, KL-38 düzeltildi.
+  - `main`'de commit'lenmemiş duran doküman değişiklikleri kullanıcı kararıyla `feature/foundation`'a alındı.
+- **2026-10-31, faz 5 başlangıcı:** `b9490cb` faz 4 commit'i, `c8a7a0b` `--no-ff` merge; özel repo açıldı, `main` push edildi (hepsi onaylı). Kararlar: repo adı `kutuphane-odunc-sistemi`, grup başına bir bulut oturumu, oturum PR açar (KL-38). G01 yerel agent tarafından commit'lendi (`69a7b33`); remote-mod sapması plan §11'de.
 
 - **2026-10-31, 6. tur (faz 4 kapanışı, commit'lenmedi):**
   - `docs/test-plan.md` yazıldı. Taslaktaki 234 TC'nin 37'si ADR-0036…0047'ye göre revize edildi, TC-235…TC-319 eklendi. Pasifleştirme TC'leri (TC-53…56) G11'e taşındı. R-10 için TC-235 G01'de.

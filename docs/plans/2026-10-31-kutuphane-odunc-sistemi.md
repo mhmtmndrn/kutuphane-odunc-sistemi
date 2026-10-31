@@ -2,7 +2,7 @@
 
 - **Tarih:** 2026-10-31
 - **İz:** Tam
-- **Durum:** Faz 4 tamamlandı, onay kapısı geçildi. Kararlar alındı (ADR-0026…0048; küçük karar listesi onaylandı, 2026-10-31). Görevler, risk kaydı, test planı (319 TC), izlenebilirlik ve tutarlılık kontrolü yazıldı; inşa kontrolü ayıklandı (§8.1). Plan, test planı ve KL-1…KL-46 onaylandı (2026-10-31); faz 5 temiz oturumda başlayacak.
+- **Durum:** Faz 4 tamamlandı, onay kapısı geçildi. Kararlar alındı (ADR-0026…0048; küçük karar listesi onaylandı, 2026-10-31). Görevler, risk kaydı, test planı (319 TC), izlenebilirlik ve tutarlılık kontrolü yazıldı; inşa kontrolü ayıklandı (§8.1). Plan, test planı ve KL-1…KL-46 onaylandı (2026-10-31); faz 5 başladı: G01 tamam (2026-10-31); G02 kararları ADR-0049, ADR-0050 ve §11'de.
 
 ## 1. Süreç uyarlaması
 
@@ -25,6 +25,7 @@
 | docs/data-design.md | Faz 3'te oluşturuldu (2026-10-31) |
 | docs/decisions/0001…0025 | Faz 3'te yazıldı (2026-10-31) |
 | docs/decisions/0026…0048 | Faz 4'te yazıldı (2026-10-31); 0048 bir süreç kararıdır |
+| docs/decisions/0049, 0050 | Faz 5'te, G02'den önce yazıldı (2026-10-31): kilit cevabı ve kilit süresi |
 | docs/architecture.md, docs/data-design.md | Faz 4 tutarlılık düzeltmeleri (§8) |
 | docs/test-plan.md | Faz 4'te oluşturuldu (2026-10-31): 319 TC, test taslağından revize edildi |
 | docs/data-design.md | I6'ya ADR-0018 istisnası yazıldı (§8 T-02) |
@@ -171,6 +172,8 @@ Kapsam içi FR sayısı 31 (23 Must, 8 Should), Won't sayısı 7.
 - [ADR-0046](../decisions/0046-checkout-member-input-classification.md): Ödünç ekranında üye alanı biçime göre yorumlanır (bulgu 12).
 - [ADR-0047](../decisions/0047-consent-event-ordering.md): Rıza olaylarının sıra kuralı (bulgu 13).
 - [ADR-0048](../decisions/0048-cloud-sessions-implementation.md): Uygulama, özel GitHub reposundan bulut oturumlarıyla (süreç kararı).
+- [ADR-0049](../decisions/0049-lockout-response-429.md): Kilitli hesaba giriş denemesi 429, giriş şablonu ve kilit mesajıyla cevaplanır (faz 5, G02).
+- [ADR-0050](../decisions/0050-lockout-cooloff-not-reset.md): Kilitliyken yapılan denemeler kilit süresini uzatmaz (faz 5, G02).
 
 **Faz 4 küçük kararları (onaylandı 2026-10-31):**
 
@@ -287,7 +290,7 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
     - Telefon araması `phone_digits LIKE %value%` (KL-10) ile en fazla 50 sonuç döndürür. Tek sonuç olsa da liste gösterilir; üye otomatik açılmaz.
 36. **Rıza** (ADR-0047): Mesajlar ADR'dedir. Rıza olayları için ayrı denetim kaydı yazılmaz, çünkü olayların kendisi izdir.
 37. **Yeni FR öncelikleri:** FR-40 Should, FR-41 Must, FR-42 Should. Kapsam içi FR sayısı 35 olur (24 Must, 11 Should); Won't sayısı 7.
-38. **Bulut oturumu görev şablonu** (ADR-0048): Her oturumun açılış istemi şunları içerir: dal adı, plan görev bölümünün yolu, TC listesi, doğrulama komutu ve "kritik karar çıkarsa dur ve soruyu raporla" kuralı. Oturum başında `python --version` (3.11) kontrol edilir (R-15). Commit kuralı ADR-0048'dedir (kullanıcı kararı): görev başına commit ve kendi dalına push.
+38. **Bulut oturumu görev şablonu** (ADR-0048): Her oturumun açılış istemi şunları içerir: dal adı, plan görev bölümünün yolu, TC listesi, doğrulama komutu ve "kritik karar çıkarsa dur ve soruyu raporla" kuralı. Oturum başında `python --version` (3.11) kontrol edilir (R-15). Commit kuralı ADR-0048'dedir (kullanıcı kararı): görev başına commit ve kendi dalına push. **Faz 5 başında verilen kullanıcı kararları (2026-10-31):** Oturumları kullanıcı kendisi açar (`claude --cloud` ya da claude.ai/code); Claude açılış istemini hazırlar. *(İlk karar, oturumları Claude'un Agent aracının remote moduyla başlatmasıydı. Bu mod bulutta değil yerelde çalıştığı için kullanıcı kararıyla değişti; §11.)* Her görev grubu için bir oturum açılır ve o oturum grubun görevlerini sırayla yapar. Oturum, grubun sonunda `main`'e PR açar. Birleştirme kullanıcı onayıyla yapılır. Repo `mhmtmndrn/kutuphane-odunc-sistemi` (özel); uzak tarafa yalnız `main` gönderildi.
 39. **Görev sırası** (§8 T-01): `circulation/models.py` (`Loan`) ve `circulation/migrations/0001_initial.py` G10'da oluşturulur. Migration, kısmi benzersiz indeksi, data-design §4'teki indeksleri ve `copy_found_on` sütununu CHECK kısıtıyla içerir (ADR-0037). Uygulama sırası G10 → G09 → G11 olur; G11 servisleri, view'ları ve şablonları ekler. Gerekçe: G09'daki `LedgerEntry.loan` yabancı anahtarı ve billing migration'ı circulation migration'ına bağımlıdır. *Alternatif:* G09'u G11'den sonraya almak; G11 `post_charge` ve `member_balance` kullandığı için bu mümkün değil.
 40. **ISBN-10'da küçük "x":** `parse_isbn` son hanedeki "x"i "X" olarak kabul eder (TC-253).
 41. **Geri yüklenecek dosya yoksa:** `restore_backup` "Dosya bulunamadı: <yol>" mesajıyla çıkış 1 verir. Çıkış 2 yalnız argparse kullanım hatalarıdır (TC-301).
@@ -384,7 +387,7 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
 
 ### Görev G02: Personel modeli, giriş, oturum, kilit ve rol denetimi
 
-- **Gereksinimler:** FR-27, FR-22, NFR-06; AC-27; ADR-0009; küçük kararlar 1 ve 9 (faz 1 ve faz 3).
+- **Gereksinimler:** FR-27, FR-22, NFR-06; AC-27; ADR-0009, ADR-0049, ADR-0050; küçük kararlar 1 ve 9 (faz 1 ve faz 3); G02 küçük kararları (a)–(e) (§11).
 - **Dosyalar:** oluştur `accounts/{__init__,apps,models,permissions,views,urls,forms}.py`, `accounts/migrations/0001_initial.py`, `templates/registration/login.html`, `accounts/tests/{test_domain,test_services,test_views}.py`; değiştir `library_site/settings/base.py`, `library_site/urls.py`.
 - **Arayüzler:**
   - sunar `accounts.models.Role(TextChoices)`: `ADMIN = "ADMIN", "Yönetici"`, `CLERK = "CLERK", "Görevli"`.
@@ -396,7 +399,7 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - sunar `accounts.permissions.staff_view(view)`. `login_required` ile `require_role(Role.CLERK)` birleşimidir.
 - **Davranış:**
   - `SESSION_COOKIE_AGE = 1800`, `SESSION_SAVE_EVERY_REQUEST = True`.
-  - axes ayarları: `AXES_FAILURE_LIMIT = 5`, `AXES_COOLOFF_TIME = timedelta(minutes=15)`, `AXES_LOCKOUT_PARAMETERS = ["username"]`, `AXES_RESET_ON_SUCCESS = True`. `AUTHENTICATION_BACKENDS` listesi `["axes.backends.AxesStandaloneBackend", "django.contrib.auth.backends.ModelBackend"]` olur, `AxesMiddleware` eklenir. Kilitli hesap giriş ekranında "Hesap geçici olarak kilitlendi. 15 dakika sonra yeniden deneyin." mesajını görür.
+  - axes ayarları: `AXES_FAILURE_LIMIT = 5`, `AXES_COOLOFF_TIME = timedelta(minutes=15)`, `AXES_LOCKOUT_PARAMETERS = ["username"]`, `AXES_RESET_ON_SUCCESS = True`, `AXES_RESET_COOL_OFF_ON_FAILURE_DURING_LOCKOUT = False` (ADR-0050). `AUTHENTICATION_BACKENDS` listesi `["axes.backends.AxesStandaloneBackend", "django.contrib.auth.backends.ModelBackend"]` olur, `AxesMiddleware` eklenir. Kilitli hesap giriş ekranında "Hesap geçici olarak kilitlendi. 15 dakika sonra yeniden deneyin." mesajını görür. Cevap HTTP 429'dur; `AXES_LOCKOUT_CALLABLE` giriş şablonunu formla birlikte çizer (ADR-0049).
   - Parola doğrulayıcıları KL-9'a göre ayarlanır.
   - Giriş için Django `LoginView` kullanılır, şablon Türkçedir. Çıkış yalnız POST ile yapılır.
 - **Testler:** TC-04…TC-12 (9 TC; `docs/test-plan.md` §6)
@@ -963,8 +966,17 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
 ## 11. Sapmalar
 
 - **2026-10-31, commit bölümü:** Faz 2 commit'i yalnız iki araştırma raporunu içeriyor; mesajındaki "and SRS updates" kısmı çıkarıldı. Sebebi, SRS, plan ve STATUS'taki faz 2 ve faz 3 değişikliklerinin aynı satırlarda iç içe olması. Bunları ayırmak, hiç var olmamış bir ara sürümü geçmişe yazmak demekti. Bu yüzden üç dosya faz 3 commit'ine alındı.
-- **2026-10-31, G01 — `AUTH_USER_MODEL` G02'de:** G01 `base.py`'de `AUTH_USER_MODEL = "accounts.StaffUser"` istiyor, ama `accounts` app'i G02'de oluşuyor; kurulu olmayan modele işaret eden ayarla Django açılmıyor. Ayar G02'de, modelle aynı commit'te eklendi. G01'deki TC-03 `get_user_model()` ile yazıldı; G02'den sonra `StaffUser` üzerinde de geçer. Son durum plandakiyle aynı.
+- **2026-10-31, G01 — `AUTH_USER_MODEL` G02'de:** G01 `base.py`'de `AUTH_USER_MODEL = "accounts.StaffUser"` istiyor, ama `accounts` app'i G02'de oluşuyor; kurulu olmayan modele işaret eden ayarla Django açılmıyor. Ayar G02'de, modelle aynı commit'te eklenir. G01'deki TC-03 `get_user_model()` ile yazıldı; G02'den sonra `StaffUser` üzerinde de geçmelidir. Son durum plandakiyle aynı olur.
 - **2026-10-31, G01 — ortam değişkenlerinin yeri:** `base.py`, bütün ortamların ihtiyaç duyduğu değişkenleri `env()` ile okur: `LIBRARY_SECRET_KEY`, `LIBRARY_DB_PATH`, `LIBRARY_BACKUP_DIR`, `LIBRARY_EXPORT_DIR`, `LIBRARY_EXPORT_PASSPHRASE_FILE`, `LIBRARY_SCHEDULER_ENABLED` (varsayılan "0"). `prod.py` geri kalanları okur (`LIBRARY_ALLOWED_HOSTS`, `LIBRARY_STATIC_ROOT`, `LIBRARY_EMAIL_*`). `dev.py` ve `test.py`, `base`'i import etmeden önce bu değişkenlere `os.environ.setdefault` ile varsayılan verir ("varsayılan değerlerle env"); geliştirme verisi depoda yok sayılan `var/` klasörüne yazılır. `LIBRARY_ALLOWED_HOSTS` virgülle ayrılmış listedir. `LIBRARY_EMAIL_PORT` tam sayı değilse "Geçersiz ortam değişkeni: …" ile `ImproperlyConfigured` verilir.
 - **2026-10-31, G01 — `.gitignore`:** Plandaki `*.sqlite3` ve `staticfiles/` satırlarına ek olarak `*.sqlite3-wal`, `*.sqlite3-shm` (WAL dosyaları), `var/`, `__pycache__/`, `.pytest_cache/` ve `.coverage` eklendi; derleme ve test artıkları depoya girmesin diye.
 - **2026-10-31, G01 — varsayılan ayar modülleri:** `manage.py` varsayılan olarak `library_site.settings.dev`, `wsgi.py` ise `library_site.settings.prod` kullanır (waitress yalnız üretimde çalışır); ikisi de `DJANGO_SETTINGS_MODULE` verilmişse ona uyar.
-- **2026-10-31, G01–G04 — çalışma ortamı:** Görevler bulutta değil, kullanıcının yerel Windows 11 makinesinde Python 3.11.9 sanal ortamıyla uygulandı. Windows'a özgü TC-235 (tzdata) doğrudan Windows'ta koştu. pytest'in varsayılan geçici klasörüne erişim kum havuzunda engellendiği için testler `PYTEST_DEBUG_TEMPROOT` yalnız kabukta ayarlanarak koşturuldu; depoya bir şey eklenmedi.
+- **2026-10-31, G01 — çalışma ortamı:** G01 bulutta değil, kullanıcının yerel Windows 11 makinesinde Python 3.11.9 sanal ortamıyla uygulandı. Windows'a özgü TC-235 (tzdata) doğrudan Windows'ta koştu. pytest'in varsayılan geçici klasörüne erişim kum havuzunda engellendiği için testler `PYTEST_DEBUG_TEMPROOT` yalnız kabukta ayarlanarak koşturuldu; depoya bir şey eklenmedi.
+- **2026-10-31, faz 5 — bulut oturumu açma yolu (KL-38):** Agent aracının `isolation: "remote"` modu bulut oturumu açmadı; yerel bir worktree'de (`.claude/worktrees/agent-a4c3b8e184eb5859a`) çalıştı ve kullanıcının 5 saatlik plan kullanımından harcadı. G01 bu yüzden yerelde yapıldı. Kullanıcı kararı: bulut oturumlarını kullanıcı kendisi açar (`claude --cloud` ya da claude.ai/code), Claude açılış istemini hazırlar. KL-38 buna göre düzeltildi. G02–G04 bulut oturumunda yapılacak.
+- **2026-10-31, G02 — uygulamadan önce verilen kararlar:** Yerel agent'ın G02 hazırlığında bulduğu açık noktalar kullanıcıya soruldu (bulut oturumu soru soramaz).
+  - Kritik: ADR-0049 (kilitli hesaba 429, giriş şablonu ve mesaj) ve ADR-0050 (`AXES_RESET_COOL_OFF_ON_FAILURE_DURING_LOCKOUT = False`).
+  - Küçük kararlar (onaylandı 2026-10-31):
+    - (a) `/odunc/` G11'e kadar yok. TC-04, 05, 09, 10, 237 ve 248, yalnız testte kullanılan `tests/support/urls.py` ile `@pytest.mark.urls` kullanır; ürün koduna yer tutucu girmez.
+    - (b) TC-12, G02'de `validate_password` ile 9 ve 10 karakterle test edilir; `create_staff` ve `reset_password` iddiaları G04'te eklenir.
+    - (c) Personelin `full_name` değeri şema değişikliği olmadan `first_name` alanında tutulur (§8.1'de uygulayıcıya bırakılan ayrıntı).
+    - (d) Yönetici view'ları yalnız `require_role(Role.ADMIN)` ile sarılır; böylece en dıştaki sarmalayıcıdaki `required_role` doğru kalır. Oturumsuz kullanıcı `redirect_to_login`'e gider (architecture §6.1).
+    - (e) Testlerde saat, `axes.attempts.now`, `axes.handlers.proxy.now` ve `django.utils.timezone.now` patch'lenerek sabitlenir. TC-08'in 14:59 ve 15:01 sınırları ayrı testlerde yazılır.

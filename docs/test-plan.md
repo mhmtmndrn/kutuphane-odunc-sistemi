@@ -93,12 +93,12 @@ Sütunlar: Görev, TC'nin yazıldığı görev (plan §4); Seviye, §2'deki sat�
 | TC-04 | FR-27 | G02 | view | Denklik sınıfı | Oturumsuz GET `/odunc/` | 302 → `/giris/?next=/odunc/` | Planlandı |
 | TC-05 | FR-27 | G02 | view | Senaryo | Doğru bilgilerle giriş, POST `/cikis/`, ardından GET `/odunc/` | Giriş başarılı; çıkıştan sonra `/giris/`e yönlendirilir | Planlandı |
 | TC-06 | FR-27, AC-27 | G02 | view | Sınır değer (iki değerli) | "ali": 4 yanlış parola, sonra doğru; ardından yine 4 yanlış ve doğru | İki giriş de başarılı (başarılı girişte sayaç sıfırlanır) | Planlandı |
-| TC-07 | FR-27, AC-27 | G02 | view | Sınır değer (iki değerli) | "ali": 5 ardışık yanlış parola, 6. denemede doğru parola | Giriş reddedilir; hesap kilitli | Planlandı |
-| TC-08 | FR-27 (ADR-0009) | G02 | view | Sınır değer (iki değerli) | Kilitli "ali", son hatalı denemeden 14 dk 59 sn ve 15 dk 01 sn sonra doğru parola | 14:59'da reddedilir; 15:01'de giriş başarılı | Planlandı |
+| TC-07 | FR-27, AC-27 | G02 | view | Sınır değer (iki değerli) | "ali": 5 ardışık yanlış parola, 6. denemede doğru parola | Giriş reddedilir: HTTP 429, giriş şablonu ve kilit mesajı (ADR-0049) | Planlandı |
+| TC-08 | FR-27 (ADR-0009, ADR-0050) | G02 | view | Sınır değer (iki değerli) | Kilitli "ali", kilidi tetikleyen 5. hatalı denemeden 14 dk 59 sn ve (ayrı testte) 15 dk 01 sn sonra doğru parola | 14:59'da 429 ile reddedilir; 15:01'de giriş başarılı | Planlandı |
 | TC-09 | FR-27, AC-27 | G02 | view | Sınır değer (iki değerli) | Oturumlu görevli; son istekten 29 dk 59 sn ve (ayrı testte) 30 dk 01 sn sonra GET `/odunc/` | 29:59'da 200; 30:01'de `/giris/`e yönlendirilir | Planlandı |
 | TC-10 | FR-27 | G02 | view | Senaryo | Oturumlu görevli 25 dk arayla 3 istek yapar (toplam 75 dk) | Üçü de 200; her istek süreyi yeniler | Planlandı |
 | TC-11 | FR-22, NFR-07 | G02 | servis | Karar tablosu | `require_role(ADMIN)` ile korunan bir servis CLERK ve ADMIN aktörle çağrılır | CLERK: `PermissionDenied`, veri değişmez; ADMIN: işlem yapılır | Planlandı |
-| TC-12 | FR-21, FR-27 (küçük karar 9) | G02 | servis | Sınır değer (iki değerli) | `create_staff` ve `reset_password` ile 9 ve 10 karakterli parola | 9: doğrulama hatası, değişiklik yok; 10: kabul | Planlandı |
+| TC-12 | FR-21, FR-27 (küçük karar 9) | G02, G04 | servis | Sınır değer (iki değerli) | 9 ve 10 karakterli parola: G02'de `validate_password` ile, G04'te `create_staff` ve `reset_password` ile (plan §11, G02 (b)) | 9: doğrulama hatası, değişiklik yok; 10: kabul | Planlandı |
 | TC-13 | SRS §7, FR-12 | G03 | birim | Sınır değer (iki değerli) | Saat 2026-11-16T20:59:59Z ve 2026-11-16T21:00:00Z iken `clock.today()` | 2026-11-16 ve 2026-11-17 | Planlandı |
 | TC-14 | NFR-12 (ADR-0016) | G03 | birim | Denklik sınıfı | Ayrıştırma: "15,00", "0,01", "150,00"; biçimlendirme: 1500, 1, 0 | 1500, 1, 15000; "15,00 TL", "0,01 TL", "0,00 TL" | Planlandı |
 | TC-15 | NFR-12 (ADR-0016) | G03 | birim | Sınır değer | Ayrıştırma: "15,005" | Reddedilir (kuruştan küçük basamak) | Planlandı |

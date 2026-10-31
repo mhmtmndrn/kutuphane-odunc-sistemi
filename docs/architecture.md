@@ -346,6 +346,8 @@ flowchart TB
 | [0025](decisions/0025-member-card-pdf.md) | Üye kartı PDF'i (FR-38) |
 | [0026](decisions/0026-shelf-copy-status-marking.md)–[0047](decisions/0047-consent-event-ordering.md) | Faz 4 kararları; özet plan §3'te |
 | [0048](decisions/0048-cloud-sessions-implementation.md) | Uygulama aşaması bulut oturumlarıyla, özel GitHub reposundan (süreç kararı) |
+| [0049](decisions/0049-lockout-response-429.md) | Kilitli hesaba 429, giriş şablonu ve kilit mesajı |
+| [0050](decisions/0050-lockout-cooloff-not-reset.md) | Kilitliyken denemeler kilit süresini uzatmaz |
 
 ## 10. Riskler ve teknik borç
 
