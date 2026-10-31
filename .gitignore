@@ -1,1 +1,12 @@
 CLAUDE.local.md
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+staticfiles/
+var/
+__pycache__/
+.pytest_cache/
+.coverage
+
+# Local Claude Code agent worktrees
+.claude/worktrees/

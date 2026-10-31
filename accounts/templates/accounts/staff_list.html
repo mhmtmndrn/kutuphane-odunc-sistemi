@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Personel · Kütüphane{% endblock %}
+
+{% block content %}
+  <h1>Personel</h1>
+  <p><a href="{% url 'accounts:staff-create' %}">Yeni personel hesabı</a></p>
+  <table>
+    <thead><tr><th>Kullanıcı adı</th><th>Ad soyad</th><th>Rol</th><th>Durum</th></tr></thead>
+    <tbody>
+      {% for person in staff %}
+        <tr>
+          <td><a href="{% url 'accounts:staff-detail' person.pk %}">{{ person.username }}</a></td>
+          <td>{{ person.first_name }}</td>
+          <td>{{ person.get_role_display }}</td>
+          <td>{% if person.is_active %}Aktif{% else %}Pasif{% endif %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

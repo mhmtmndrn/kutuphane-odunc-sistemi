@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Ana sayfa · Kütüphane{% endblock %}
+
+{% block content %}
+  <h1>Ana sayfa</h1>
+  {% if panel %}
+    <section class="admin-panel">
+      {% for warning in panel.warnings %}
+        <p class="warning">{{ warning }}</p>
+      {% endfor %}
+      <p>Son dışa aktarma:
+        {% if panel.last_export_on %}{{ panel.last_export_on|date:"d.m.Y" }}{% else %}yok{% endif %}
+      </p>
+    </section>
+  {% endif %}
+  <nav class="modules">
+    <h2>Modüller</h2>
+    <ul>
+      {% if user.role == "ADMIN" %}
+        <li><a href="{% url 'administration:settings' %}">Ayarlar</a></li>
+        <li><a href="{% url 'administration:closed-days' %}">Kapalı günler</a></li>
+        <li><a href="{% url 'administration:audit' %}">Denetim kaydı</a></li>
+        <li><a href="{% url 'accounts:staff-list' %}">Personel</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+{% endblock %}

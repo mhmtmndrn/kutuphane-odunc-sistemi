@@ -2,7 +2,7 @@
 
 - **Tarih:** 2026-10-31
 - **İz:** Tam
-- **Durum:** Faz 4 tamamlandı, onay kapısı geçildi. Kararlar alındı (ADR-0026…0048; küçük karar listesi onaylandı, 2026-10-31). Görevler, risk kaydı, test planı (319 TC), izlenebilirlik ve tutarlılık kontrolü yazıldı; inşa kontrolü ayıklandı (§8.1). Plan, test planı ve KL-1…KL-46 onaylandı (2026-10-31); faz 5 temiz oturumda başlayacak.
+- **Durum:** Faz 4 tamamlandı, onay kapısı geçildi. Kararlar alındı (ADR-0026…0048; küçük karar listesi onaylandı, 2026-10-31). Görevler, risk kaydı, test planı (319 TC), izlenebilirlik ve tutarlılık kontrolü yazıldı; inşa kontrolü ayıklandı (§8.1). Plan, test planı ve KL-1…KL-46 onaylandı (2026-10-31); faz 5 başladı: G01 tamam (2026-10-31); G02 kararları ADR-0049, ADR-0050 ve §11'de.
 
 ## 1. Süreç uyarlaması
 
@@ -25,6 +25,7 @@
 | docs/data-design.md | Faz 3'te oluşturuldu (2026-10-31) |
 | docs/decisions/0001…0025 | Faz 3'te yazıldı (2026-10-31) |
 | docs/decisions/0026…0048 | Faz 4'te yazıldı (2026-10-31); 0048 bir süreç kararıdır |
+| docs/decisions/0049, 0050 | Faz 5'te, G02'den önce yazıldı (2026-10-31): kilit cevabı ve kilit süresi |
 | docs/architecture.md, docs/data-design.md | Faz 4 tutarlılık düzeltmeleri (§8) |
 | docs/test-plan.md | Faz 4'te oluşturuldu (2026-10-31): 319 TC, test taslağından revize edildi |
 | docs/data-design.md | I6'ya ADR-0018 istisnası yazıldı (§8 T-02) |
@@ -171,6 +172,9 @@ Kapsam içi FR sayısı 31 (23 Must, 8 Should), Won't sayısı 7.
 - [ADR-0046](../decisions/0046-checkout-member-input-classification.md): Ödünç ekranında üye alanı biçime göre yorumlanır (bulgu 12).
 - [ADR-0047](../decisions/0047-consent-event-ordering.md): Rıza olaylarının sıra kuralı (bulgu 13).
 - [ADR-0048](../decisions/0048-cloud-sessions-implementation.md): Uygulama, özel GitHub reposundan bulut oturumlarıyla (süreç kararı).
+- [ADR-0049](../decisions/0049-lockout-response-429.md): Kilitli hesaba giriş denemesi 429, giriş şablonu ve kilit mesajıyla cevaplanır (faz 5, G02).
+- [ADR-0050](../decisions/0050-lockout-cooloff-not-reset.md): Kilitliyken yapılan denemeler kilit süresini uzatmaz (faz 5, G02).
+- [ADR-0051](../decisions/0051-axes-w006-silenced.md): django-axes `axes.W006` uyarısı gerekçe yorumuyla susturulur; kilit yalnız kullanıcı adına göre kalır (faz 5, PR #1 incelemesi).
 
 **Faz 4 küçük kararları (onaylandı 2026-10-31):**
 
@@ -287,7 +291,7 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
     - Telefon araması `phone_digits LIKE %value%` (KL-10) ile en fazla 50 sonuç döndürür. Tek sonuç olsa da liste gösterilir; üye otomatik açılmaz.
 36. **Rıza** (ADR-0047): Mesajlar ADR'dedir. Rıza olayları için ayrı denetim kaydı yazılmaz, çünkü olayların kendisi izdir.
 37. **Yeni FR öncelikleri:** FR-40 Should, FR-41 Must, FR-42 Should. Kapsam içi FR sayısı 35 olur (24 Must, 11 Should); Won't sayısı 7.
-38. **Bulut oturumu görev şablonu** (ADR-0048): Her oturumun açılış istemi şunları içerir: dal adı, plan görev bölümünün yolu, TC listesi, doğrulama komutu ve "kritik karar çıkarsa dur ve soruyu raporla" kuralı. Oturum başında `python --version` (3.11) kontrol edilir (R-15). Commit kuralı ADR-0048'dedir (kullanıcı kararı): görev başına commit ve kendi dalına push.
+38. **Bulut oturumu görev şablonu** (ADR-0048): Her oturumun açılış istemi şunları içerir: dal adı, plan görev bölümünün yolu, TC listesi, doğrulama komutu ve "kritik karar çıkarsa dur ve soruyu raporla" kuralı. Oturum başında `python --version` (3.11) kontrol edilir (R-15). Commit kuralı ADR-0048'dedir (kullanıcı kararı): görev başına commit ve kendi dalına push. **Faz 5 başında verilen kullanıcı kararları (2026-10-31):** Oturumları kullanıcı kendisi açar (`claude --cloud` ya da claude.ai/code); Claude açılış istemini hazırlar. *(İlk karar, oturumları Claude'un Agent aracının remote moduyla başlatmasıydı. Bu mod bulutta değil yerelde çalıştığı için kullanıcı kararıyla değişti; §11.)* Her görev grubu için bir oturum açılır ve o oturum grubun görevlerini sırayla yapar. Oturum, grubun sonunda `main`'e PR açar. Birleştirme kullanıcı onayıyla yapılır. Repo `mhmtmndrn/kutuphane-odunc-sistemi` (özel); uzak tarafa yalnız `main` gönderildi.
 39. **Görev sırası** (§8 T-01): `circulation/models.py` (`Loan`) ve `circulation/migrations/0001_initial.py` G10'da oluşturulur. Migration, kısmi benzersiz indeksi, data-design §4'teki indeksleri ve `copy_found_on` sütununu CHECK kısıtıyla içerir (ADR-0037). Uygulama sırası G10 → G09 → G11 olur; G11 servisleri, view'ları ve şablonları ekler. Gerekçe: G09'daki `LedgerEntry.loan` yabancı anahtarı ve billing migration'ı circulation migration'ına bağımlıdır. *Alternatif:* G09'u G11'den sonraya almak; G11 `post_charge` ve `member_balance` kullandığı için bu mümkün değil.
 40. **ISBN-10'da küçük "x":** `parse_isbn` son hanedeki "x"i "X" olarak kabul eder (TC-253).
 41. **Geri yüklenecek dosya yoksa:** `restore_backup` "Dosya bulunamadı: <yol>" mesajıyla çıkış 1 verir. Çıkış 2 yalnız argparse kullanım hatalarıdır (TC-301).
@@ -379,11 +383,13 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - `pyproject.toml`: `[tool.pytest.ini_options]` altında `DJANGO_SETTINGS_MODULE = "library_site.settings.test"`, `markers = ["slow: PDF ve barkod çözme testleri"]`. `[tool.coverage.run]` altında `branch = true`, `omit = ["*/migrations/*", "*/tests/*"]`.
 - **Testler:** TC-01…TC-03, TC-224, TC-235…TC-236 (6 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest tests/test_prod_settings.py -q` → hepsi geçer. `python manage.py check --deploy --settings=library_site.settings.prod` (gerekli ortam değişkenleri geçici değerlerle verilir) → "System check identified no issues (2 silenced)."
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, yerel Windows 11, Python 3.11.9): `python -m pytest tests/test_prod_settings.py -q` → 19 passed; `python manage.py check --deploy --settings=library_site.settings.prod` (geçici ortam değişkenleriyle) → "System check identified no issues (2 silenced)."; `python -m pytest -q` → 19 passed; TC-224: `coverage report --include="*/domain.py" --fail-under=90` → "No data to report." (henüz `domain.py` yok; G03'ten itibaren ölçülür).
+  - G02'de axes.W006 susturuldu; güncel sonuç (3 silenced), bkz. ADR-0051.
 
 ### Görev G02: Personel modeli, giriş, oturum, kilit ve rol denetimi
 
-- **Gereksinimler:** FR-27, FR-22, NFR-06; AC-27; ADR-0009; küçük kararlar 1 ve 9 (faz 1 ve faz 3).
+- **Gereksinimler:** FR-27, FR-22, NFR-06; AC-27; ADR-0009, ADR-0049, ADR-0050; küçük kararlar 1 ve 9 (faz 1 ve faz 3); G02 küçük kararları (a)–(e) (§11).
 - **Dosyalar:** oluştur `accounts/{__init__,apps,models,permissions,views,urls,forms}.py`, `accounts/migrations/0001_initial.py`, `templates/registration/login.html`, `accounts/tests/{test_domain,test_services,test_views}.py`; değiştir `library_site/settings/base.py`, `library_site/urls.py`.
 - **Arayüzler:**
   - sunar `accounts.models.Role(TextChoices)`: `ADMIN = "ADMIN", "Yönetici"`, `CLERK = "CLERK", "Görevli"`.
@@ -395,12 +401,13 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - sunar `accounts.permissions.staff_view(view)`. `login_required` ile `require_role(Role.CLERK)` birleşimidir.
 - **Davranış:**
   - `SESSION_COOKIE_AGE = 1800`, `SESSION_SAVE_EVERY_REQUEST = True`.
-  - axes ayarları: `AXES_FAILURE_LIMIT = 5`, `AXES_COOLOFF_TIME = timedelta(minutes=15)`, `AXES_LOCKOUT_PARAMETERS = ["username"]`, `AXES_RESET_ON_SUCCESS = True`. `AUTHENTICATION_BACKENDS` listesi `["axes.backends.AxesStandaloneBackend", "django.contrib.auth.backends.ModelBackend"]` olur, `AxesMiddleware` eklenir. Kilitli hesap giriş ekranında "Hesap geçici olarak kilitlendi. 15 dakika sonra yeniden deneyin." mesajını görür.
+  - axes ayarları: `AXES_FAILURE_LIMIT = 5`, `AXES_COOLOFF_TIME = timedelta(minutes=15)`, `AXES_LOCKOUT_PARAMETERS = ["username"]`, `AXES_RESET_ON_SUCCESS = True`, `AXES_RESET_COOL_OFF_ON_FAILURE_DURING_LOCKOUT = False` (ADR-0050). `AUTHENTICATION_BACKENDS` listesi `["axes.backends.AxesStandaloneBackend", "django.contrib.auth.backends.ModelBackend"]` olur, `AxesMiddleware` eklenir. Kilitli hesap giriş ekranında "Hesap geçici olarak kilitlendi. 15 dakika sonra yeniden deneyin." mesajını görür. Cevap HTTP 429'dur; `AXES_LOCKOUT_CALLABLE` giriş şablonunu formla birlikte çizer (ADR-0049).
   - Parola doğrulayıcıları KL-9'a göre ayarlanır.
   - Giriş için Django `LoginView` kullanılır, şablon Türkçedir. Çıkış yalnız POST ile yapılır.
 - **Testler:** TC-04…TC-12 (9 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest accounts -q` → hepsi geçer.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, bulut oturumu, Linux, Python 3.11): `python -m pytest accounts -q` → 35 passed; `python -m pytest -q` → 54 passed; `coverage report --include="accounts/permissions.py"` → %100 (dal); `makemigrations --check --dry-run` → "No changes detected"; `check --deploy --settings=library_site.settings.prod` → "System check identified no issues (3 silenced)." (axes.W006 eklendi, §11). TC-12'nin `create_staff` ve `reset_password` kısmı G04'te.
 
 ### Görev G03: Yönetim çekirdeği: saat, para, ayarlar, kapalı günler, denetim kaydı, görev kaydı, ana sayfa
 
@@ -433,7 +440,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Ana sayfa bütün personele modül bağlantılarını gösterir. Yöneticiye ek olarak son dışa aktarma tarihini ve varsa uyarıları gösterir: önce yedek uyarısı (FR-42), sonra dışa aktarma uyarısı (KL-33).
 - **Testler:** TC-13…TC-26, TC-238…TC-247 (24 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest administration -q` → hepsi geçer.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, bulut oturumu, Linux, Python 3.11): `python -m pytest administration -q` → 118 passed; `python -m pytest -q` → 172 passed; `coverage report --include="*/domain.py" --fail-under=90` → %100 (dal); `makemigrations --check --dry-run` → "No changes detected".
 
 ### Görev G04: Personel yönetimi ve yetki testi (NFR-07)
 
@@ -452,11 +460,12 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - KL-45: Pasifleştirilen personelin açık oturumu sonraki istekte kapanır; ek kod yazılmaz, TC-237 davranışı sabitler.
   - `tests/test_authorization.py` iki şeyi doğrular:
     - URL çözücüdeki bütün desenler gezilir ve `required_role == ADMIN` olan her view'a görevli oturumuyla GET ve POST istekleri gönderilir. Desen argümanları `1` ya da `"00000001"` ile doldurulur. Her istek için 403 beklenir.
-    - §4.1'deki yönetici yollarının listesi, testteki sabit bir listeyle karşılaştırılır. Böylece yanlışlıkla işaretsiz kalan bir yönetici view'ı da yakalanır.
-  - Bu test sonraki görevlerin URL'lerini de kapsar. Her görev kendi yönetici yollarını sabit listeye ekler.
+    - §4.1'deki 19 yönetici yolunun hepsi testteki sabit listededir. `Role.ADMIN` ile korunan yollar, bu listenin bugün var olan yollarla kesişimine eşit olmalıdır. Böylece yanlışlıkla işaretsiz kalan bir yönetici view'ı da yakalanır.
+  - Bu test sonraki görevlerin URL'lerini de kapsar: bir görev §4.1'deki yönetici yolunu eklediği anda yol kontrol edilir ve ADMIN koruması yoksa test düşer; listeye bir şey eklemek gerekmez. Görevliye açık kalması gereken `/parola/`, `/nushalar/<barcode>/bulundu/` ve `/uyeler/<no>/aktif/` de var oldukları anda görevli rolüyle kontrol edilir.
 - **Testler:** TC-27…TC-33, TC-237, TC-248…TC-252 (13 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest accounts tests/test_authorization.py -q` → hepsi geçer.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, bulut oturumu, Linux, Python 3.11): `python -m pytest accounts tests/test_authorization.py -q` → 79 passed; `python -m pytest -q` → 216 passed; `coverage report --include="accounts/permissions.py,accounts/middleware.py" --fail-under=100` → %100 (dal); `coverage report --include="*/domain.py" --fail-under=90` → %100; `makemigrations --check --dry-run` → "No changes detected"; `check --deploy` → "no issues (3 silenced)".
 
 ### Görev G05: Katalog domain'i: Türkçe normalizasyon ve ISBN
 
@@ -962,3 +971,151 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
 ## 11. Sapmalar
 
 - **2026-10-31, commit bölümü:** Faz 2 commit'i yalnız iki araştırma raporunu içeriyor; mesajındaki "and SRS updates" kısmı çıkarıldı. Sebebi, SRS, plan ve STATUS'taki faz 2 ve faz 3 değişikliklerinin aynı satırlarda iç içe olması. Bunları ayırmak, hiç var olmamış bir ara sürümü geçmişe yazmak demekti. Bu yüzden üç dosya faz 3 commit'ine alındı.
+- **2026-10-31, G01 — `AUTH_USER_MODEL` G02'de:** G01 `base.py`'de `AUTH_USER_MODEL = "accounts.StaffUser"` istiyor, ama `accounts` app'i G02'de oluşuyor; kurulu olmayan modele işaret eden ayarla Django açılmıyor. Ayar G02'de, modelle aynı commit'te eklenir. G01'deki TC-03 `get_user_model()` ile yazıldı; G02'den sonra `StaffUser` üzerinde de geçmelidir. Son durum plandakiyle aynı olur.
+- **2026-10-31, G01 — ortam değişkenlerinin yeri:** `base.py`, bütün ortamların ihtiyaç duyduğu değişkenleri `env()` ile okur: `LIBRARY_SECRET_KEY`, `LIBRARY_DB_PATH`, `LIBRARY_BACKUP_DIR`, `LIBRARY_EXPORT_DIR`, `LIBRARY_EXPORT_PASSPHRASE_FILE`, `LIBRARY_SCHEDULER_ENABLED` (varsayılan "0"). `prod.py` geri kalanları okur (`LIBRARY_ALLOWED_HOSTS`, `LIBRARY_STATIC_ROOT`, `LIBRARY_EMAIL_*`). `dev.py` ve `test.py`, `base`'i import etmeden önce bu değişkenlere `os.environ.setdefault` ile varsayılan verir ("varsayılan değerlerle env"); geliştirme verisi depoda yok sayılan `var/` klasörüne yazılır. `LIBRARY_ALLOWED_HOSTS` virgülle ayrılmış listedir. `LIBRARY_EMAIL_PORT` tam sayı değilse "Geçersiz ortam değişkeni: …" ile `ImproperlyConfigured` verilir.
+- **2026-10-31, G01 — `.gitignore`:** Plandaki `*.sqlite3` ve `staticfiles/` satırlarına ek olarak `*.sqlite3-wal`, `*.sqlite3-shm` (WAL dosyaları), `var/`, `__pycache__/`, `.pytest_cache/` ve `.coverage` eklendi; derleme ve test artıkları depoya girmesin diye.
+- **2026-10-31, G01 — varsayılan ayar modülleri:** `manage.py` varsayılan olarak `library_site.settings.dev`, `wsgi.py` ise `library_site.settings.prod` kullanır (waitress yalnız üretimde çalışır); ikisi de `DJANGO_SETTINGS_MODULE` verilmişse ona uyar.
+- **2026-10-31, G01 — çalışma ortamı:** G01 bulutta değil, kullanıcının yerel Windows 11 makinesinde Python 3.11.9 sanal ortamıyla uygulandı. Windows'a özgü TC-235 (tzdata) doğrudan Windows'ta koştu. pytest'in varsayılan geçici klasörüne erişim kum havuzunda engellendiği için testler `PYTEST_DEBUG_TEMPROOT` yalnız kabukta ayarlanarak koşturuldu; depoya bir şey eklenmedi.
+- **2026-10-31, faz 5 — bulut oturumu açma yolu (KL-38):** Agent aracının `isolation: "remote"` modu bulut oturumu açmadı; yerel bir worktree'de (`.claude/worktrees/agent-a4c3b8e184eb5859a`) çalıştı ve kullanıcının 5 saatlik plan kullanımından harcadı. G01 bu yüzden yerelde yapıldı. Kullanıcı kararı: bulut oturumlarını kullanıcı kendisi açar (`claude --cloud` ya da claude.ai/code), Claude açılış istemini hazırlar. KL-38 buna göre düzeltildi. G02–G04 bulut oturumunda yapılacak.
+- **2026-10-31, G02 — uygulamadan önce verilen kararlar:** Yerel agent'ın G02 hazırlığında bulduğu açık noktalar kullanıcıya soruldu (bulut oturumu soru soramaz).
+  - Kritik: ADR-0049 (kilitli hesaba 429, giriş şablonu ve mesaj) ve ADR-0050 (`AXES_RESET_COOL_OFF_ON_FAILURE_DURING_LOCKOUT = False`).
+  - Küçük kararlar (onaylandı 2026-10-31):
+    - (a) `/odunc/` G11'e kadar yok. TC-04, 05, 09, 10, 237 ve 248, yalnız testte kullanılan `tests/support/urls.py` ile `@pytest.mark.urls` kullanır; ürün koduna yer tutucu girmez.
+    - (b) TC-12, G02'de `validate_password` ile 9 ve 10 karakterle test edilir; `create_staff` ve `reset_password` iddiaları G04'te eklenir.
+    - (c) Personelin `full_name` değeri şema değişikliği olmadan `first_name` alanında tutulur (§8.1'de uygulayıcıya bırakılan ayrıntı).
+    - (d) Yönetici view'ları yalnız `require_role(Role.ADMIN)` ile sarılır; böylece en dıştaki sarmalayıcıdaki `required_role` doğru kalır. Oturumsuz kullanıcı `redirect_to_login`'e gider (architecture §6.1).
+    - (e) Testlerde saat, `axes.attempts.now`, `axes.handlers.proxy.now` ve `django.utils.timezone.now` patch'lenerek sabitlenir. TC-08'in 14:59 ve 15:01 sınırları ayrı testlerde yazılır.
+- **2026-10-31, G02 — uygulama ayrıntıları (bulut oturumu):**
+  - `accounts/tests/test_domain.py` yazılmadı: `accounts`'ta saf kural (`domain.py`) yok. Testler `test_services.py` ve `test_views.py`'de.
+  - Test yardımcıları: `tests/support/clock.py` (`FrozenClock`, G02 (e)'deki üç `now`'ı patch'ler), `tests/support/factories.py` (`make_staff`), `tests/support/urls.py` (G02 (a)). django-axes istek nesnesi olmadan `authenticate` çağrısını reddettiği için testlerde `client.login` yerine `client.force_login` kullanılır.
+  - `staff_view` tek sarmalayıcıdır: `require_role(Role.CLERK)`. `require_role` oturumsuz isteği zaten `redirect_to_login`'e gönderdiği için `login_required` ile aynı sonucu verir ve `required_role` en dıştaki nesnede kalır.
+  - `StaffUser.role` varsayılanı `CLERK`'tir (en az yetki); `createsuperuser` `ADMIN` atar. Tablo adları data-design'daki gibidir (`db_table = "staff_user"`).
+  - django-axes `axes.W006` uyarısı ("AXES_LOCKOUT_PARAMETERS 'ip_address' içermiyor") gerekçe yorumuyla `base.py`'de `SILENCED_SYSTEM_CHECKS` listesine alındı; `prod.py` bu listeyi genişletir. Gerekçe ADR-0009'daki kullanıcı adına göre kilit: Caddy arkasında bütün istekler 127.0.0.1'den gelir, IP'ye göre kilit bütün personeli birden kilitler. G01'deki `check --deploy` çıktısı bu yüzden "(3 silenced)" oldu. Karar [ADR-0051](../decisions/0051-axes-w006-silenced.md) ile kayda geçti (kullanıcı onayı 2026-10-31).
+  - Kilitli hesabın 5. hatalı denemesi de 429 alır (axes kilidi bu denemede koyar); TC-07 6. denemeyi doğrular.
+- **2026-10-31, G03 — uygulama ayrıntıları (bulut oturumu):**
+  - Plandaki arayüzlere ek servisler: `weekly_closed() -> set[int]`, `closed_date_list() -> list[ClosedDate]` (kapalı günler ekranı), `audit_events(actor)` (yönetici; denetim listesi) ve `admin_home(actor) -> AdminHome(last_export_on, warnings)` (yönetici; ana sayfa paneli). Böylece view'lar ORM'e ve `jobs` modülüne doğrudan dokunmaz.
+  - Ayar aralıkları `domain.validate_settings(values)` içindedir; servis bunu çağırır, form aynı sınırları alan düzeyinde de uygular. Bilinmeyen ayar adı `TypeError` verir (programlama hatası). Mesajlar SRS'te yoktu, uygulayıcı seçti: "Ödünç süresi 1 ile 365 gün arasında olmalı", "Ödünç limiti 1 ile 20 arasında olmalı", "Saklama süresi 1 ile 10 yıl arasında olmalı", "Günlük ceza negatif olamaz", "Ceza üst sınırı negatif olamaz", "Borç eşiği 0,00 TL'den büyük olmalı", "Kütüphane adı 1 ile 80 karakter arasında olmalı"; kapalı tarihte "Bu tarih zaten kapalı" ve "Kapalı tarih bulunamadı".
+  - `AuditAction` ve `Job` seçenekleri döngüsel import olmasın diye `administration/models.py`'de tanımlıdır; `audit.AuditAction` ve `jobs.Job` aynı sınıflardır.
+  - `record_audit`'in üye ve ödünç denetimi (küçük karar 10) `member`/`member_no`/`member_id` ile `loan`/`loan_id` anahtarlarına bakar; KL-15'teki ayrıntılar `member_no` kullanır.
+  - Denetim kaydı modeli güncellemeyi ve silmeyi reddeder (`save` ve `delete` `ValueError`). Ayar değişmezse ve haftalık kapalı günler aynıysa kayıt yazılmaz.
+  - Ana sayfadaki modül bağlantıları yalnız var olan ekranları gösterir; her görev kendi ekranının bağlantısını ekler. Denetim listesinde sayfa parametresi `?sayfa=`dır.
+  - Ayar ve kapalı gün işlemleri başarıda 302 ile aynı ekrana döner ve mesaj gösterir.
+- **2026-10-31, G04 — uygulama ayrıntıları (bulut oturumu):**
+  - Plandaki arayüzlere ek servisler: `staff_list(actor)` ve `get_staff(actor, pk)` (yönetici; view ORM'e dokunmasın diye). Bilinmeyen `pk` yetki denetiminden sonra 404 verir.
+  - `create_staff` ad soyadı, kullanıcı adı biçimini (Django `username_validator`) ve benzersizliği denetler. Mesajlar uygulayıcı seçimidir: "Ad soyad boş olamaz", "Kullanıcı adı yalnız harf, rakam ve @ . + - _ karakterlerinden oluşabilir", "Bu kullanıcı adı zaten kullanılıyor". Parola hataları Django doğrulayıcılarının Türkçe mesajlarıyla `RuleViolation` olur. `change_own_password` de doğrulayıcıları yeniden çalıştırır.
+  - Rol aynıysa `set_role`, hesap zaten pasifse `deactivate_staff` hiçbir şey yazmaz. Personeli yeniden aktifleştirme §4.1'de olmadığı için yapılmadı.
+  - Hesap oluşturma formu parolayı iki kez ister; yöneticinin parola sıfırlama formu tek alandır. `staff_form.html` hem oluşturma hem ayrıntı ekranıdır.
+  - `accounts` URL'leri `accounts` ad alanındadır (`accounts:login` vb.); `LOGIN_URL` yine `/giris/`.
+  - TC-32 URL adları yerine URL desenlerini (`personel/<int:pk>/pasif/` gibi) sabit kümeyle karşılaştırır; §4.1 ile birebir eşlenir. Küme §4.1'deki 19 yolun hepsidir; test ADMIN korumalı yolları kümenin var olan yollarla kesişimiyle karşılaştırır, böylece sonraki görevlerin yönetici yolları eklendikleri anda denetlenir (inceleme D3, kullanıcı kararı 2026-10-31). Ek test: `giris/` ve `cikis/` dışındaki her yolda `required_role` bulunmalı.
+- **2026-10-31, G02–G04 — uygulayıcının seçtiği kullanıcıya görünen metinler (inceleme D2):** SRS'te, KL'de ya da ADR'de olmayan bütün metinler aşağıdadır. Kullanıcı 2026-10-31'de PR #1 incelemesinde hepsini onayladı; metin değiştirilmedi. SRS/KL/ADR'den gelen metinler (kilit mesajı, "En az bir gün açık kalmalı", "En az bir aktif yönetici kalmalı", "Kendi hesabınızı pasifleştiremezsiniz", "Parolanız değiştirildi", yedek ve dışa aktarma uyarıları, "Yönetici"/"Görevli") ve Django'nun kendi Türkçe metinleri (giriş ve parola değiştirme formu hataları, parola doğrulayıcı mesajları) listede yoktur.
+  - "Personel girişi": `templates/registration/login.html`, sayfa başlığı.
+  - "Giriş yap": `templates/registration/login.html`, düğme.
+  - "Kullanıcı adı": `accounts/forms.py` `LoginForm` ve `StaffCreateForm` alan etiketi; `accounts/staff_list.html` sütun başlığı.
+  - "Parola": `accounts/forms.py` `LoginForm` ve `StaffCreateForm` alan etiketi; `templates/base.html` üst menü bağlantısı.
+  - "Ana sayfa": `templates/base.html` üst menü bağlantısı; `administration/home.html` sayfa başlığı.
+  - "Personel": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `accounts/staff_list.html` sayfa başlığı; `administration/audit_list.html` sütun başlığı.
+  - "Çıkış": `templates/base.html`, çıkış düğmesi.
+  - "Kütüphane": bütün şablonlarda `<title>` sonu (`… · Kütüphane`); ayarlardaki `library_name` varsayılanı ADR-0035'tendir.
+  - "Parola değiştir": `templates/registration/password_change.html`, sayfa başlığı.
+  - "Devam etmeden önce yöneticinin verdiği parolayı değiştirmeniz gerekiyor.": `templates/registration/password_change.html`, bayrak True iken uyarı.
+  - "Parola en az 10 karakter olmalı.": `templates/registration/password_change.html`, not.
+  - "Değiştir": `templates/registration/password_change.html`, düğme.
+  - "Personel bulunamadı": `accounts/views.py` `_get_staff`, 404 nedeni (yalnız `DEBUG` açıkken görünür).
+  - "Personel hesabı oluşturuldu": `accounts/views.py` `staff_create`, başarı mesajı.
+  - "Rol kaydedildi": `accounts/views.py` `staff_detail`, başarı mesajı.
+  - "Hesap pasifleştirildi": `accounts/views.py` `staff_deactivate`, başarı mesajı.
+  - "Parola sıfırlandı; ilk girişte değiştirilecek": `accounts/views.py` `staff_reset_password`, başarı mesajı.
+  - "Hesap kilidi kaldırıldı": `accounts/views.py` `staff_unlock`, başarı mesajı.
+  - "Ad soyad": `accounts/forms.py` `StaffCreateForm` alan etiketi; `accounts/staff_list.html` sütun başlığı.
+  - "Rol": `accounts/forms.py` `StaffCreateForm` ve `StaffRoleForm` alan etiketi; `accounts/staff_list.html` sütun başlığı; `accounts/staff_form.html` bölüm başlığı.
+  - "Parola (tekrar)": `accounts/forms.py` `StaffCreateForm` alan etiketi.
+  - "Parolalar aynı değil": `accounts/forms.py` `StaffCreateForm.clean`, `password2` alan hatası.
+  - "Yeni parola": `accounts/forms.py` `PasswordResetByAdminForm` alan etiketi.
+  - "Ad soyad boş olamaz": `accounts/services.py` `create_staff`, `RuleViolation`.
+  - "Kullanıcı adı yalnız harf, rakam ve @ . + - _ karakterlerinden oluşabilir": `accounts/services.py` `create_staff`, `RuleViolation`.
+  - "Bu kullanıcı adı zaten kullanılıyor": `accounts/services.py` `create_staff`, `RuleViolation`.
+  - "Yeni personel hesabı": `accounts/staff_list.html` bağlantı; `accounts/staff_form.html` sayfa başlığı.
+  - "Durum": `accounts/staff_list.html`, sütun başlığı.
+  - "Aktif": `accounts/staff_list.html` ve `accounts/staff_form.html`, hesap durumu.
+  - "Pasif": `accounts/staff_list.html` ve `accounts/staff_form.html`, hesap durumu.
+  - "Yeni personel": `accounts/staff_form.html`, oluşturma ekranının `<title>`'ı.
+  - "Personel listesi": `accounts/staff_form.html`, geri bağlantısı.
+  - "Personel ilk girişte parolasını değiştirmek zorundadır.": `accounts/staff_form.html`, oluşturma formu notu.
+  - "Oluştur": `accounts/staff_form.html`, oluşturma düğmesi.
+  - "Rolü kaydet": `accounts/staff_form.html`, düğme.
+  - "Parola sıfırla": `accounts/staff_form.html`, bölüm başlığı.
+  - "Parolayı sıfırla": `accounts/staff_form.html`, düğme.
+  - "Hesap": `accounts/staff_form.html`, bölüm başlığı.
+  - "Kilidi kaldır": `accounts/staff_form.html`, düğme.
+  - "Pasifleştir": `accounts/staff_form.html`, düğme.
+  - "Ayarlar kaydedildi": `administration/views.py` `settings_view`, başarı mesajı.
+  - "Haftalık kapalı günler kaydedildi": `administration/views.py` `closed_days`, başarı mesajı.
+  - "Kapalı tarih eklendi": `administration/views.py` `closed_date_add`, başarı mesajı.
+  - "Kapalı tarih silindi": `administration/views.py` `closed_date_remove`, başarı mesajı.
+  - "Geçerli bir tutar girin (ör. 5,00)": `administration/forms.py` `TLField`, alan hatası.
+  - "Pazartesi": `administration/forms.py` `WEEKDAYS`, haftalık kapalı gün seçeneği.
+  - "Salı": `administration/forms.py` `WEEKDAYS`, haftalık kapalı gün seçeneği.
+  - "Çarşamba": `administration/forms.py` `WEEKDAYS`, haftalık kapalı gün seçeneği.
+  - "Perşembe": `administration/forms.py` `WEEKDAYS`, haftalık kapalı gün seçeneği.
+  - "Cuma": `administration/forms.py` `WEEKDAYS`, haftalık kapalı gün seçeneği.
+  - "Cumartesi": `administration/forms.py` `WEEKDAYS`, haftalık kapalı gün seçeneği.
+  - "Pazar": `administration/forms.py` `WEEKDAYS`, haftalık kapalı gün seçeneği.
+  - "Ödünç süresi (gün)": `administration/forms.py` `SettingsForm` alan etiketi.
+  - "Aynı anda ödünç limiti": `administration/forms.py` `SettingsForm` alan etiketi.
+  - "Günlük ceza (TL)": `administration/forms.py` `SettingsForm` alan etiketi.
+  - "Ödünç başına ceza üst sınırı (TL)": `administration/forms.py` `SettingsForm` alan etiketi.
+  - "Borç eşiği (TL)": `administration/forms.py` `SettingsForm` alan etiketi.
+  - "Saklama süresi (yıl)": `administration/forms.py` `SettingsForm` alan etiketi.
+  - "Kütüphane adı": `administration/forms.py` `SettingsForm` alan etiketi.
+  - "Haftalık kapalı günler": `administration/forms.py` `WeeklyClosedForm` alan etiketi; `administration/closed_days.html` bölüm başlığı.
+  - "Tarih": `administration/forms.py` `ClosedDateForm` alan etiketi; `administration/closed_days.html` sütun başlığı.
+  - "Not": `administration/forms.py` `ClosedDateForm` alan etiketi; `administration/closed_days.html` sütun başlığı.
+  - "Ödünç süresi 1 ile 365 gün arasında olmalı": `administration/domain.py` `SETTING_BOUNDS`, `RuleViolation`.
+  - "Ödünç limiti 1 ile 20 arasında olmalı": `administration/domain.py` `SETTING_BOUNDS`, `RuleViolation`.
+  - "Günlük ceza negatif olamaz": `administration/domain.py` `SETTING_BOUNDS`, `RuleViolation`.
+  - "Ceza üst sınırı negatif olamaz": `administration/domain.py` `SETTING_BOUNDS`, `RuleViolation`.
+  - "Borç eşiği 0,00 TL'den büyük olmalı": `administration/domain.py` `SETTING_BOUNDS`, `RuleViolation`.
+  - "Saklama süresi 1 ile 10 yıl arasında olmalı": `administration/domain.py` `SETTING_BOUNDS`, `RuleViolation`.
+  - "Kütüphane adı 1 ile 80 karakter arasında olmalı": `administration/domain.py` `LIBRARY_NAME_MESSAGE`, `RuleViolation`.
+  - "Bu tarih zaten kapalı": `administration/services.py` `add_closed_date`, `RuleViolation`.
+  - "Kapalı tarih bulunamadı": `administration/services.py` `remove_closed_date`, `RuleViolation`.
+  - "Son dışa aktarma:": `administration/home.html`, yönetici paneli.
+  - "yok": `administration/home.html`, hiç dışa aktarma yoksa tarih yerine.
+  - "Modüller": `administration/home.html`, bölüm başlığı.
+  - "Ayarlar": `administration/home.html` modül bağlantısı; `administration/settings.html` sayfa başlığı.
+  - "Kapalı günler": `administration/home.html` modül bağlantısı; `administration/closed_days.html` sayfa başlığı.
+  - "Denetim kaydı": `administration/home.html` modül bağlantısı; `administration/audit_list.html` sayfa başlığı.
+  - "Kaydet": `administration/settings.html` ve `administration/closed_days.html`, düğme.
+  - "Değişiklikler yalnız sonraki ödünçlere uygulanır; mevcut ödünçlerin son tarihi ve ceza oranı değişmez.": `administration/settings.html`, not.
+  - "Kapalı tarihler": `administration/closed_days.html`, bölüm başlığı.
+  - "Ekle": `administration/closed_days.html`, düğme.
+  - "Sil": `administration/closed_days.html`, düğme.
+  - "Kapalı tarih yok.": `administration/closed_days.html`, boş liste.
+  - "Zaman": `administration/audit_list.html`, sütun başlığı.
+  - "İşlem": `administration/audit_list.html`, sütun başlığı.
+  - "Hedef": `administration/audit_list.html`, sütun başlığı.
+  - "Ayrıntılar": `administration/audit_list.html`, sütun başlığı.
+  - "Sistem": `administration/audit_list.html`, aktörsüz (zamanlanmış görev) kayıt.
+  - "Kayıt yok.": `administration/audit_list.html`, boş liste.
+  - "Önceki": `administration/audit_list.html`, sayfalama.
+  - "Sonraki": `administration/audit_list.html`, sayfalama.
+  - "Sayfa N / M": `administration/audit_list.html`, sayfalama.
+  - "Ödeme": `administration/models.py` `AuditAction` etiketi; denetim listesinde işlem adı.
+  - "Af": `administration/models.py` `AuditAction` etiketi.
+  - "Bedel": `administration/models.py` `AuditAction` etiketi.
+  - "Para iadesi": `administration/models.py` `AuditAction` etiketi.
+  - "Nüsha kayıp": `administration/models.py` `AuditAction` etiketi.
+  - "Nüsha hasarlı": `administration/models.py` `AuditAction` etiketi.
+  - "Nüsha bulundu": `administration/models.py` `AuditAction` etiketi.
+  - "Nüsha onarıldı": `administration/models.py` `AuditAction` etiketi.
+  - "Nüsha kayıttan düşüldü": `administration/models.py` `AuditAction` etiketi.
+  - "Ayar değişikliği": `administration/models.py` `AuditAction` etiketi.
+  - "Kapalı gün değişikliği": `administration/models.py` `AuditAction` etiketi.
+  - "Personel değişikliği": `administration/models.py` `AuditAction` etiketi.
+  - "Bedel iptali": `administration/models.py` `AuditAction` etiketi.
+  - "Üye yeniden aktifleştirildi": `administration/models.py` `AuditAction` etiketi.
+- **2026-10-31, inceleme küçük kararı 2 — `tl` filtresi `None` ile `TypeError` verir:** Değişiklik yapılmadı. Bütün tutar alanları `NOT NULL`'dır (data-design), bu yüzden şablona `None` gelmesi bir hatadır ve sessizce "0,00 TL" yazmak yerine görünür biçimde patlamalıdır (kullanıcı onayı 2026-10-31).
+- **2026-10-31, inceleme küçük kararı 4 — kilitli kullanıcı adı ve boş parola:** Kilitli kullanıcı adıyla boş parolalı giriş POST'u 429 değil, 200 ve "zorunlu alan" hatası alır; böyle kalır. Boş parolayla kimlik doğrulama hiç denenmez ve cevap kilit durumunu açığa vurmaz; ADR-0049 bu durumu kapsamaz (kullanıcı onayı 2026-10-31).
+- **2026-10-31, inceleme D4 — kural ihlalinde aynı ekran 200 ile:** `staff_deactivate` (`accounts/views.py`) ve `closed_date_remove` (`administration/views.py`) `RuleViolation`'da artık 302 ile yönlendirmez; personel ayrıntısı ve kapalı günler ekranını 200 ile, mesajı hata mesajı olarak göstererek yeniden çizer. Gerekçe plan §4.0'daki kural; bu iki view'da form olmadığı için mesaj form hatası yerine sayfanın mesaj alanında görünür ve sonraki istekte tekrar çıkmaz (kullanıcı kararı 2026-10-31).
+- **2026-10-31, inceleme küçük kararı 3 — yalnız boşluktan oluşan kütüphane adı:** `validate_settings` doğrudan çağrıldığında boşluklu adı kabul ediyordu (form alanı boşlukları zaten kırpıyordu). Artık boş adla aynı mesajla ("Kütüphane adı 1 ile 80 karakter arasında olmalı") reddeder; ad kaydedilirken kırpılmaz, yalnız boş sayılır (kullanıcı onayı 2026-10-31).
+- **2026-10-31, inceleme gözlemi — `deactivate_staff` son yönetici denetimi:** `accounts/services.py`'deki `user.role == Role.ADMIN and not _other_active_admins(user)` dalına bugünkü kurallarla ulaşılamaz: aktör her zaman aktif bir yöneticidir (`require_role(Role.ADMIN)`) ve kendini pasifleştirme bu denetimden önce reddedilir; bu yüzden hedef dışında en az bir aktif yönetici hep vardır. Dal, "en az bir aktif yönetici" değişmezini aktör kuralından bağımsız koruyan bir savunma olarak kalır; `accounts/services.py`'nin dal kapsamının %96 olmasının bir nedeni budur (kullanıcı kararı 2026-10-31).

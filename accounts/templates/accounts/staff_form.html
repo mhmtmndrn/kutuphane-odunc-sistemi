@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}{% if staff_user %}{{ staff_user.username }}{% else %}Yeni personel{% endif %} · Kütüphane{% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'accounts:staff-list' %}">Personel listesi</a></p>
+  {% if staff_user is None %}
+    <h1>Yeni personel hesabı</h1>
+    <form method="post" action="{% url 'accounts:staff-create' %}">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      {% for field in form %}
+        <p>
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {{ field.errors }}
+        </p>
+      {% endfor %}
+      <p class="note">Personel ilk girişte parolasını değiştirmek zorundadır.</p>
+      <p><button type="submit">Oluştur</button></p>
+    </form>
+  {% else %}
+    <h1>{{ staff_user.username }}</h1>
+    <p>{% if staff_user.first_name %}{{ staff_user.first_name }} · {% endif %}{{ staff_user.get_role_display }} ·
+      {% if staff_user.is_active %}Aktif{% else %}Pasif{% endif %}</p>
+
+    <h2>Rol</h2>
+    <form method="post" action="{% url 'accounts:staff-detail' staff_user.pk %}">
+      {% csrf_token %}
+      {{ role_form.non_field_errors }}
+      {{ role_form.role }}
+      <button type="submit">Rolü kaydet</button>
+    </form>
+
+    <h2>Parola sıfırla</h2>
+    <form method="post" action="{% url 'accounts:staff-reset-password' staff_user.pk %}">
+      {% csrf_token %}
+      {{ password_form.non_field_errors }}
+      <p>
+        <label for="{{ password_form.password.id_for_label }}">{{ password_form.password.label }}</label>
+        {{ password_form.password }}
+        {{ password_form.password.errors }}
+      </p>
+      <p><button type="submit">Parolayı sıfırla</button></p>
+    </form>
+
+    <h2>Hesap</h2>
+    <form class="inline-form" method="post" action="{% url 'accounts:staff-unlock' staff_user.pk %}">
+      {% csrf_token %}
+      <button type="submit">Kilidi kaldır</button>
+    </form>
+    {% if staff_user.is_active and staff_user.pk != user.pk %}
+      <form class="inline-form" method="post" action="{% url 'accounts:staff-deactivate' staff_user.pk %}">
+        {% csrf_token %}
+        <button type="submit">Pasifleştir</button>
+      </form>
+    {% endif %}
+  {% endif %}
+{% endblock %}

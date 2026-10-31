@@ -1,0 +1,37 @@
+{% load static %}<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Kütüphane{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+  <header class="site-header">
+    {% block header %}
+      {% if user.is_authenticated %}
+        <nav>
+          <a href="{% url 'administration:home' %}">Ana sayfa</a>
+          {% if user.role == "ADMIN" %}<a href="{% url 'accounts:staff-list' %}">Personel</a>{% endif %}
+        </nav>
+        <span class="user">{{ user.get_username }}</span>
+        <a href="{% url 'accounts:password-change' %}">Parola</a>
+        <form class="inline-form" method="post" action="{% url 'accounts:logout' %}">
+          {% csrf_token %}
+          <button type="submit">Çıkış</button>
+        </form>
+      {% endif %}
+    {% endblock %}
+  </header>
+  <main class="content">
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li class="message{% if message.tags %} message-{{ message.tags }}{% endif %}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

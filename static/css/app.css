@@ -1,0 +1,108 @@
+/* Base styles for the staff interface (NFR-09: screens >= 1366 px). */
+
+:root {
+  --text: #1f2328;
+  --muted: #59636e;
+  --border: #d1d9e0;
+  --accent: #0b5cad;
+  --error: #b42318;
+  --warning-bg: #fff4ce;
+  --success-bg: #e6f4ea;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+  background: #ffffff;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.site-header nav a {
+  margin-right: 1rem;
+}
+
+.content {
+  max-width: 1280px;
+  padding: 1.5rem;
+}
+
+a {
+  color: var(--accent);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+form p {
+  margin: 0 0 0.75rem;
+}
+
+label {
+  display: inline-block;
+  min-width: 12rem;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+button {
+  padding: 0.35rem 0.9rem;
+  cursor: pointer;
+}
+
+.messages {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.message,
+.warning {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+}
+
+.message-success {
+  background: var(--success-bg);
+}
+
+.message-error,
+.errorlist {
+  color: var(--error);
+}
+
+.warning {
+  background: var(--warning-bg);
+}
+
+.inline-form {
+  display: inline;
+}

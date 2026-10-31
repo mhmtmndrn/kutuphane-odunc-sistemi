@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Giriş · Kütüphane{% endblock %}
+
+{% block content %}
+  <h1>Personel girişi</h1>
+  <form method="post" action="{% url 'accounts:login' %}">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <ul class="errorlist nonfield">
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    <p>
+      <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+      {{ form.username }}
+      {{ form.username.errors }}
+    </p>
+    <p>
+      <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+      {{ form.password }}
+      {{ form.password.errors }}
+    </p>
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <p><button type="submit">Giriş yap</button></p>
+  </form>
+{% endblock %}

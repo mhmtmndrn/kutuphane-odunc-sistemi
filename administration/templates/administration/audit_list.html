@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load audit %}
+
+{% block title %}Denetim kaydı · Kütüphane{% endblock %}
+
+{% block content %}
+  <h1>Denetim kaydı</h1>
+  <table>
+    <thead>
+      <tr><th>Zaman</th><th>Personel</th><th>İşlem</th><th>Hedef</th><th>Ayrıntılar</th></tr>
+    </thead>
+    <tbody>
+      {% for event in page.object_list %}
+        <tr>
+          <td>{{ event.occurred_at|date:"d.m.Y H:i:s" }}</td>
+          <td>{% if event.actor %}{{ event.actor.username }}{% else %}Sistem{% endif %}</td>
+          <td>{{ event.get_action_display }}</td>
+          <td>{{ event.target_type }} #{{ event.target_id }}</td>
+          <td><code>{{ event.details|details_text }}</code></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">Kayıt yok.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if page.has_other_pages %}
+    <p class="pagination">
+      {% if page.has_previous %}<a href="?sayfa={{ page.previous_page_number }}">Önceki</a>{% endif %}
+      Sayfa {{ page.number }} / {{ page.paginator.num_pages }}
+      {% if page.has_next %}<a href="?sayfa={{ page.next_page_number }}">Sonraki</a>{% endif %}
+    </p>
+  {% endif %}
+{% endblock %}

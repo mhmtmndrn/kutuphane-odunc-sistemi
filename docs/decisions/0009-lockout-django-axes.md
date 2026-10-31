@@ -2,6 +2,7 @@
 
 - **Durum:** Kabul edildi (2026-10-31)
 - **Kaynak:** Faz 3, 3. tur. Kullanıcı soru penceresinden seçti.
+- **Ek kararlar:** ADR-0049 (kilitli hesaba cevap), ADR-0050 (kilit süresi uzamaz), ADR-0051 (`axes.W006` susturulur).
 
 ## Bağlam
 
