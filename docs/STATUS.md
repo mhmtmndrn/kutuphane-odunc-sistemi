@@ -1,26 +1,28 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-10-31 (faz 5, 2. oturum)
-- **Aşama:** eng-process **faz 5**, grup `feature/foundation` (G01–G04).
-  - **G01 tamam:** `69a7b33 feat: add project skeleton and settings (G01)`, `origin/feature/foundation`'da. Plandaki kutu kanıtıyla işaretli; 19 test geçti; `check --deploy` sonucu "no issues (2 silenced)".
-  - **G02:** test ve kod yok. Uygulamadan önce gereken kararlar alındı: ADR-0049, ADR-0050 ve küçük kararlar (a)–(e) (plan §11).
-  - **G03 ve G04:** başlanmadı.
-  - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G01 sapmaları, remote-mod sapması ve G02 kararları §11'de.
+- **Güncelleme:** 2026-10-31 (faz 5, G02–G04 bulut oturumu)
+- **Aşama:** eng-process **faz 5**, grup `feature/foundation` (G01–G04) **tamam**; `main`'e birleştirme kullanıcı onayı bekliyor.
+  - **G01:** `69a7b33` (yerel Windows).
+  - **G02:** `2af6d70`: personel modeli, giriş, oturum süresi, django-axes kilidi (ADR-0049, ADR-0050), `require_role`.
+  - **G03:** `91cbb1c`: saat, para, ayarlar, kapalı günler, denetim kaydı, görev kaydı, yönetici ana sayfası.
+  - **G04:** `b2047af`: personel yönetimi, zorunlu parola değişikliği, NFR-07 yetki taraması (`tests/test_authorization.py`). Ardından `4ddac8e` küçük şablon düzeltmesi.
+  - Sonuç (bulut, Linux, Python 3.11): `python -m pytest -q` → 216 passed; `domain.py` dal kapsamı %100; `accounts/permissions.py` ve `accounts/middleware.py` %100; `check --deploy` → "no issues (3 silenced)". Yerel Windows koşusu henüz yapılmadı (R-15).
+  - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G02–G04 kutuları kanıtıyla işaretli; uygulama ayrıntıları ve sapmalar §11'de. Test planında 46 TC "Geçti".
 - **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`c8a7a0b`) ve `feature/foundation`.
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
 - **Bulut oturumu açma yolu:** Bulut oturumlarını kullanıcı kendisi açar, Claude açılış istemini hazırlar (KL-38, plan §11). Agent aracının `isolation: "remote"` modu kullanılmaz, çünkü yerelde çalışıyor.
   - **Tarayıcı (önerilen):** claude.ai/code. İlk seferde GitHub bağlanır ve Claude GitHub App özel repoya kurulur. Repo `mhmtmndrn/kutuphane-odunc-sistemi`, dal `feature/foundation`, ortam **Default** (Trusted ağ; pip için PyPI gerekir) seçilir; istem kutuya yapıştırılıp gönderilir.
   - **Terminal:** depo klasöründe, `feature/foundation` checkout'luyken `claude --cloud "<istem>"`. Oturum GitHub'daki dalı klonlar; yerel commit'ler önce push edilmeli. Çok satırlı istem PowerShell'de argüman olarak zahmetli olduğu için tarayıcı yolu önerilir.
   - Kaynak: https://code.claude.com/docs/en/claude-code-on-the-web (2026-10-31 okundu). Dokümana göre bulut oturumu soru sorup cevap bekleyebiliyor; ADR-0048'deki "soru soramaz" varsayımı fazla katı olabilir. İstem yine de "dur ve raporla" kuralını taşıyor. Doküman bulut oturumlarının plan kullanım limitinden düştüğünü söylüyor; 100 $ kredinin buna etkisi teyit edilmedi.
-- **Hazır istem (G02–G04):** `C:\Users\MEHMET~1\AppData\Local\Temp\claude\C--Users-Mehmet-Emin-AppData-Local-Temp-ai-config-evals-at-02-manual\3b64b7c5-70eb-4568-b8f4-ee400daa5eb9\scratchpad\cloud-prompt-foundation-G02-G04.md`. Depoda değil, 2. oturumun scratchpad'inde; silinmişse plan §4.0, G02–G04, §11 ve ADR-0049/0050'den yeniden yazılır.
 
 ## Sıradaki adım
 
 `eng-process` faz 5'e devam et:
 
-1. **G02–G04 bulut oturumu:** Kullanıcı yukarıdaki istemle `feature/foundation` için bulut oturumunu açar (2. oturum sonunda henüz açılmamıştı). Açıldıysa oturum linkini ya da PR'ı sor, ilerlemeyi oradan izle. Kullanıcı açmakta zorlanırsa yukarıdaki adımları tek tek anlat.
+1. **`feature/foundation` PR'ı:** İncele; yerelde Windows'ta `pip install -r requirements-dev.txt` (django-axes yeni tablolar getirir), `python manage.py migrate`, `python -m pytest -q` (R-15); birleştirme onayı al.
+   - Gözden geçirilecek uygulama seçimleri (plan §11, G02–G04): `axes.W006` susturuldu (IP'ye göre kilit Caddy arkasında bütün personeli kilitler); ek servisler (`admin_home`, `audit_events`, `staff_list`, `get_staff` vb.); SRS'te olmayan hata metinleri; TC-32 URL adları yerine desenleri karşılaştırıyor.
 2. **Onay bekleyen küçük temizlik:** Yerel `worktree-agent-a4c3b8e184eb5859a` dalı `main` ile aynı yerde (`c8a7a0b`), silinebilir (`git branch -d`). Boş `.claude/worktrees/agent-a4c3b8e184eb5859a` klasörü, oturum tuttuğu için silinemedi ("Permission denied"); oturum kapandıktan sonra elle silinir. Agent worktree'si git'ten kaldırıldı, `.gitignore`'a `.claude/worktrees/` eklendi (`4024c6b`).
-3. **PR gelince:** incele, yerelde Windows'ta `python -m pytest -q` (R-15), birleştirme onayı al. Sonra `feature/catalog-members` (G05–G08) istemi; o grubun açık noktaları istemden önce kullanıcıya sorulur.
+3. **Sonraki grup:** `feature/catalog-members` (G05–G08) istemi; o grubun açık noktaları istemden önce kullanıcıya sorulur. `tests/test_authorization.py`'deki `EXPECTED_ADMIN_ROUTES` her grubun yönetici yollarıyla genişletilir.
    - Genel sıra: G01 → G08, **G10 → G09 → G11** → G12 (KL-39), G13…G19.
    - Not: Kum havuzu pytest'in geçici klasörünü engellerse `PYTEST_DEBUG_TEMPROOT` yalnız kabukta scratchpad'e yönlendirilir.
 
@@ -42,6 +44,12 @@
 - **Araştırma:** [ISBN meta veri](research/2026-10-31-isbn-meta-veri-apileri.md), [demo veri seti](research/2026-10-31-demo-kitap-veri-seti.md).
 
 ## Son güncellemeden bu yana yapılanlar
+
+- **2026-10-31, faz 5, G02–G04 bulut oturumu:**
+  - Kullanıcının açtığı bulut oturumu ("devam et") hazır istem olmadan plan §4.0, G02–G04, §11 ve ADR-0049/0050'den çalıştı. Python 3.11 sanal ortamı kuruldu, sabit bağımlılıklar PyPI'den geldi.
+  - Her görev TDD ile yapıldı (önce kırmızı test), görev başına `feat:` commit'i atılıp `feature/foundation`'a push edildi (ADR-0048).
+  - Kritik karar çıkmadı; uygulayıcı seçimleri plan §11'e yazıldı.
+  - Sayfalar geliştirme sunucusunda tarayıcıyla açılıp göz kontrolünden geçti (giriş, ana sayfa, personel, kapalı günler).
 
 - **2026-10-31, faz 5, 2. oturum:**
   - G02 kararları kullanıcıya soruldu. ADR-0049 (kilitli hesaba 429, giriş şablonu ve mesaj) ve ADR-0050 (kilit süresi uzamaz) yazıldı; küçük kararlar (a)–(e) onaylandı.
@@ -65,9 +73,16 @@
 
 ## Nasıl çalıştırılır ve test edilir
 
-Henüz kod yok. Planlanan komutlar (küçük karar 11, plan §4.0, test planı §4):
+Kurulum ve geliştirme sunucusu (`dev` ayarı varsayılan; veri `var/` altında):
+
+- `pip install -r requirements-dev.txt`
+- `python manage.py migrate`, ardından `python manage.py createsuperuser` (ilk yönetici, rolü ADMIN).
+- `python manage.py runserver` → `/giris/`.
+
+Komutlar (küçük karar 11, plan §4.0, test planı §4):
 
 - Testler: `python -m pytest -q`; yavaş PDF ve barkod testleri `slow` işaretli.
+- Yetki kapsamı: `coverage report --include="accounts/permissions.py,accounts/middleware.py" --fail-under=100`.
 - NFR-13 kapsamı: `coverage run --branch -m pytest`, ardından `coverage report --include="*/domain.py" --fail-under=90`.
 - Diğer kapsam hedefleri (servisler %85, yetki %100, operations %80): test planı §4.
 - Migration kontrolü: `python manage.py makemigrations --check --dry-run`.
@@ -85,3 +100,5 @@ Yapılandırma için [architecture.md](architecture.md) §6 ve §8'e, zorunlu or
 - **SQLite ve Django:** `DecimalField` SQLite'ta REAL'e düşebilir; tutarlar kuruş (ADR-0016). Veritabanı ağ paylaşımına konmaz (WAL).
 - **Python sürümü:** Makinede 3.11.9; Django 6.x 3.12+ istediği için 5.2 LTS.
 - **Windows'ta zoneinfo:** `tzdata` gerekir (R-10, KL-18, TC-235).
+- **django-axes ve test istemcisi:** `client.login()` istek nesnesi vermediği için axes tarafından reddedilir; testlerde `client.force_login()` kullanılır. Giriş akışını sınayan testler `/giris/`e POST eder.
+- **Zaman sabitleme:** Oturum ve kilit testleri `tests/support/clock.py`'deki `FrozenClock` ile çalışır. Saat dondurulduktan sonra giriş yapılmalı; yoksa oturum gerçek saate göre yazılır ve "süresi dolmuş" görünür.
