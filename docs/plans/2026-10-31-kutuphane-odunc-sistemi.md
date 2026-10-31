@@ -384,6 +384,7 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
 - **Doğrulama:** `python -m pytest tests/test_prod_settings.py -q` → hepsi geçer. `python manage.py check --deploy --settings=library_site.settings.prod` (gerekli ortam değişkenleri geçici değerlerle verilir) → "System check identified no issues (2 silenced)."
 - [x] Tamamlandı
   - Kanıt (2026-10-31, yerel Windows 11, Python 3.11.9): `python -m pytest tests/test_prod_settings.py -q` → 19 passed; `python manage.py check --deploy --settings=library_site.settings.prod` (geçici ortam değişkenleriyle) → "System check identified no issues (2 silenced)."; `python -m pytest -q` → 19 passed; TC-224: `coverage report --include="*/domain.py" --fail-under=90` → "No data to report." (henüz `domain.py` yok; G03'ten itibaren ölçülür).
+  - G02'de axes.W006 susturuldu; güncel sonuç (3 silenced), bkz. ADR-0051.
 
 ### Görev G02: Personel modeli, giriş, oturum, kilit ve rol denetimi
 
@@ -988,7 +989,7 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - Test yardımcıları: `tests/support/clock.py` (`FrozenClock`, G02 (e)'deki üç `now`'ı patch'ler), `tests/support/factories.py` (`make_staff`), `tests/support/urls.py` (G02 (a)). django-axes istek nesnesi olmadan `authenticate` çağrısını reddettiği için testlerde `client.login` yerine `client.force_login` kullanılır.
   - `staff_view` tek sarmalayıcıdır: `require_role(Role.CLERK)`. `require_role` oturumsuz isteği zaten `redirect_to_login`'e gönderdiği için `login_required` ile aynı sonucu verir ve `required_role` en dıştaki nesnede kalır.
   - `StaffUser.role` varsayılanı `CLERK`'tir (en az yetki); `createsuperuser` `ADMIN` atar. Tablo adları data-design'daki gibidir (`db_table = "staff_user"`).
-  - django-axes `axes.W006` uyarısı ("AXES_LOCKOUT_PARAMETERS 'ip_address' içermiyor") gerekçe yorumuyla `base.py`'de `SILENCED_SYSTEM_CHECKS` listesine alındı; `prod.py` bu listeyi genişletir. Gerekçe ADR-0009'daki kullanıcı adına göre kilit: Caddy arkasında bütün istekler 127.0.0.1'den gelir, IP'ye göre kilit bütün personeli birden kilitler. G01'deki `check --deploy` çıktısı bu yüzden "(3 silenced)" oldu.
+  - django-axes `axes.W006` uyarısı ("AXES_LOCKOUT_PARAMETERS 'ip_address' içermiyor") gerekçe yorumuyla `base.py`'de `SILENCED_SYSTEM_CHECKS` listesine alındı; `prod.py` bu listeyi genişletir. Gerekçe ADR-0009'daki kullanıcı adına göre kilit: Caddy arkasında bütün istekler 127.0.0.1'den gelir, IP'ye göre kilit bütün personeli birden kilitler. G01'deki `check --deploy` çıktısı bu yüzden "(3 silenced)" oldu. Karar [ADR-0051](../decisions/0051-axes-w006-silenced.md) ile kayda geçti (kullanıcı onayı 2026-10-31).
   - Kilitli hesabın 5. hatalı denemesi de 429 alır (axes kilidi bu denemede koyar); TC-07 6. denemeyi doğrular.
 - **2026-10-31, G03 — uygulama ayrıntıları (bulut oturumu):**
   - Plandaki arayüzlere ek servisler: `weekly_closed() -> set[int]`, `closed_date_list() -> list[ClosedDate]` (kapalı günler ekranı), `audit_events(actor)` (yönetici; denetim listesi) ve `admin_home(actor) -> AdminHome(last_export_on, warnings)` (yönetici; ana sayfa paneli). Böylece view'lar ORM'e ve `jobs` modülüne doğrudan dokunmaz.
@@ -1005,3 +1006,112 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - Hesap oluşturma formu parolayı iki kez ister; yöneticinin parola sıfırlama formu tek alandır. `staff_form.html` hem oluşturma hem ayrıntı ekranıdır.
   - `accounts` URL'leri `accounts` ad alanındadır (`accounts:login` vb.); `LOGIN_URL` yine `/giris/`.
   - TC-32 URL adları yerine URL desenlerini (`personel/<int:pk>/pasif/` gibi) sabit kümeyle karşılaştırır; §4.1 ile birebir eşlenir. Küme şimdilik 19 yolun mevcut 11'idir; kalan 8 yol (saklama listesi, dört nüsha işlemi, af, para iadesi, elle iptal) kendi görevlerinde eklenir. Ek test: `giris/` ve `cikis/` dışındaki her yolda `required_role` bulunmalı.
+- **2026-10-31, G02–G04 — uygulayıcının seçtiği kullanıcıya görünen metinler (inceleme D2):** SRS'te, KL'de ya da ADR'de olmayan bütün metinler aşağıdadır. Kullanıcı 2026-10-31'de PR #1 incelemesinde hepsini onayladı; metin değiştirilmedi. SRS/KL/ADR'den gelen metinler (kilit mesajı, "En az bir gün açık kalmalı", "En az bir aktif yönetici kalmalı", "Kendi hesabınızı pasifleştiremezsiniz", "Parolanız değiştirildi", yedek ve dışa aktarma uyarıları, "Yönetici"/"Görevli") ve Django'nun kendi Türkçe metinleri (giriş ve parola değiştirme formu hataları, parola doğrulayıcı mesajları) listede yoktur.
+  - "Personel girişi": `templates/registration/login.html`, sayfa başlığı.
+  - "Giriş yap": `templates/registration/login.html`, düğme.
+  - "Kullanıcı adı": `accounts/forms.py` `LoginForm` ve `StaffCreateForm` alan etiketi; `accounts/staff_list.html` sütun başlığı.
+  - "Parola": `accounts/forms.py` `LoginForm` ve `StaffCreateForm` alan etiketi; `templates/base.html` üst menü bağlantısı.
+  - "Ana sayfa": `templates/base.html` üst menü bağlantısı; `administration/home.html` sayfa başlığı.
+  - "Personel": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `accounts/staff_list.html` sayfa başlığı; `administration/audit_list.html` sütun başlığı.
+  - "Çıkış": `templates/base.html`, çıkış düğmesi.
+  - "Kütüphane": bütün şablonlarda `<title>` sonu (`… · Kütüphane`); ayarlardaki `library_name` varsayılanı ADR-0035'tendir.
+  - "Parola değiştir": `templates/registration/password_change.html`, sayfa başlığı.
+  - "Devam etmeden önce yöneticinin verdiği parolayı değiştirmeniz gerekiyor.": `templates/registration/password_change.html`, bayrak True iken uyarı.
+  - "Parola en az 10 karakter olmalı.": `templates/registration/password_change.html`, not.
+  - "Değiştir": `templates/registration/password_change.html`, düğme.
+  - "Personel bulunamadı": `accounts/views.py` `_get_staff`, 404 nedeni (yalnız `DEBUG` açıkken görünür).
+  - "Personel hesabı oluşturuldu": `accounts/views.py` `staff_create`, başarı mesajı.
+  - "Rol kaydedildi": `accounts/views.py` `staff_detail`, başarı mesajı.
+  - "Hesap pasifleştirildi": `accounts/views.py` `staff_deactivate`, başarı mesajı.
+  - "Parola sıfırlandı; ilk girişte değiştirilecek": `accounts/views.py` `staff_reset_password`, başarı mesajı.
+  - "Hesap kilidi kaldırıldı": `accounts/views.py` `staff_unlock`, başarı mesajı.
+  - "Ad soyad": `accounts/forms.py` `StaffCreateForm` alan etiketi; `accounts/staff_list.html` sütun başlığı.
+  - "Rol": `accounts/forms.py` `StaffCreateForm` ve `StaffRoleForm` alan etiketi; `accounts/staff_list.html` sütun başlığı; `accounts/staff_form.html` bölüm başlığı.
+  - "Parola (tekrar)": `accounts/forms.py` `StaffCreateForm` alan etiketi.
+  - "Parolalar aynı değil": `accounts/forms.py` `StaffCreateForm.clean`, `password2` alan hatası.
+  - "Yeni parola": `accounts/forms.py` `PasswordResetByAdminForm` alan etiketi.
+  - "Ad soyad boş olamaz": `accounts/services.py` `create_staff`, `RuleViolation`.
+  - "Kullanıcı adı yalnız harf, rakam ve @ . + - _ karakterlerinden oluşabilir": `accounts/services.py` `create_staff`, `RuleViolation`.
+  - "Bu kullanıcı adı zaten kullanılıyor": `accounts/services.py` `create_staff`, `RuleViolation`.
+  - "Yeni personel hesabı": `accounts/staff_list.html` bağlantı; `accounts/staff_form.html` sayfa başlığı.
+  - "Durum": `accounts/staff_list.html`, sütun başlığı.
+  - "Aktif": `accounts/staff_list.html` ve `accounts/staff_form.html`, hesap durumu.
+  - "Pasif": `accounts/staff_list.html` ve `accounts/staff_form.html`, hesap durumu.
+  - "Yeni personel": `accounts/staff_form.html`, oluşturma ekranının `<title>`'ı.
+  - "Personel listesi": `accounts/staff_form.html`, geri bağlantısı.
+  - "Personel ilk girişte parolasını değiştirmek zorundadır.": `accounts/staff_form.html`, oluşturma formu notu.
+  - "Oluştur": `accounts/staff_form.html`, oluşturma düğmesi.
+  - "Rolü kaydet": `accounts/staff_form.html`, düğme.
+  - "Parola sıfırla": `accounts/staff_form.html`, bölüm başlığı.
+  - "Parolayı sıfırla": `accounts/staff_form.html`, düğme.
+  - "Hesap": `accounts/staff_form.html`, bölüm başlığı.
+  - "Kilidi kaldır": `accounts/staff_form.html`, düğme.
+  - "Pasifleştir": `accounts/staff_form.html`, düğme.
+  - "Ayarlar kaydedildi": `administration/views.py` `settings_view`, başarı mesajı.
+  - "Haftalık kapalı günler kaydedildi": `administration/views.py` `closed_days`, başarı mesajı.
+  - "Kapalı tarih eklendi": `administration/views.py` `closed_date_add`, başarı mesajı.
+  - "Kapalı tarih silindi": `administration/views.py` `closed_date_remove`, başarı mesajı.
+  - "Geçerli bir tutar girin (ör. 5,00)": `administration/forms.py` `TLField`, alan hatası.
+  - "Pazartesi": `administration/forms.py` `WEEKDAYS`, haftalık kapalı gün seçeneği.
+  - "Salı": `administration/forms.py` `WEEKDAYS`, haftalık kapalı gün seçeneği.
+  - "Çarşamba": `administration/forms.py` `WEEKDAYS`, haftalık kapalı gün seçeneği.
+  - "Perşembe": `administration/forms.py` `WEEKDAYS`, haftalık kapalı gün seçeneği.
+  - "Cuma": `administration/forms.py` `WEEKDAYS`, haftalık kapalı gün seçeneği.
+  - "Cumartesi": `administration/forms.py` `WEEKDAYS`, haftalık kapalı gün seçeneği.
+  - "Pazar": `administration/forms.py` `WEEKDAYS`, haftalık kapalı gün seçeneği.
+  - "Ödünç süresi (gün)": `administration/forms.py` `SettingsForm` alan etiketi.
+  - "Aynı anda ödünç limiti": `administration/forms.py` `SettingsForm` alan etiketi.
+  - "Günlük ceza (TL)": `administration/forms.py` `SettingsForm` alan etiketi.
+  - "Ödünç başına ceza üst sınırı (TL)": `administration/forms.py` `SettingsForm` alan etiketi.
+  - "Borç eşiği (TL)": `administration/forms.py` `SettingsForm` alan etiketi.
+  - "Saklama süresi (yıl)": `administration/forms.py` `SettingsForm` alan etiketi.
+  - "Kütüphane adı": `administration/forms.py` `SettingsForm` alan etiketi.
+  - "Haftalık kapalı günler": `administration/forms.py` `WeeklyClosedForm` alan etiketi; `administration/closed_days.html` bölüm başlığı.
+  - "Tarih": `administration/forms.py` `ClosedDateForm` alan etiketi; `administration/closed_days.html` sütun başlığı.
+  - "Not": `administration/forms.py` `ClosedDateForm` alan etiketi; `administration/closed_days.html` sütun başlığı.
+  - "Ödünç süresi 1 ile 365 gün arasında olmalı": `administration/domain.py` `SETTING_BOUNDS`, `RuleViolation`.
+  - "Ödünç limiti 1 ile 20 arasında olmalı": `administration/domain.py` `SETTING_BOUNDS`, `RuleViolation`.
+  - "Günlük ceza negatif olamaz": `administration/domain.py` `SETTING_BOUNDS`, `RuleViolation`.
+  - "Ceza üst sınırı negatif olamaz": `administration/domain.py` `SETTING_BOUNDS`, `RuleViolation`.
+  - "Borç eşiği 0,00 TL'den büyük olmalı": `administration/domain.py` `SETTING_BOUNDS`, `RuleViolation`.
+  - "Saklama süresi 1 ile 10 yıl arasında olmalı": `administration/domain.py` `SETTING_BOUNDS`, `RuleViolation`.
+  - "Kütüphane adı 1 ile 80 karakter arasında olmalı": `administration/domain.py` `LIBRARY_NAME_MESSAGE`, `RuleViolation`.
+  - "Bu tarih zaten kapalı": `administration/services.py` `add_closed_date`, `RuleViolation`.
+  - "Kapalı tarih bulunamadı": `administration/services.py` `remove_closed_date`, `RuleViolation`.
+  - "Son dışa aktarma:": `administration/home.html`, yönetici paneli.
+  - "yok": `administration/home.html`, hiç dışa aktarma yoksa tarih yerine.
+  - "Modüller": `administration/home.html`, bölüm başlığı.
+  - "Ayarlar": `administration/home.html` modül bağlantısı; `administration/settings.html` sayfa başlığı.
+  - "Kapalı günler": `administration/home.html` modül bağlantısı; `administration/closed_days.html` sayfa başlığı.
+  - "Denetim kaydı": `administration/home.html` modül bağlantısı; `administration/audit_list.html` sayfa başlığı.
+  - "Kaydet": `administration/settings.html` ve `administration/closed_days.html`, düğme.
+  - "Değişiklikler yalnız sonraki ödünçlere uygulanır; mevcut ödünçlerin son tarihi ve ceza oranı değişmez.": `administration/settings.html`, not.
+  - "Kapalı tarihler": `administration/closed_days.html`, bölüm başlığı.
+  - "Ekle": `administration/closed_days.html`, düğme.
+  - "Sil": `administration/closed_days.html`, düğme.
+  - "Kapalı tarih yok.": `administration/closed_days.html`, boş liste.
+  - "Zaman": `administration/audit_list.html`, sütun başlığı.
+  - "İşlem": `administration/audit_list.html`, sütun başlığı.
+  - "Hedef": `administration/audit_list.html`, sütun başlığı.
+  - "Ayrıntılar": `administration/audit_list.html`, sütun başlığı.
+  - "Sistem": `administration/audit_list.html`, aktörsüz (zamanlanmış görev) kayıt.
+  - "Kayıt yok.": `administration/audit_list.html`, boş liste.
+  - "Önceki": `administration/audit_list.html`, sayfalama.
+  - "Sonraki": `administration/audit_list.html`, sayfalama.
+  - "Sayfa N / M": `administration/audit_list.html`, sayfalama.
+  - "Ödeme": `administration/models.py` `AuditAction` etiketi; denetim listesinde işlem adı.
+  - "Af": `administration/models.py` `AuditAction` etiketi.
+  - "Bedel": `administration/models.py` `AuditAction` etiketi.
+  - "Para iadesi": `administration/models.py` `AuditAction` etiketi.
+  - "Nüsha kayıp": `administration/models.py` `AuditAction` etiketi.
+  - "Nüsha hasarlı": `administration/models.py` `AuditAction` etiketi.
+  - "Nüsha bulundu": `administration/models.py` `AuditAction` etiketi.
+  - "Nüsha onarıldı": `administration/models.py` `AuditAction` etiketi.
+  - "Nüsha kayıttan düşüldü": `administration/models.py` `AuditAction` etiketi.
+  - "Ayar değişikliği": `administration/models.py` `AuditAction` etiketi.
+  - "Kapalı gün değişikliği": `administration/models.py` `AuditAction` etiketi.
+  - "Personel değişikliği": `administration/models.py` `AuditAction` etiketi.
+  - "Bedel iptali": `administration/models.py` `AuditAction` etiketi.
+  - "Üye yeniden aktifleştirildi": `administration/models.py` `AuditAction` etiketi.
+- **2026-10-31, inceleme küçük kararı 2 — `tl` filtresi `None` ile `TypeError` verir:** Değişiklik yapılmadı. Bütün tutar alanları `NOT NULL`'dır (data-design), bu yüzden şablona `None` gelmesi bir hatadır ve sessizce "0,00 TL" yazmak yerine görünür biçimde patlamalıdır (kullanıcı onayı 2026-10-31).
+- **2026-10-31, inceleme küçük kararı 4 — kilitli kullanıcı adı ve boş parola:** Kilitli kullanıcı adıyla boş parolalı giriş POST'u 429 değil, 200 ve "zorunlu alan" hatası alır; böyle kalır. Boş parolayla kimlik doğrulama hiç denenmez ve cevap kilit durumunu açığa vurmaz; ADR-0049 bu durumu kapsamaz (kullanıcı onayı 2026-10-31).

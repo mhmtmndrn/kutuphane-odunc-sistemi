@@ -138,7 +138,7 @@ AXES_RESET_COOL_OFF_ON_FAILURE_DURING_LOCKOUT = False
 AXES_LOCKOUT_CALLABLE = "accounts.views.lockout_response"
 
 SILENCED_SYSTEM_CHECKS = [
-    # axes.W006 asks for "ip_address" in AXES_LOCKOUT_PARAMETERS. ADR-0009
+    # ADR-0051. axes.W006 asks for "ip_address" in AXES_LOCKOUT_PARAMETERS. ADR-0009
     # locks by username only: behind Caddy every request comes from
     # 127.0.0.1, so an IP lock would lock out the whole staff at once.
     "axes.W006",
