@@ -1287,7 +1287,7 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
     - "Başlangıç ve bitiş pozitif üye no olmalı": `members/services.py` `members_for_cards`, `RuleViolation`.
     - "Geçersiz seçim": `administration/forms.py` `IntListField`, alan hatası.
     - "Etiket bas" ve "Kart bas" ADR-0036'dan gelir; aralık formlarının düğmesinde de aynı metin kullanıldı.
-- **2026-11-01, G09–G12 onay bekleyen metinler:** Plan, SRS, KL ya da ADR'nin vermediği ve uygulayıcının seçtiği kullanıcıya görünen metinler (2026-11-01 kullanıcı kararı; PR'da onaylanır). Önceki listelerde onaylı olup aynen kullanılanlar "(onaylı)" ile işaretlidir.
+- **2026-11-01, G09–G12 uygulayıcının seçtiği kullanıcıya görünen metinler:** Plan, SRS, KL ya da ADR'nin vermediği ve uygulayıcının seçtiği kullanıcıya görünen metinler (2026-11-01 kullanıcı kararı; PR'da onaylanır). Kullanıcı 2026-11-01'de PR #3 incelemesinde hepsini onayladı; metin değiştirilmedi. Önceki listelerde onaylı olup aynen kullanılanlar "(onaylı)" ile işaretlidir.
   - G09:
     - "Borç dökümü": `billing/statement.html`, sayfa başlığı ve `<title>` ("Borç dökümü · Üye N · Kütüphane").
     - "Üye N" (onaylı): `billing/statement.html`, üye ayrıntısına geri bağlantı.
