@@ -1,117 +1,89 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-10-31 (faz 5, `feature/catalog-members` başladı)
-- **Aşama:** eng-process **faz 5**. PR #1 birleştirildi (`main` = `1a93f2d`); grup `feature/foundation` (G01–G04) **kapandı**. Şu anki iş: grup `feature/catalog-members` (G05–G08), bulut oturumunda.
-  - **G01:** `69a7b33` (yerel Windows).
-  - **G02:** `2af6d70`: personel modeli, giriş, oturum süresi, django-axes kilidi (ADR-0049, ADR-0050), `require_role`.
-  - **G03:** `91cbb1c`: saat, para, ayarlar, kapalı günler, denetim kaydı, görev kaydı, yönetici ana sayfası.
-  - **G04:** `b2047af`: personel yönetimi, zorunlu parola değişikliği, NFR-07 yetki taraması (`tests/test_authorization.py`). Ardından `4ddac8e` küçük şablon düzeltmesi.
-  - **İnceleme düzeltmeleri:** `8defa25` (ADR-0051, onaylı metin listesi), `f1edc59` (TC-32 bütün 19 yönetici yolu), `4610cde` (kural ihlalinde 200), `4dca151` (boşluklu kütüphane adı).
-  - Sonuç (bulut, Linux, Python 3.11.18): `python -m pytest -q` → 219 passed; `makemigrations --check --dry-run` → "No changes detected"; `check --deploy` → "no issues (3 silenced)" (ADR-0051); `accounts` ve `administration` dal kapsamı toplam %99, `domain.py`, `permissions.py`, `middleware.py` %100.
-  - Yerel Windows (R-15, Python 3.11.9, 2026-10-31): `python -m pytest -q` → 219 passed (`PYTEST_DEBUG_TEMPROOT` scratchpad'de); `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı toplam %98, `domain.py`, `permissions.py`, `middleware.py` %100, `accounts/services.py` %96, `administration/services.py` %100.
-  - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G02–G04 kutuları kanıtıyla işaretli; uygulama ayrıntıları ve sapmalar §11'de. Test planında 46 TC "Geçti".
-- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`1a93f2d`, PR #1 birleştirmesi), `feature/foundation` (kapandı) ve `feature/catalog-members` (çalışılan).
+- **Güncelleme:** 2026-10-31 (faz 5, `feature/catalog-members` tamam, PR açıldı)
+- **Aşama:** eng-process **faz 5**. Grup `feature/foundation` (G01–G04) PR #1 ile birleşti (`main` = `1a93f2d`). Grup `feature/catalog-members` (G05–G08) **tamam**; `main`'e PR açıldı, kullanıcının incelemesini ve yerel Windows koşusunu bekliyor (birleştirilmedi).
+  - **G05:** `9c0d20a`: `catalog/domain.py` (`normalize_tr`, `parse_isbn`, `isbn10_to_13`).
+  - **G06:** `ffc2a16`: `members` app'i: üye modeli, arama, rıza olayları, aktifleştirme, ekranlar.
+  - **G07:** `e7f8d03`: kitap ve nüsha modelleri, ISBN öneri akışı, nüsha ekleme, katalog araması.
+  - **G08:** `944d3ef`: `pdf/sheets.py`, nüsha etiketi ve üye kartı PDF'leri, seçim kutuları, barkod çözme testleri.
+  - Sonuç (bulut, Linux, Python 3.11.18): `python -m pytest -q` → 515 passed (`slow` dahil; `-m slow` → 4 passed); `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı: `*/domain.py` %100, `catalog/services.py` %100, `members/services.py` %100, `pdf/sheets.py` %100, `accounts/permissions.py` ve `accounts/middleware.py` %100; `catalog` + `members` + `pdf` toplam %99.
+  - Test planında 101 TC "Geçti" (46 + G05–G08'in 55'i).
+  - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G05–G08 kutuları kanıtıyla işaretli; uygulama ayrıntıları ve onay bekleyen metinler §11'de.
+- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`1a93f2d`), `feature/foundation` (kapandı), `feature/catalog-members` (PR açık).
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
-- **Bulut oturumu açma yolu:** Bulut oturumlarını kullanıcı kendisi açar, Claude açılış istemini hazırlar (KL-38, plan §11). Agent aracının `isolation: "remote"` modu kullanılmaz, çünkü yerelde çalışıyor.
-  - **Tarayıcı (önerilen):** claude.ai/code. İlk seferde GitHub bağlanır ve Claude GitHub App özel repoya kurulur. Repo `mhmtmndrn/kutuphane-odunc-sistemi`, dal `feature/foundation`, ortam **Default** (Trusted ağ; pip için PyPI gerekir) seçilir; istem kutuya yapıştırılıp gönderilir.
-  - **Terminal:** depo klasöründe, `feature/foundation` checkout'luyken `claude --cloud "<istem>"`. Oturum GitHub'daki dalı klonlar; yerel commit'ler önce push edilmeli. Çok satırlı istem PowerShell'de argüman olarak zahmetli olduğu için tarayıcı yolu önerilir.
-  - Kaynak: https://code.claude.com/docs/en/claude-code-on-the-web (2026-10-31 okundu). Dokümana göre bulut oturumu soru sorup cevap bekleyebiliyor; ADR-0048'deki "soru soramaz" varsayımı fazla katı olabilir. İstem yine de "dur ve raporla" kuralını taşıyor. Doküman bulut oturumlarının plan kullanım limitinden düştüğünü söylüyor; 100 $ kredinin buna etkisi teyit edilmedi.
+- **Bulut oturumu:** Her grup için kullanıcı yeni bir bulut oturumu açar, Claude açılış istemini hazırlar (KL-38). Oturum kritik soruyu oturumun içinde sorar; planın vermediği metinleri seçip §11'de listeler ve PR'da onaya sunar (plan §11, 2026-11-01 kararları).
+  - **Tarayıcı (önerilen):** claude.ai/code; repo `mhmtmndrn/kutuphane-odunc-sistemi`, ortam **Default** (Trusted ağ; pip için PyPI gerekir).
+  - **Terminal:** depo klasöründe `claude --cloud "<istem>"`; yerel commit'ler önce push edilmeli.
+  - Kaynak: https://code.claude.com/docs/en/claude-code-on-the-web.
+
+## Bu oturumda sorulan ve cevaplanan
+
+- **G06, anonimleştirilmiş üyenin güncellenmesi:** Plan vermiyordu; KVKK saklamasının sildiği verinin geri yazılmasına yol açabilirdi. Kullanıcı önerilen seçeneği seçti: `update_member` "Anonimleştirilmiş üye güncellenemez" ile reddeder; anonim üyenin ayrıntısında düzenleme bağlantısı ve rıza formu yok. §11'e küçük karar olarak yazıldı (ADR gerekmedi).
+- Kritik karar (yeni bağımlılık, şema dışı değişiklik, plandan farklı arayüz, güvenlik ödünleşimi) çıkmadı; yeni ADR yok (sıradaki numara hâlâ 0052).
+
+## G05–G08 sapmaları ve dikkat edilecekler (ayrıntı plan §11)
+
+- PDF metni reportlab içindeki Vera TTF yazı tipiyle yazılır; temel PDF yazı tiplerinde ş, ğ, ı, İ yok. Yeni bağımlılık yok.
+- Plandaki arayüzlere ek yardımcılar: `catalog.services` `get_book`, `book_copies`, `shelf_counts`, `is_barcode`, `suggestion_message`; `pdf.sheets` `item_position`, `fit_text`; `members.domain` `validate_member_fields`, `check_consent_change`; `administration.forms.IntListField`.
+- `search_key`/`phone_digits` `Member.save()`'de, `search_key` `Book.save()`'de, `status_changed_at` `Copy.save()`'de yazılır (tek nokta).
+- Geçici barkod `"PENDING-"`; nüsha id'leri SQLite `AUTOINCREMENT`'ten gelir. Testler sırayı `sqlite_sequence` ile ayarlar (TC-65, TC-263).
+- **G12 için:** `library_site/urls.py`'de `catalog.urls` circulation yollarından önce kalmalı; yoksa `/nushalar/etiket/` `nushalar/<str:barcode>/`'a düşer.
+- Üye, kitap ve nüsha oluşturma ve güncelleme denetim kaydı yazmaz (eylem listesinde yoklar); rıza olayları kendi izidir (KL-36).
+- Barkod çözen testler (TC-70, TC-71, TC-74) `slow` işaretli; bu oturumda Linux'ta hepsi koştu. Windows'ta yerel koşuda da çalışmaları beklenir (pypdfium2 ve zxing-cpp Windows wheel'leri ADR-0030'da doğrulanmıştı).
 
 ## Sıradaki adım
 
-`eng-process` faz 5'e devam et:
-
-1. **`feature/foundation` PR'ı (#1):** Birleştirildi (merge commit `1a93f2d`); grup kapandı.
-   - PR #1 özet yorumundaki görev dışı gözlemler kararlandı: ADR-0051 plan §3'e, architecture §9'a ve ADR-0009 "Ek kararlar" satırına işlendi; `deactivate_staff`'taki ulaşılamayan son yönetici denetimi savunma olarak kalır (§11); diğerleri (§11 metin tekrarı, `TLField` boş dalı, `get_settings()` yazması, `type="date"` görünümü) olduğu gibi kalır.
-2. **Onay bekleyen küçük temizlik:** Yerel `worktree-agent-a4c3b8e184eb5859a` dalı `main` ile aynı yerde (`c8a7a0b`), silinebilir (`git branch -d`). Boş `.claude/worktrees/agent-a4c3b8e184eb5859a` klasörü, oturum tuttuğu için silinemedi ("Permission denied"); oturum kapandıktan sonra elle silinir. Agent worktree'si git'ten kaldırıldı, `.gitignore`'a `.claude/worktrees/` eklendi (`4024c6b`).
-3. **Şu anki grup:** `feature/catalog-members` (G05–G08), bulut oturumunda; oturum grubun sonunda PR açar ve durur. `tests/test_authorization.py` §4.1'deki 19 yönetici yolunun hepsini zaten içerir; yeni yönetici yolu eklendiği anda ADMIN koruması denetlenir (D3).
-   - Genel sıra: G01 → G08, **G10 → G09 → G11** → G12 (KL-39), G13…G19.
-   - Not: Kum havuzu pytest'in geçici klasörünü engellerse `PYTEST_DEBUG_TEMPROOT` yalnız kabukta scratchpad'e yönlendirilir.
+1. **PR incelemesi (kullanıcı):** `feature/catalog-members` → `main` PR'ı. Kullanıcı inceler, yerel Windows'ta `python -m pytest -q` (R-15) koşar ve §11'deki "G05–G08 onay bekleyen metinler" listesini onaylar ya da düzeltir. Birleştirme kullanıcı onayıyla.
+2. **Sonraki grup:** `feature/circulation`: **G10 → G09 → G11 → G12** (KL-39). O grubun açık noktaları açılış isteminden önce kullanıcıya sorulur; istem yeni bir bulut oturumunda verilir.
+   - G11, üye ayrıntısına açık ödünçleri, bakiyeyi ve pasifleştirme yolunu (`/uyeler/<no>/pasif/`, `circulation.services.deactivate_member` → `members.services.set_inactive`) ekler.
+   - Genel sıra: G01 → G08 (tamam), G10 → G09 → G11 → G12, G13…G19.
+3. **Onay bekleyen küçük temizlik (önceki oturumdan):** Yerel `worktree-agent-a4c3b8e184eb5859a` dalı silinebilir; boş `.claude/worktrees/agent-a4c3b8e184eb5859a` klasörü elle silinir.
 
 ## Açık sorular ve riskler
 
 - **SRS açık soru 5:** Sunucu donanımı ve işletim sistemi belli değil; Windows ve Linux birlikte destekleniyor (ADR-0010).
 - **SRS açık soru 6, R-05:** 2 yıllık saklama ve borçlu üyede anonimleştirmenin ertelenmesi (ADR-0045) kurumun KVKK politikasıyla teyit edilmeli.
-- **SRS açık soru 8:** KYGM Z39.50 erişimi doğrulanmadı; gerekirse kullanıcı kendisi sorar.
+- **SRS açık soru 8:** KYGM Z39.50 erişimi doğrulanmadı.
 - **Kurulum ön koşulu:** Kurumdan SMTP gönderen hesabı alınmalı (ADR-0004, R-11).
+- **Etiket kağıdı ve okuyucu:** Basılı etiket ve kartın gerçek okuyucuyla taranması faz 6'da (TC-228); kağıt markasına göre `LABEL_LAYOUT` ölçüleri ayarlanabilir.
 - **Riskler:** [docs/risk-register.md](risk-register.md). En önemlileri R-04, R-10 ve R-13; bulut için R-15 ve R-16.
 
 ## Nerede kaldık
 
 - **SRS:** [docs/srs.md](srs.md), onaylı. 35 FR (24 Must, 11 Should), 7 Won't, 13 NFR, 35 AC.
-- **Tasarım:** [architecture.md](architecture.md) (§3'e KL-1, KL-2, KL-22 işlendi) ve [data-design.md](data-design.md) (I6'ya ADR-0018 istisnası).
-- **ADR'ler:** [0001–0051](decisions/), hepsi kabul edildi; özet plan §3. 0048 süreç kararıdır.
-- **Plan:** §3 kararlar ve KL-1…KL-46; §4 görevler G01–G19 (her birinde TC listesi); §5 test planı bağlantısı; §7 izlenebilirlik (48 gereksinim → tasarım, görev, TC); §8 tutarlılık (T-01…T-24) ve §8.2 test taslağının 27 sorusunun karşılığı; §9 commit noktaları; §10 onay.
-- **Test planı:** [docs/test-plan.md](test-plan.md): 319 TC (TC-01…TC-319), seviyeler, teknikler, kapsam hedefleri, giriş-çıkış ölçütleri, hata kaydı (§8, KL-46). Elle TC'ler: TC-223, TC-225…TC-234, TC-319 (faz 6).
+- **Tasarım:** [architecture.md](architecture.md) ve [data-design.md](data-design.md).
+- **ADR'ler:** [0001–0051](decisions/), hepsi kabul edildi; özet plan §3.
+- **Plan:** §3 kararlar ve KL-1…KL-46; §4 görevler G01–G19; §7 izlenebilirlik; §8 tutarlılık; §11 sapmalar ve onay bekleyen metinler.
+- **Test planı:** [docs/test-plan.md](test-plan.md): 319 TC; 101'i "Geçti". Elle TC'ler: TC-223, TC-225…TC-234, TC-319 (faz 6).
 - **Araştırma:** [ISBN meta veri](research/2026-10-31-isbn-meta-veri-apileri.md), [demo veri seti](research/2026-10-31-demo-kitap-veri-seti.md).
 
-## Son güncellemeden bu yana yapılanlar
+## Geçmiş (özet)
 
-- **2026-10-31, PR #1 yerel doğrulama ve kapanış (yerel Windows):**
-  - R-15 koşusu geçti (yukarıdaki sonuçlar). İlk koşudaki 15 `test_prod_settings.py` hatası kum havuzunun pytest geçici klasörüne verdiği `PermissionError`'dı, kod hatası değil.
-  - Görev dışı gözlemler kullanıcıya soruldu; kararlar "Sıradaki adım" 1'de.
-
-- **2026-10-31, PR #1 inceleme düzeltmeleri (bulut oturumu):**
-  - D1: ADR-0051 (`axes.W006` susturulur); plan §11 ve `base.py` yorumundan bağlandı; G01 doğrulamasına "(3 silenced)" notu.
-  - D2: Uygulayıcının seçtiği bütün kullanıcıya görünen metinler (106 madde) plan §11'de, kullanıcı onayıyla; metin değişmedi.
-  - D3: TC-32 bütün 19 yönetici yolunu içerir; ADMIN korumalı yollar = beklenen ∩ var olan. Test planı TC-32 satırı ve plan G04 güncellendi.
-  - D4: `staff_deactivate` ve `closed_date_remove` kural ihlalinde ekranı 200 ile yeniden gösterir (TDD).
-  - Küçük kararlar: boşluklu kütüphane adı reddedilir (TDD); `tl` filtresi ve kilitli kullanıcı + boş parola davranışı değişmeden §11'e yazıldı.
-
-- **2026-10-31, faz 5, G02–G04 bulut oturumu:**
-  - Kullanıcının açtığı bulut oturumu ("devam et") hazır istem olmadan plan §4.0, G02–G04, §11 ve ADR-0049/0050'den çalıştı. Python 3.11 sanal ortamı kuruldu, sabit bağımlılıklar PyPI'den geldi.
-  - Her görev TDD ile yapıldı (önce kırmızı test), görev başına `feat:` commit'i atılıp `feature/foundation`'a push edildi (ADR-0048).
-  - Kritik karar çıkmadı; uygulayıcı seçimleri plan §11'e yazıldı.
-  - Sayfalar geliştirme sunucusunda tarayıcıyla açılıp göz kontrolünden geçti (giriş, ana sayfa, personel, kapalı günler).
-
-- **2026-10-31, faz 5, 2. oturum:**
-  - G02 kararları kullanıcıya soruldu. ADR-0049 (kilitli hesaba 429, giriş şablonu ve mesaj) ve ADR-0050 (kilit süresi uzamaz) yazıldı; küçük kararlar (a)–(e) onaylandı.
-  - Kararlar plan G02'ye, §11'e, test planındaki TC-07, TC-08 ve TC-12'ye, architecture §9 ADR tablosuna ve ADR-0009'a işlendi.
-  - Remote-mod sapması plan §11'e yazıldı, KL-38 düzeltildi.
-  - `main`'de commit'lenmemiş duran doküman değişiklikleri kullanıcı kararıyla `feature/foundation`'a alındı.
-- **2026-10-31, faz 5 başlangıcı:** `b9490cb` faz 4 commit'i, `c8a7a0b` `--no-ff` merge; özel repo açıldı, `main` push edildi (hepsi onaylı). Kararlar: repo adı `kutuphane-odunc-sistemi`, grup başına bir bulut oturumu, oturum PR açar (KL-38). G01 yerel agent tarafından commit'lendi (`69a7b33`); remote-mod sapması plan §11'de.
-
-- **2026-10-31, 6. tur (faz 4 kapanışı, commit'lenmedi):**
-  - `docs/test-plan.md` yazıldı. Taslaktaki 234 TC'nin 37'si ADR-0036…0047'ye göre revize edildi, TC-235…TC-319 eklendi. Pasifleştirme TC'leri (TC-53…56) G11'e taşındı. R-10 için TC-235 G01'de.
-  - Kontrol: kapsam betiği "requirements=48 acs=35 all covered" verdi; plandaki `grep -c "{{G"` → 0.
-  - Yeni KL-39…KL-46 eklendi; KL-3, KL-8, KL-10 genişletildi. Hepsi kapıda onaylandı.
-  - Tutarlılık: 24 bulgu (1 Yüksek: T-01 sıralama, KL-39 ile düzeltildi; açık Kritik ya da Yüksek yok).
-  - Test tasarımı taslağı kullanıcı kararıyla silindi; içeriği test planında, açık soruları plan §8.2'de.
-- **2026-10-31, 5. tur:** İnşa kontrolü ayıklandı; ADR-0036…0048, FR-40…42, AC-33…35, KL-23…38 (plan §8.1).
-- **2026-10-31: Faz 4 plan yazımı:** Görevler G01–G19, risk kaydı, KL-1…22, architecture ve data-design tutarlılık düzeltmeleri (plan §8, T-17…T-24).
-- **2026-10-31: Faz 4 kararları** (`8c06c2b`): ADR-0026…0035, 16 maddelik küçük karar listesi. `tool-scout`: `pyright-lsp` kuruldu, diğerleri reddedildi (auto memory).
-- **2026-10-31: Faz 3** (`531bd9c`): Python 3.11, Django 5.2 LTS, SQLite WAL, waitress; ADR 0001–0025.
-- **2026-10-31: Faz 2** (`57d5c45`): FR-30 Won't oldu (Open Library %52 < %60).
-- **2026-10-31: Faz 1** (`bfe7836`): SRS onaylandı.
+- **2026-10-31, `feature/catalog-members` bulut oturumu:** İlk commit `docs:` (STATUS ve §11'e 2026-11-01 kullanıcı kararları), ardından G05–G08 görev başına TDD ve `feat:` commit'i, her biri push edildi. Ekranlar geliştirme sunucusunda tarayıcıyla açılıp göz kontrolünden geçti (üye arama ve ayrıntı, kitap formu ve ISBN önerisi, kitap ayrıntısı, barkod araması, etiket ve kart PDF'i).
+- **2026-10-31, PR #1 (G01–G04):** Bulut oturumunda G02–G04, inceleme düzeltmeleri D1–D4 (ADR-0051, 106 onaylı metin, TC-32 bütün yönetici yolları, kural ihlalinde 200), yerel Windows doğrulaması (219 passed) ve merge commit `1a93f2d`.
+- **2026-10-31, faz 4 ve öncesi:** Test planı (319 TC), plan (G01–G19, KL-1…KL-46), ADR-0026…0048, faz 3 kararları (ADR-0001…0025), faz 2 araştırmaları, faz 1 SRS. Ayrıntı git geçmişinde ve plan §8–§10'da.
 
 ## Nasıl çalıştırılır ve test edilir
 
-Kurulum ve geliştirme sunucusu (`dev` ayarı varsayılan; veri `var/` altında):
-
-- `pip install -r requirements-dev.txt`
-- `python manage.py migrate`, ardından `python manage.py createsuperuser` (ilk yönetici, rolü ADMIN).
-- `python manage.py runserver` → `/giris/`.
-
-Komutlar (küçük karar 11, plan §4.0, test planı §4):
-
-- Testler: `python -m pytest -q`; yavaş PDF ve barkod testleri `slow` işaretli.
+- `pip install -r requirements-dev.txt`, `python manage.py migrate`, `python manage.py createsuperuser` (ilk yönetici), `python manage.py runserver` → `/giris/`.
+- Testler: `python -m pytest -q` (yavaş PDF ve barkod testleri `slow` işaretli ve varsayılan koşuda dahil; yalnız onlar için `-m slow`).
 - Yetki kapsamı: `coverage report --include="accounts/permissions.py,accounts/middleware.py" --fail-under=100`.
 - NFR-13 kapsamı: `coverage run --branch -m pytest`, ardından `coverage report --include="*/domain.py" --fail-under=90`.
-- Diğer kapsam hedefleri (servisler %85, yetki %100, operations %80): test planı §4.
+- Diğer hedefler (servisler %85, `pdf/sheets.py` satır %80, operations %80): test planı §4.
 - Migration kontrolü: `python manage.py makemigrations --check --dry-run`.
-
-Yapılandırma için [architecture.md](architecture.md) §6 ve §8'e, zorunlu ortam değişkenleri için KL-43'e bakın.
 
 ## Tuzaklar
 
 - **Görev sırası:** G09, G10'dan sonra yapılır (KL-39); numaralar değişmedi.
-- **Arka plan subagent'ları:** Sonuçları yalnız onları başlatan oturuma gelir. Büyük çıktılar geçici bir dosyaya düşer; oturum kapanmadan depoya kopyalanmaları gerekir.
+- **Python sürümü:** Yerelde 3.11.9, bulutta 3.11.18; Django 6.x 3.12+ istediği için 5.2 LTS (ADR-0013). Bulut imajındaki varsayılan `python` 3.13'tür; sanal ortam `/usr/bin/python3.11` ile kurulur.
+- **Arka plan subagent'ları:** Sonuçları yalnız onları başlatan oturuma gelir; büyük çıktılar oturum kapanmadan depoya kopyalanmalı.
 - **Kitapyurdu ISBN alanı:** Geçersiz ISBN-10'lar büyük olasılıkla "978" öneki atılmış ISBN-13'tür (ADR-0008; `6053609322` → `9786053609322`).
 - **"İade" terimi:** Yalnız kitap iadesi demektir. Para için "para iadesi", kodda `REFUND` (ADR-0027).
 - **Windows konsolu:** `python -I`, `PYTHONIOENCODING`'i yok sayar; cp1254 konsolda Türkçe çıktı bozulur. Çıktıyı UTF-8 bir dosyaya yaz.
-- **Bash aracında heredoc:** Türkçe kesme işareti (`'`) içeren uzun heredoc'lar "unexpected EOF" verdi. Dokümanları Write aracıyla yaz; toplu değişiklik için betiği dosyaya yazıp çalıştır.
-- **SQLite ve Django:** `DecimalField` SQLite'ta REAL'e düşebilir; tutarlar kuruş (ADR-0016). Veritabanı ağ paylaşımına konmaz (WAL).
-- **Python sürümü:** Makinede 3.11.9; Django 6.x 3.12+ istediği için 5.2 LTS.
+- **Bash aracında heredoc:** Türkçe kesme işareti içeren uzun heredoc'lar "unexpected EOF" verebilir; dokümanları Write aracıyla ya da dosyaya yazılmış betikle değiştir.
+- **SQLite ve Django:** Tutarlar kuruş (ADR-0016). Veritabanı ağ paylaşımına konmaz (WAL). Django'nun SQLite `AutoField`'ı `AUTOINCREMENT`'tir; nüsha barkodu buna dayanır.
 - **Windows'ta zoneinfo:** `tzdata` gerekir (R-10, KL-18, TC-235).
-- **django-axes ve test istemcisi:** `client.login()` istek nesnesi vermediği için axes tarafından reddedilir; testlerde `client.force_login()` kullanılır. Giriş akışını sınayan testler `/giris/`e POST eder.
-- **Zaman sabitleme:** Oturum ve kilit testleri `tests/support/clock.py`'deki `FrozenClock` ile çalışır. Saat dondurulduktan sonra giriş yapılmalı; yoksa oturum gerçek saate göre yazılır ve "süresi dolmuş" görünür.
+- **django-axes ve test istemcisi:** `client.login()` yerine `client.force_login()`; giriş akışını sınayan testler `/giris/`e POST eder.
+- **Zaman sabitleme:** `FrozenClock` `django.utils.timezone.now`'ı patch'ler; model alanının `default=timezone.now`'ı patch'i görmez (fonksiyon import anında bağlanır). Zamanı testte sabitlenecek alanlar `save()` içinde `timezone.now()` çağırır (`Copy.status_changed_at`). "Bugün" için `administration.clock.today` `monkeypatch` edilir.
+- **Boş POST:** `Form(request.POST or None)` boş POST'ta formu bağlamaz; boş isteğin hata vermesi gereken formlarda `request.POST if request.method == "POST" else None` kullan (G08 seçim formları).
+- **Kum havuzu:** pytest geçici klasörü engellenirse `PYTEST_DEBUG_TEMPROOT` yalnız kabukta scratchpad'e yönlendirilir.
