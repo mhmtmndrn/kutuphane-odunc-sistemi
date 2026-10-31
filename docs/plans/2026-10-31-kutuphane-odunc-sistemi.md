@@ -576,7 +576,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Türler Türkçe gösterilir: Ceza, Bedel, Ödeme, Af, İptal, Para iadesi.
 - **Testler:** TC-76…TC-103, TC-270…TC-275 (34 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest billing -q` → hepsi geçer. `coverage run --branch -m pytest billing && coverage report --include="billing/domain.py" --fail-under=90` → çıkış 0.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-11-01, bulut oturumu, Linux, Python 3.11.18): `python -m pytest billing -q` → 69 passed (TC-103 dosya tabanlı SQLite ve iki iş parçacığıyla); `coverage run --branch -m pytest billing` → 69 passed; `coverage report --include="billing/domain.py" --fail-under=90` → %100 (dal), çıkış 0; `billing/services.py` %100 (dal), `billing` toplam %99; `python -m pytest -q` → 658 passed (TC-31 ve TC-32 yeni üç yönetici yolunu da denetliyor); `makemigrations --check --dry-run` → "No changes detected".
 
 ### Görev G10: Ödünç domain'i
 
@@ -598,7 +599,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - `check_transition(from_status: str, to_status: str) -> Literal["ADMIN", "CLERK"]`. Tabloda olmayan geçişte `InvalidTransition("Bu durum değişikliği yapılamaz: <eski> → <yeni>")` fırlatır.
 - **Testler:** TC-104…TC-123, TC-276…TC-277, TC-279…TC-280 (24 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `coverage run --branch -m pytest circulation/tests/test_domain.py && coverage report --include="circulation/domain.py" --fail-under=90` → çıkış 0. `python manage.py makemigrations --check --dry-run` → "No changes detected".
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-11-01, bulut oturumu, Linux, Python 3.11.18): `coverage run --branch -m pytest circulation/tests/test_domain.py` → 67 passed; `coverage report --include="circulation/domain.py" --fail-under=90` → %100 (dal), çıkış 0; `python -m pytest circulation -q` → 73 passed (6'sı `Loan` kısıt testi); `python -m pytest -q` → 588 passed; `makemigrations --check --dry-run` → "No changes detected".
 
 ### Görev G11: Ödünç verme, iade ve uzatma
 
@@ -634,7 +636,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Üye ayrıntısına (`members/views.py`) açık ödünçler, bakiye, `/borclar/<no>/` bağlantısı ve pasifleştirme formu eklenir. Pasifleştirme formu `circulation.services.deactivate_member` çağırır (KL-22).
 - **Testler:** TC-53…TC-56, TC-124…TC-149, TC-278, TC-281…TC-288 (39 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest circulation -q` → hepsi geçer. `coverage run --branch -m pytest circulation && coverage report --include="circulation/domain.py" --fail-under=90` → çıkış 0.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-11-01, bulut oturumu, Linux, Python 3.11.18): `python -m pytest circulation -q` → 140 passed (TC-145…TC-148 dosya tabanlı SQLite ve iki iş parçacığıyla); `coverage run --branch -m pytest circulation` → 140 passed; `coverage report --include="circulation/domain.py" --fail-under=90` → %100 (dal), çıkış 0; tam koşuda `circulation/services.py` %99 (dal; tek eksik `IntegrityError` dalı, IMMEDIATE işlemler yüzünden ulaşılamaz), `members/views.py` %99; `python -m pytest -q` → 733 passed; `makemigrations --check --dry-run` → "No changes detected". Pasifleştirme korumasının testleri (kullanıcı kararı 2026-11-01): `test_tc53_guard_anonymized_member_is_refused`, `test_tc53_guard_inactive_member_keeps_its_deactivation_date` (servis), `test_tc53_deactivation_form_only_for_active_members`, `test_tc53_guard_view_refuses_inactive_and_anonymized` (view).
 
 ### Görev G12: Nüsha durum işlemleri
 
@@ -660,7 +663,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Bütün yollarda nüsha `barcode` ile bulunur. Bulunamazsa 404 döner.
 - **Testler:** TC-150…TC-170, TC-289…TC-293 (26 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest circulation billing -q` → hepsi geçer.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-11-01, bulut oturumu, Linux, Python 3.11.18): `python -m pytest circulation billing -q` → 260 passed; `python -m pytest -q` → 784 passed; `makemigrations --check --dry-run` → "No changes detected"; tam koşuda dal kapsamı `*/domain.py` %100, `billing/services.py` %100, `circulation/services.py` %98, `members/services.py` %100, `accounts/permissions.py` ve `accounts/middleware.py` %100; `circulation` + `billing` + `members` toplam %99. Ödünç, iade, nüsha, döküm ve üye ekranları geliştirme sunucusunda Playwright ile açılıp göz kontrolünden geçti (odak "Onayla" düğmesinde; nüsha ekranında yalnız geçerli işlemler).
 
 ### Görev G13: Geciken listesi ve hatırlatmalar
 
@@ -1126,6 +1130,7 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
 - **2026-11-01, kullanıcı kararı — grup başına bir bulut oturumu:** Her görev grubu kendi bulut oturumunda yapılır; grup bitince oturum PR açar ve durur. Sonraki grup yeni bir oturumda ve yeni bir açılış istemiyle başlar (KL-38'deki "grup başına bir oturum" kuralının açık hali).
 - **2026-11-01, kullanıcı kararı — bulut oturumunda kritik soru:** Bulut oturumunda kritik bir açık nokta çıkarsa oturum durup raporlamak yerine soruyu oturumun içinde kullanıcıya sorar ve cevabı bekler; cevap ADR ya da §11 maddesi olarak kaydedilir (ADR-0048'deki "soru soramaz" varsayımının yerine).
 - **2026-11-01, kullanıcı kararı — planın vermediği kullanıcıya görünen metinler:** Plan, SRS, KL ya da ADR'nin vermediği etiket, başlık, düğme ve mesaj metinlerini uygulayıcı mevcut şablonların üslubuyla seçer, §11'de metin ve dosyasıyla listeler; metinler G02–G04'teki D2 gibi PR'da onaylanır. Uygulayıcı bu metinler için durmaz.
+- **2026-11-01, kullanıcı kararı — pasif ya da anonimleştirilmiş üye pasifleştirilemez:** `circulation.services.deactivate_member`, açık ödünç ve borç denetimlerinden önce anonimleştirilmiş üyeyi "Anonimleştirilmiş üye pasifleştirilemez", zaten pasif üyeyi "Üye zaten pasif" mesajıyla `RuleViolation` ile reddeder. Böylece saklama süresinin başlangıcı olan `deactivated_on` (ADR-0045) hiçbir zaman üzerine yazılmaz. Üye ayrıntısında pasifleştirme formu yalnız aktif ve anonimleştirilmemiş üyede görünür. Kural `members.services.reactivate_member`'ın ("Üye zaten aktif", "Anonimleştirilmiş üye aktifleştirilemez") aynası; G11'de testleriyle uygulanır.
 - **2026-10-31, G05 — uygulama ayrıntıları (bulut oturumu):**
   - `catalog` app'i G05'te `INSTALLED_APPS`'e eklendi (`library_site/settings/base.py`). G05'in dosya listesinde `base.py` yok, ama `catalog/apps.py` bu görevde oluşuyor; model G07'de gelir ve app'in o zaman ayrıca eklenmesi gerekmez.
   - `normalize_tr`'nin 4. adımı (`" ".join(text.split())`) boşlukları teke indirirken baştaki ve sondaki boşluğu da atar. Gerekçe: " ayşe" gibi bir arama terimi `search_key LIKE %…%` ile baştaki boşluk yüzünden eşleşmeyi kaçırmasın.
@@ -1168,6 +1173,47 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - **URL sırası (§8.1'de uygulayıcıya bırakılan ayrıntı):** `nushalar/etiket/` `catalog.urls` içindedir; `library_site/urls.py`'de `catalog.urls`, G12'de eklenecek circulation yollarından önce gelmelidir, yoksa `nushalar/<str:barcode>/` "etiket"i barkod sanar. `catalog/urls.py`'de bu not yorum olarak duruyor.
   - "Etiket bas" düğmesi yalnız basılabilir nüsha varsa, "Kart bas" düğmesi yalnız seçilebilir üye varsa görünür. Kitap arama ekranında "Nüsha etiketleri", üye arama ekranında "Üye kartları" bağlantısı aralık formuna gider.
   - G08'in dosya listesi dışında değişenler: `administration/forms.py` (`IntListField`), `catalog/forms.py`, `members/forms.py`, `catalog/templates/catalog/search.html` ve `members/templates/members/search.html` (bağlantılar), `catalog/tests/*` ve `members/tests/*` (TC-71…TC-75, TC-265…TC-269), `pdf/tests/__init__.py`.
+- **2026-11-01, G10 — uygulama ayrıntıları (bulut oturumu):**
+  - `circulation` app'i G10'da `INSTALLED_APPS`'e eklendi (`library_site/settings/base.py`; G05'teki `catalog` gibi, dosya listesinde yok ama model bu görevde oluşuyor).
+  - `InvalidTransition` mesajında durumlar Türkçe etiketleriyle yazılır ("Bu durum değişikliği yapılamaz: Kayıp → Hasarlı"); kodlar (`LOST`) personele anlamsızdır. Etiketler domain ORM modülü import etmesin diye `circulation.domain.STATUS_LABELS`'ta tutulur; bir test bunları `catalog.models.CopyStatus` etiketleriyle eşit tutar.
+  - `NoOpenDayError` mesajı ADR-0028'deki metindir ve `NO_OPEN_DAY_MESSAGE` sabitidir; `RuleViolation`'ın alt sınıfı olduğu için view'lar onu ayrıca yakalamaz.
+  - `classify_member_input`: temizlikten sonra boş kalan girdi `TEXT` ve boş değerdir (ekran boş girdiyi aramaz). `TEXT` değeri özgün metnin kırpılmış halidir; normalizasyonu `search_members` yapar. Yalnız ASCII rakamlar rakam sayılır (`members.domain` ile aynı).
+  - `late_days`, takvim farkı 0 ya da negatifse kapalı tarihleri saymadan 0 döner; sonuç formülle aynıdır.
+  - `Loan` modeli: `db_table = "loan"`; data-design §2.4'teki CHECK'ler (`due_on > loaned_on`, `close_reason` değerleri, `closed_on` ile `close_reason`'ın birlikte dolu ya da boş olması, `copy_found_on` için `closed_on IS NOT NULL AND close_reason = 'LOST' AND copy_found_on >= closed_on`) ve §4'teki indeksler (`loan_one_open_per_copy` kısmi benzersiz, `loan(member_id, closed_on)`, kısmi `loan(due_on) WHERE closed_on IS NULL`, `loan(closed_on)`) migration'dadır. `copy_found_on` CHECK'ine `closed_on IS NOT NULL` eklendi: SQL'de `close_reason` NULL iken karşılaştırma bilinmez sonuç verir ve CHECK geçerdi; açık ödünçte `copy_found_on` böylece reddedilir. `CloseReason` etiketleri: "İade edildi", "Kayıp", "Hasarlı".
+  - Model kısıt testleri `circulation/tests/test_services.py`'nin başındadır (KL-11'deki üç dosya düzeni; `test_domain.py` veritabanına dokunmaz).
+- **2026-11-01, G09 — kullanıcı kararı: denetim listesinde tutarlar TL olarak:** TC-91 af kaydının `/denetim/`'de "5,00 TL" olarak görünmesini bekliyordu; G03'ün denetim listesi ayrıntıları ham JSON olarak (`"amount_kurus": 500`) gösteriyordu. Oturumda soruldu, önerilen seçenek seçildi: `administration/templatetags/audit.py` `details_text` filtresi `amount_kurus` ve `fee_kurus` anahtarlarının değerini `format_tl` ile ("5,00 TL") gösterir; saklanan JSON ve öteki anahtarlar (ayar değişikliklerindeki eski ve yeni değerler dahil) değişmez. G03 ekranında küçük bir gösterim değişikliğidir; ADR gerekmedi.
+- **2026-11-01, G09 — uygulama ayrıntıları (bulut oturumu):**
+  - `billing` app'i `INSTALLED_APPS`'e, `billing.urls` `library_site/urls.py`'ye (`catalog.urls`'ten sonra) eklendi.
+  - `LedgerEntry` ve `Allocation` yalnız eklenir (I6): model `save` güncellemeyi, `delete` silmeyi `ValueError` ile reddeder (G03'teki `AuditEvent` gibi). ADR-0018'deki tek istisna (G15, `loan_id` NULL) queryset `update` ile yapılır. `created_at` `save()` içinde `timezone.now()` ile yazılır (`FrozenClock` geçerli olsun diye; G07'deki `Copy.status_changed_at` gibi). CHECK kısıtları: tür listesi, `amount_kurus > 0`, WAIVER/CANCELLATION/REFUND'da `target_entry` dolu, WAIVER'da `reason` dolu ve boş değil (data-design §2.5). `allocation` için `amount_kurus > 0` ve `UNIQUE(credit_entry, charge_entry)`. data-design §4'teki `ledger_entry(member_id)`, `(target_entry_id)`, `(loan_id)` ve `allocation(charge_entry_id)` indeksleri Django'nun yabancı anahtar indeksleridir. `EntryKind` etiketleri plandaki Türkçe adlardır.
+  - `post_charge` ve `cancel_unpaid` iç servislerdir ve `require_role(Role.CLERK)` taşır (çağıranlar: görevlinin iadesi, yöneticinin kayıp/hasar işaretlemesi, görevlinin "bulundu" işareti). `post_charge` FINE ya da FEE dışındaki türü ve pozitif olmayan tutarı, `cancel_unpaid` FEE dışındaki kalemi programlama hatası sayıp `ValueError` ile reddeder. `cancel_unpaid` kendi denetim kaydını yazmaz: otomatik iptal `mark_found`'un `COPY_FOUND` kaydıyla izlenir; `CANCELLATION` eylemi yalnız elle iptalindir (ADR-0041, KL-30).
+  - Denetim sırası: `waive` gerekçe → tür → tutar > 0 → ödenmemiş kısım; `cancel_fee_manual` tür → gerekçe → ödünç bağı → ödenmemiş kısım; `refund` ön koşul (I5) → tutar > 0 → iade edilebilir tutar. Gerekçe kırpılarak kaydedilir.
+  - Plandaki arayüzlere ek: `get_entry(member, entry_id)` (formdaki gizli kimlik başka üyenin kalemine ulaşamasın diye; yoksa "Kalem bulunamadı") ve `StatementRow` alanları (`entry_id`, `created_at`, `kind`, `kind_label`, `amount_kurus`, `staff_name`, `reason`, `target_entry_id`, `unpaid_kurus`, `refundable_kurus`, `manually_cancellable`). `staff_name` personelin ad soyadıdır (`first_name`, G02 (c)); boşsa kullanıcı adı. Döküm `created_at, id` sırasıyla en eskiden başlar.
+  - Döküm ekranı: ödeme formu yalnız bakiye > 0 iken görünür (herkese); af formu yalnız yöneticiye ve ödenmemiş kalem varken, açılır listede ödenmemiş kalemlerle; para iadesi ve elle iptal formları bedel satırı başına birer küçük formdur (KL-26, ADR-0041). Seçilen kimliği servis denetler. Başarı 302 ile döküme döner ve mesaj gösterir; kural ihlali dökümü 200 ile yeniden çizer (ödeme ve af formunda form hatası olarak, satır formlarında sayfa mesajı olarak; G04 D4).
+  - **Test yardımcıları:** `make_charge(member, kind, amount_kurus, *, loan, created_by, created_at)` (yalnız FINE ve FEE). `make_loan` G11 yerine G09'da eklendi, çünkü TC-92…TC-96 ödüncü LOST ile kapanmış bedel istiyor; nüsha durumunu ödüncün durumuna uydurur (açık → ON_LOAN, LOST/DAMAGED kapanış → LOST/DAMAGED). Factory'lerin varsayılan personeli `kayit.test` kullanıcı adıyla oluşturulur; testlerin kendi `ali`/`ayse.y` hesaplarıyla çakışmaz.
+  - **Eşzamanlılık testleri:** `tests/support/concurrency.py`: `file_db` fixture'ı `default` bağlantısını bir test boyunca migrate edilmiş geçici bir dosya veritabanına (üretimdeki WAL, IMMEDIATE, `busy_timeout` ayarlarıyla) yönlendirir, sonra bellekteki test veritabanını geri koyar; `run_parallel` çağrıları `threading.Barrier` ile aynı anda, kendi bağlantılarıyla çalıştırır (test planı §5). Bellekteki paylaşımlı önbellekli veritabanında SQLite tablo kilitleri beklemeden hata verdiği için IMMEDIATE işlemler orada sınanamaz.
+- **2026-11-01, G11 — uygulama ayrıntıları (bulut oturumu):**
+  - `MemberStatus(member, open_loans, balance_kurus, blockers)`: `blockers` üyenin kendi engelleridir (nüsha engeli dışındaki hepsi; durum `copy_status="ON_SHELF"` ile hesaplanır). `CheckoutPreview(copy, due_on, blockers)`; son tarih bulunamazsa önizleme de `NoOpenDayError` verir. `open_loans` son tarihe, sonra id'ye göre sıralıdır.
+  - Plandaki arayüzlere ek servisler: `copies_matching(q, status)` (`search_books` sonuçlarının verilen durumdaki nüshaları; ödünçte Rafta, iadede Ödünçte; FR-11 elle seçim) ve `get_loan(loan_id)` (uzatma view'ı için).
+  - `check_out` engelleri işlem içinde veritabanından yeniden okur (S2, S3). Kısmi benzersiz indeksin `IntegrityError`'ı "Nüsha rafta değil" olarak `RuleViolation`'a çevrilir (data-design §5'teki ikinci güvence); IMMEDIATE işlemlerde bu dala ulaşılmaz, TC-145 ikinci isteğin engelden döndüğünü gösterir.
+  - `renew` mesajları (plan vermiyordu): bilinmeyen ödünç "Ödünç bulunamadı", kapanmış ödünç "Ödünç kapanmış" (TC-144). Uzatma engelleri de "; " ile birleştirilir.
+  - Ödünç, iade, uzatma ve pasifleştirme denetim kaydı yazmaz (faz 4 küçük karar 8'deki listede yoklar); gecikme cezası `billing.post_charge` ile ödünce ve üyeye bağlı FINE olarak yazılır.
+  - **Ödünç ekranı:** Tek bir GET formu `uye` ve (üye açıksa) `nusha` alanlarını taşır; "Getir" düğmesi JS'siz kullanım içindir. Üye açık değilken `uye`, açıkken `nusha`, önizlemede "Onayla" düğmesi `autofocus` alır; üye açıkken `uye` alanında `data-next-focus="id_nusha"` vardır. Onay formu POST'tur ve `uye`, `nusha` gizli alanlarını taşır; üyenin ya da nüshanın engeli varsa görünmez. 18 haneden uzun ya da rakam olmayan üye no "Üye bulunamadı" verir (SQLite tam sayı sınırı; G06 ile aynı). Anonimleştirilmiş üye "Anonimleştirilmiş üye" adıyla ve "Üye pasif" engeliyle açılır. Başarılı POST 303 döner (`HttpResponseRedirect`, durum 303).
+  - **Uzatma yolu:** POST `/odunc/<id>/uzat/` gizli `next` alanını taşır (üye ayrıntısı ya da ödünç ekranı); güvenli yerel adres değilse ödünç ekranına (`/odunc/?uye=<no>`) döner. Kural ihlalinde ödünç ekranı o üyeyle 200 ve mesajla gösterilir: view'lar başka bir app'in view modülünü import edemez (KL-22) ve ödünç ekranı da açık ödünçleri "Uzat" düğmeleriyle listeler. Açık ödünç listesi `circulation/templates/circulation/_loans.html` parçasıdır; ödünç ekranı ve üye ayrıntısı bunu kullanır. Uzatılmış ödünçte düğme yerine "Uzatıldı (GG.AA.YYYY)" yazar.
+  - **İade ekranı:** Form POST'tur; boş POST boş formu gösterir. 8 haneli olmayan girişte `copies_matching(q, ON_LOAN)` sonuçları satır başına bir "İade al" POST formuyla listelenir; sonuç yoksa "Nüsha bulunamadı".
+  - **`scan.js`:** Sayfa yüklenince (ve tarayıcı önbellekten geri dönünce) `autofocus` öğesine odaklanır ve metnini seçer; `data-next-focus` alanında Enter, hedef aynı formda ve boşsa formu göndermek yerine odağı hedefe taşır. Formlar JS'siz çalışır.
+  - **Üye ayrıntısı:** "Ödünç ve borç" bölümü bakiyeyi, `/borclar/<no>/` bağlantısını ve açık ödünç listesini gösterir. Pasifleştirme formu yalnız aktif ve anonimleştirilmemiş üyede görünür (kullanıcı kararı 2026-11-01). Onay kutusu (`confirm_debt`) plandaki gibi yalnız borç nedeniyle yapılan retten sonra, formla birlikte yeniden gösterilir; bütün retler ayrıntıyı 200 ve mesajla yeniden çizer (G04 D4).
+  - G11'in dosya listesi dışında değişenler: `members/views.py`, `members/urls.py` ve `members/templates/members/detail.html` (plan Davranış'ta), `library_site/urls.py` (`circulation.urls`, `catalog.urls`'ten sonra), `templates/base.html` ve `administration/home.html` ("Ödünç" ve "İade" bağlantıları; G03 §11 kuralı), `tests/support/urls.py`.
+  - `tests/support/urls.py`'deki G02 yer tutucusu (`/odunc/`) kaldırıldı: gerçek ödünç ekranı yolu artık karşılıyor; modül ürünün URL listesini aynen verir, G02 testleri `@pytest.mark.urls` işaretleriyle değişmeden geçer.
+  - `make_loan` G09'da eklendi (yukarıda).
+- **2026-11-01, G12 — uygulama ayrıntıları (bulut oturumu):**
+  - Her servis önce kendi ele aldığı kaynak durumu denetler (kayıp/hasar: Ödünçte; `mark_shelf_copy`: Rafta; `mark_found`: Kayıp; `repair`: Hasarlı; `withdraw`: Hasarlı ya da Kayıp), sonra `check_transition` ile geçişi ve rolü doğrular. Kaynak durum servise uymuyorsa da aynı `InvalidTransition` mesajı verilir; bunun için `circulation.domain.transition_error(eski, yeni)` eklendi (TC-164: Ödünçteki nüshada `mark_shelf_copy`, tabloda geçerli bir geçiş olsa da reddedilir). `check_transition`'ın döndürdüğü rol yönetici ise ve aktör yönetici değilse `PermissionDenied` verilir; yönetici servisleri ayrıca `require_role(Role.ADMIN)` taşır.
+  - Kayıp ve hasarda negatif bedel "Bedel negatif olamaz" ile reddedilir. Ödünçteki nüsha için bedel alanı formda zorunludur: boş bırakılırsa "Bedel girin (bedel yoksa 0)" verilir (0 bilerek girilir; KL-7). COPY_LOST ve COPY_DAMAGED ayrıntısı ödünçteki nüshada `fee_kurus`'u (0 dahil) taşır; raftaki nüshada taşımaz (KL-15'teki "?"). `mark_found`'un ayrıntısında `note` boştur (servisin not parametresi yok).
+  - `mark_found` bedeli `billing.services.loan_fee(loan)` ile bulur (plandaki arayüze ek; ödüncün ilk FEE kalemi). Otomatik iptal yalnız `COPY_FOUND` ile izlenir (G09 maddesi).
+  - Plandaki arayüzlere ek: `copy_loans(copy)` (nüsha ekranındaki ödünç geçmişi; ödünç tarihine göre en yeniden başlar).
+  - **Nüsha ekranı:** Durum ve role göre gösterilen işlemler: Rafta → yönetici Kayıp, Hasarlı, Kayıttan düş; Ödünçte → yönetici bedel alanlı Kayıp ve Hasarlı; Kayıp → herkes Bulundu, yönetici Kayıttan düş; Hasarlı → yönetici Onarıldı ve Kayıttan düş; Kayıttan düşmüş → işlem yok. `/kayip/` ve `/hasarli/` nüsha Ödünçteyse `mark_lost`/`mark_damaged`, değilse `mark_shelf_copy`'yi; `/kayittan-dus/` Raftaysa `mark_shelf_copy(WITHDRAWN)`, değilse `withdraw`'u çağırır. Başarı 303 ile nüsha ekranına döner ve mesaj gösterir; kural ihlali ekranı 200 ve mesajla yeniden çizer; bilinmeyen barkod GET ve POST'ta 404 verir. Ekranda açık ödünç (üye bağlantısı, son tarih) ve ödünç geçmişi (kapanış nedeni ve varsa bulunma tarihi) bulunur.
+  - Bulundu mesajı: iptal edilen tutar varsa "Nüsha bulundu olarak işaretlendi; <tutar> ödenmemiş bedel iptal edildi"; iade edilebilir tutar varsa ikinci mesaj "Ödenmiş <tutar> para iadesi için üyenin borç sayfasında: Borç dökümü" ve `/borclar/<no>/` bağlantısı (plandaki metne bağlantı metni eklendi; mesaj `format_html` ile güvenli HTML'dir). Üye, nüshanın en son ödüncünden okunur.
+  - G12'nin dosya listesi dışında değişenler: `circulation/forms.py` (`CopyMarkForm`, `NoteForm`), `billing/services.py` (`loan_fee`), `catalog/templates/catalog/detail.html` (her barkod nüsha ekranına bağlantı; G12 ekranına katalogdan ulaşılsın diye).
+  - `library_site/urls.py`'de `catalog.urls` `circulation.urls`'ten önce durur; `/nushalar/etiket/` hâlâ etiket ekranına gider (test: `test_label_route_still_wins_over_the_barcode_route`).
 - **2026-10-31, G05–G08 uygulayıcının seçtiği kullanıcıya görünen metinler:** Plan, SRS, KL ya da ADR'nin vermediği ve uygulayıcının seçtiği kullanıcıya görünen metinler (2026-11-01 kullanıcı kararı; PR'da onaylanır). Kullanıcı 2026-11-01'de PR #2 incelemesinde hepsini onayladı; metin değiştirilmedi. G02–G04 listesinde zaten onaylı olup aynen yeniden kullanılanlar "(G02–G04'te onaylı)" ile işaretlidir.
   - G06:
     - "Üyeler": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `members/search.html` sayfa başlığı; `members/form.html` ve `members/detail.html` geri bağlantısı.
@@ -1241,3 +1287,62 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
     - "Başlangıç ve bitiş pozitif üye no olmalı": `members/services.py` `members_for_cards`, `RuleViolation`.
     - "Geçersiz seçim": `administration/forms.py` `IntListField`, alan hatası.
     - "Etiket bas" ve "Kart bas" ADR-0036'dan gelir; aralık formlarının düğmesinde de aynı metin kullanıldı.
+- **2026-11-01, G09–G12 uygulayıcının seçtiği kullanıcıya görünen metinler:** Plan, SRS, KL ya da ADR'nin vermediği ve uygulayıcının seçtiği kullanıcıya görünen metinler (2026-11-01 kullanıcı kararı; PR'da onaylanır). Kullanıcı 2026-11-01'de PR #3 incelemesinde hepsini onayladı; metin değiştirilmedi. Önceki listelerde onaylı olup aynen kullanılanlar "(onaylı)" ile işaretlidir.
+  - G09:
+    - "Borç dökümü": `billing/statement.html`, sayfa başlığı ve `<title>` ("Borç dökümü · Üye N · Kütüphane").
+    - "Üye N" (onaylı): `billing/statement.html`, üye ayrıntısına geri bağlantı.
+    - "Güncel borç: <tutar>": `billing/statement.html`, bakiye satırı.
+    - "Tarih", "Personel" (onaylı), "Tür", "Tutar", "Ödenmemiş", "Gerekçe": `billing/statement.html`, döküm tablosu sütun başlıkları; "—" (onaylı) boş hücrede.
+    - "Hareket yok.": `billing/statement.html`, boş döküm.
+    - "Ödeme al": `billing/statement.html`, bölüm başlığı. "Ödemeyi kaydet": düğme.
+    - "Tutar (TL)": `billing/forms.py` `PaymentForm`, `WaiverForm`, `RefundForm` alan etiketi; `billing/statement.html` para iadesi satırı.
+    - "Af" (onaylı, `AuditAction` etiketi): `billing/statement.html`, bölüm başlığı. "Kalem" ve "Gerekçe": `billing/forms.py` `WaiverForm` alan etiketleri. "Affet": düğme.
+    - "<Tür> · GG.AA.YYYY · <tutar> (ödenmemiş <tutar>)": `billing/views.py` `_charge_choices`, af formundaki kalem seçeneği.
+    - "Para iadesi" (onaylı, `AuditAction` etiketi): `billing/statement.html`, bölüm başlığı. "Bedel (GG.AA.YYYY, <tutar>): iade edilebilir <tutar>": satır metni. "Para iadesi yap": düğme.
+    - "Bedel iptali" (onaylı, `AuditAction` etiketi): `billing/statement.html`, bölüm başlığı. "Ödüncüyle bağı koparılmış bedeller; ödenmemiş kısmın tamamı iptal edilir.": not. "Bedel (GG.AA.YYYY, <tutar>): ödenmemiş <tutar>": satır metni. "Gerekçe": `CancelForm` alan etiketi. "İptal et": düğme.
+    - "Ödeme alındı: <tutar>", "Af kaydedildi: <tutar>", "Para iadesi kaydedildi: <tutar>", "Bedel iptal edildi: <tutar>": `billing/views.py`, başarı mesajları.
+    - "Ödeme tutarı 0,00 TL'den büyük olmalı": `billing/services.py` `record_payment`, `RuleViolation`.
+    - "Af tutarı 0,00 TL'den büyük olmalı" ve "Yalnız ceza ve bedel kalemleri affedilebilir": `billing/services.py` `waive`, `RuleViolation`.
+    - "Para iadesi tutarı 0,00 TL'den büyük olmalı": `billing/services.py` `refund`, `RuleViolation`.
+    - "Yalnız bedel kalemleri iptal edilebilir": `billing/services.py` `cancel_fee_manual`, `RuleViolation`.
+    - "Kalem bulunamadı": `billing/services.py` `get_entry`, `RuleViolation`.
+    - "Üye bulunamadı" (onaylı): `billing/views.py`, bilinmeyen üye no'da 404 nedeni.
+    - "5,00 TL" biçimi: `administration/templatetags/audit.py` `details_text`, denetim listesinde `amount_kurus` ve `fee_kurus` değerleri (kullanıcı kararı, yukarıda).
+  - G11:
+    - "Ödünç": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `circulation/checkout.html` sayfa başlığı.
+    - "İade": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `circulation/checkin.html` sayfa başlığı.
+    - "Üye kartı, üye no, telefon ya da ad": `circulation/checkout.html`, üye alanı etiketi.
+    - "Nüsha barkodu ya da kitap": `circulation/checkout.html` ve `circulation/checkin.html`, nüsha alanı etiketi.
+    - "Getir": `circulation/checkout.html`, GET formunun düğmesi.
+    - "Üyeler" (onaylı): `circulation/checkout.html`, üye arama sonuçları başlığı; satır "Üye N · <ad soyad> · <telefon>" ve pasifse " · Pasif"; anonimde "Anonimleştirilmiş üye" (onaylı).
+    - "Üye N" (onaylı) ve "<ad soyad> · Borç: <tutar>": `circulation/checkout.html`, üye paneli.
+    - "Açık ödünçler": `circulation/checkout.html` ve `members/detail.html`, bölüm başlığı.
+    - "Barkod", "Başlık" (onaylı), "Son tarih": `circulation/_loans.html`, sütun başlıkları.
+    - "Uzatıldı (GG.AA.YYYY)": `circulation/_loans.html`, uzatılmış ödünç.
+    - "Açık ödünç yok.": `circulation/_loans.html`, boş liste.
+    - "Raftaki nüshalar": `circulation/checkout.html`, nüsha arama sonuçları başlığı; satır "<barkod> · <başlık> · <yazar>".
+    - "Nüsha NNNNNNNN · <durum>": `circulation/checkout.html`, önizleme.
+    - "Ödünçteki nüshalar": `circulation/checkin.html`, arama sonuçları başlığı; "Yazar" (onaylı) sütun başlığı.
+    - "Uzatıldı; yeni son tarih GG.AA.YYYY": `circulation/views.py` `renew`, başarı mesajı.
+    - "Ödünç bulunamadı": `circulation/services.py` `renew`, `RuleViolation`; `circulation/views.py` `renew`, 404 nedeni.
+    - "Ödünç kapanmış": `circulation/services.py` `renew`, `RuleViolation`.
+    - "Ödünç ve borç": `members/detail.html`, bölüm başlığı. "Borç: <tutar>": bakiye satırı. "Borç dökümü": `/borclar/<no>/` bağlantısı.
+    - "Borç olduğunu biliyorum; üyeyi yine de pasifleştir": `members/detail.html`, `confirm_debt` onay kutusu etiketi.
+    - "Pasifleştir" (onaylı): `members/detail.html`, düğme.
+    - "Üye pasifleştirildi": `members/views.py` `member_deactivate`, başarı mesajı.
+    - "Anonimleştirilmiş üye pasifleştirilemez" ve "Üye zaten pasif": `circulation/services.py` `deactivate_member`, `RuleViolation` (davranış ve metin 2026-11-01 kullanıcı kararıyla verildi; listede bilgi için).
+    - Planın verdiği metinler listede yoktur: "Uzat", "Onayla", "İade al", "Son tarih 16.11.2026", "İade alındı", "İade alındı; 15,00 TL ceza yazıldı", "Bu bir nüsha barkodu. Üye kartını okutun.", KL-6 mesajları.
+  - G12:
+    - "Nüsha NNNNNNNN": `circulation/copy_detail.html`, sayfa başlığı ve `<title>`; kitap başlığı geri bağlantısı.
+    - "Başlık", "Yazar", "Durum" (onaylı): `circulation/copy_detail.html`, satır başlıkları.
+    - "Ödünç": `circulation/copy_detail.html`, açık ödünç satırı ("Üye N · Son tarih GG.AA.YYYY") ve ödünç geçmişi sütun başlığı.
+    - "İşlemler": `circulation/copy_detail.html`, bölüm başlığı.
+    - "Bedel (TL)" ve "Not" (onaylı): `circulation/forms.py` ve `circulation/copy_detail.html`, alan etiketleri.
+    - "Kayıp", "Hasarlı", "Bulundu", "Onarıldı", "Kayıttan düş": `circulation/copy_detail.html`, düğmeler (durum adları `CopyStatus` etiketleriyle aynı).
+    - "Ödünç geçmişi": `circulation/copy_detail.html`, bölüm başlığı; sütunlar "Ödünç", "Üye", "Son tarih", "Kapanış", "Sonuç"; açık ödünçte "Açık", bulunan kayıpta " · bulundu GG.AA.YYYY"; boş listede "Ödünç yok.".
+    - "İade edildi", "Kayıp", "Hasarlı": `circulation/models.py` `CloseReason` etiketleri (G10).
+    - "Nüsha kayıp olarak işaretlendi", "Nüsha hasarlı olarak işaretlendi", "Nüsha onarıldı olarak işaretlendi", "Nüsha kayıttan düşüldü", "Nüsha bulundu olarak işaretlendi" ve "; <tutar> ödenmemiş bedel iptal edildi": `circulation/views.py`, başarı mesajları.
+    - "Ödenmiş <tutar> para iadesi için üyenin borç sayfasında" planın metnidir; ardındaki ": Borç dökümü" bağlantı metni uygulayıcı seçimidir (`circulation/views.py` `copy_found`).
+    - "Bedel girin (bedel yoksa 0)": `circulation/views.py` `_mark`, ödünçteki nüshada boş bedel.
+    - "Bedel negatif olamaz": `circulation/services.py` `_mark_loaned_copy`, `RuleViolation`.
+    - "Bu durum değişikliği yapılamaz: <eski> → <yeni>" plandandır; durumlar Türkçe etiketleriyle yazılır (G10 maddesi).

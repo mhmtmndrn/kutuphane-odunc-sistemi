@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load money %}
 
 {% block title %}Üye {{ member.member_no }} · Kütüphane{% endblock %}
 
@@ -17,6 +18,24 @@
       </tbody>
     </table>
     <p><a href="{% url 'members:edit' member.member_no %}">Düzenle</a></p>
+  {% endif %}
+
+  <h2>Ödünç ve borç</h2>
+  <p>Borç: {{ balance|tl }} · <a href="{% url 'billing:statement' member.member_no %}">Borç dökümü</a></p>
+  <h3>Açık ödünçler</h3>
+  {% include "circulation/_loans.html" with loans=open_loans next=detail_url %}
+
+  {% if can_deactivate %}
+    <form method="post" action="{% url 'members:deactivate' member.member_no %}">
+      {% csrf_token %}
+      {% if confirm_debt %}
+        <p>
+          <input type="checkbox" name="confirm_debt" id="id_confirm_debt">
+          <label for="id_confirm_debt">Borç olduğunu biliyorum; üyeyi yine de pasifleştir</label>
+        </p>
+      {% endif %}
+      <p><button type="submit">Pasifleştir</button></p>
+    </form>
   {% endif %}
 
   {% if can_reactivate %}

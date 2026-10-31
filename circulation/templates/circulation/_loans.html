@@ -1,0 +1,28 @@
+{# Open loans with their renewal buttons; ``loans`` and ``next`` come from the caller. #}
+{% if loans %}
+  <table>
+    <thead><tr><th>Barkod</th><th>Başlık</th><th>Son tarih</th><th></th></tr></thead>
+    <tbody>
+      {% for loan in loans %}
+        <tr>
+          <td>{{ loan.copy.barcode }}</td>
+          <td>{{ loan.copy.book.title }}</td>
+          <td>{{ loan.due_on|date:"d.m.Y" }}</td>
+          <td>
+            {% if loan.renewed_on %}
+              Uzatıldı ({{ loan.renewed_on|date:"d.m.Y" }})
+            {% else %}
+              <form class="inline-form" method="post" action="{% url 'circulation:renew' loan.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next }}">
+                <button type="submit">Uzat</button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>Açık ödünç yok.</p>
+{% endif %}

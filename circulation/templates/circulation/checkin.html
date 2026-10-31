@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}İade · Kütüphane{% endblock %}
+
+{% block content %}
+  <h1>İade</h1>
+  {% for error in errors %}<p class="error">{{ error }}</p>{% endfor %}
+  <form method="post" action="{% url 'circulation:checkin' %}">
+    {% csrf_token %}
+    <p>
+      <label for="id_nusha">Nüsha barkodu ya da kitap</label>
+      <input type="text" name="nusha" id="id_nusha" value="{% if copy_results or errors %}{{ nusha }}{% endif %}" autocomplete="off" autofocus>
+      <button type="submit">İade al</button>
+    </p>
+  </form>
+
+  {% if copy_results %}
+    <h2>Ödünçteki nüshalar</h2>
+    <table>
+      <thead><tr><th>Barkod</th><th>Başlık</th><th>Yazar</th><th></th></tr></thead>
+      <tbody>
+        {% for copy in copy_results %}
+          <tr>
+            <td>{{ copy.barcode }}</td>
+            <td>{{ copy.book.title }}</td>
+            <td>{{ copy.book.author }}</td>
+            <td>
+              <form class="inline-form" method="post" action="{% url 'circulation:checkin' %}">
+                {% csrf_token %}
+                <input type="hidden" name="nusha" value="{{ copy.barcode }}">
+                <button type="submit">İade al</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+  <script src="{% static 'js/scan.js' %}"></script>
+{% endblock %}

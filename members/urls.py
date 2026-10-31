@@ -12,6 +12,7 @@ urlpatterns = [
     path("uyeler/kart/", views.card_print, name="cards"),
     path("uyeler/<int:member_no>/", views.member_detail, name="detail"),
     path("uyeler/<int:member_no>/duzenle/", views.member_edit, name="edit"),
+    path("uyeler/<int:member_no>/pasif/", views.member_deactivate, name="deactivate"),
     path("uyeler/<int:member_no>/aktif/", views.member_reactivate, name="reactivate"),
     path("uyeler/<int:member_no>/riza/", views.member_consent, name="consent"),
 ]

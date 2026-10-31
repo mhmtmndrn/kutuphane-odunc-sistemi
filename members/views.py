@@ -1,15 +1,23 @@
-"""Member screens (plan §4.1, G06). Views only call forms and services."""
+"""Member screens (plan §4.1, G06, G11). Views only call forms and services.
+
+The detail screen also shows open loans and the balance, and deactivation
+calls ``circulation.services.deactivate_member``: views are leaves and may
+use any app's services (KL-22).
+"""
 
 from __future__ import annotations
 
 from django.contrib import messages
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods, require_POST
 
 from accounts.permissions import staff_view
 from administration import clock
 from administration.errors import RuleViolation
+from billing import services as billing
+from circulation import services as circulation
 
 from . import services
 from .forms import CardSelectionForm, ConsentForm, MemberForm
@@ -72,7 +80,9 @@ def member_edit(request: HttpRequest, member_no: int) -> HttpResponse:
     return render(request, "members/form.html", {"form": form, "member": member})
 
 
-def _detail_page(request: HttpRequest, member: Member, *, consent_form=None) -> HttpResponse:
+def _detail_page(
+    request: HttpRequest, member: Member, *, consent_form=None, confirm_debt: bool = False
+) -> HttpResponse:
     given_on, withdrawn_on = services.consent_dates(member)
     context = {
         "member": member,
@@ -80,6 +90,11 @@ def _detail_page(request: HttpRequest, member: Member, *, consent_form=None) -> 
         "withdrawn_on": withdrawn_on,
         "consent_form": consent_form or ConsentForm(initial={"on": clock.today()}),
         "can_reactivate": not member.is_active and not member.is_anonymized,
+        "can_deactivate": member.is_active and not member.is_anonymized,
+        "confirm_debt": confirm_debt,
+        "open_loans": circulation.open_loans(member),
+        "balance": billing.member_balance(member),
+        "detail_url": reverse("members:detail", args=[member.member_no]),
     }
     return render(request, "members/detail.html", context)
 
@@ -101,6 +116,23 @@ def member_reactivate(request: HttpRequest, member_no: int) -> HttpResponse:
         messages.error(request, exc.message)
         return _detail_page(request, _get_member(member_no))
     messages.success(request, "Üye aktifleştirildi")
+    return redirect("members:detail", member_no=member_no)
+
+
+@staff_view
+@require_POST
+def member_deactivate(request: HttpRequest, member_no: int) -> HttpResponse:
+    member = _get_member(member_no)
+    try:
+        circulation.deactivate_member(
+            request.user, member, confirm_debt=request.POST.get("confirm_debt") == "on"
+        )
+    except RuleViolation as exc:
+        messages.error(request, exc.message)
+        # A debt refusal re-shows the form with the confirmation checkbox (plan G11).
+        has_debt = member.is_active and billing.member_balance(member) > 0
+        return _detail_page(request, _get_member(member_no), confirm_debt=has_debt)
+    messages.success(request, "Üye pasifleştirildi")
     return redirect("members:detail", member_no=member_no)
 
 

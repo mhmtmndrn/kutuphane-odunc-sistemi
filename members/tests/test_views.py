@@ -15,9 +15,10 @@ from accounts.models import Role
 from administration import clock
 from administration.audit import AuditAction
 from administration.models import AuditEvent
+from billing.models import EntryKind
 from members import services
 from members.models import ConsentEvent, Member
-from tests.support.factories import make_member, make_staff
+from tests.support.factories import make_charge, make_loan, make_member, make_staff
 
 pytestmark = pytest.mark.django_db
 
@@ -322,3 +323,85 @@ def test_no_card_button_when_no_result_is_printable(clerk_client) -> None:
     make_member("Ayşe Demir", member_no=2, is_active=False)
     html = clerk_client.get("/uyeler/", {"q": "ayse"}).content.decode()
     assert "Kart bas</button>" not in html
+
+
+# --- Open loans, balance and deactivation (G11: FR-02, KL-22) ------------------
+
+def _deactivate_form(member_no: int) -> str:
+    return f'action="/uyeler/{member_no}/pasif/"'
+
+
+def test_detail_shows_open_loans_balance_and_statement_link(clerk_client, today) -> None:
+    member = make_member(member_no=1042)
+    loan = make_loan(member, loaned_on=date(2026, 10, 25))
+    make_charge(member, EntryKind.FINE, 1500)
+    body = clerk_client.get("/uyeler/1042/").content.decode()
+    assert loan.copy.barcode in body and loan.copy.book.title in body
+    assert "08.11.2026" in body
+    assert f'action="/odunc/{loan.pk}/uzat/"' in body
+    assert 'name="next" value="/uyeler/1042/"' in body
+    assert "Borç: 15,00 TL" in body
+    assert 'href="/borclar/1042/"' in body
+
+
+def test_tc53_deactivation_form_only_for_active_members(clerk_client) -> None:
+    """User decision 2026-11-01: hidden for inactive and anonymized members."""
+    make_member("Aktif", member_no=1)
+    make_member("Pasif", member_no=2, is_active=False)
+    make_member(member_no=3, anonymized=True)
+    assert _deactivate_form(1) in clerk_client.get("/uyeler/1/").content.decode()
+    assert _deactivate_form(2) not in clerk_client.get("/uyeler/2/").content.decode()
+    assert _deactivate_form(3) not in clerk_client.get("/uyeler/3/").content.decode()
+
+
+def test_tc53_deactivation_view(clerk_client, today) -> None:
+    make_member(member_no=1042)
+    response = clerk_client.post("/uyeler/1042/pasif/")
+    assert response.status_code == 302
+    assert response["Location"] == "/uyeler/1042/"
+    member = Member.objects.get(member_no=1042)
+    assert (member.is_active, member.deactivated_on) == (False, date(2026, 11, 1))
+    assert "Üye pasifleştirildi" in clerk_client.get("/uyeler/1042/").content.decode()
+
+
+def test_tc286_debt_needs_the_confirmation_checkbox(clerk_client, today) -> None:
+    member = make_member(member_no=1042)
+    make_charge(member, EntryKind.FINE, 2000)
+    page = clerk_client.get("/uyeler/1042/").content.decode()
+    assert 'name="confirm_debt"' not in page
+    response = clerk_client.post("/uyeler/1042/pasif/")
+    assert response.status_code == 200
+    body = response.content.decode()
+    assert "Üyenin 20,00 TL borcu var; onaylayarak pasifleştirin" in body
+    assert 'type="checkbox" name="confirm_debt"' in body
+    assert Member.objects.get(member_no=1042).is_active
+    response = clerk_client.post("/uyeler/1042/pasif/", {"confirm_debt": "on"})
+    assert response.status_code == 302
+    assert not Member.objects.get(member_no=1042).is_active
+
+
+def test_tc54_open_loan_refusal_reshows_the_detail(clerk_client, today) -> None:
+    member = make_member(member_no=1042)
+    make_loan(member)
+    response = clerk_client.post("/uyeler/1042/pasif/", {"confirm_debt": "on"})
+    assert response.status_code == 200
+    assert "Açık ödüncü olan üye pasifleştirilemez" in response.content.decode()
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"is_active": False, "deactivated_on": date(2025, 5, 1)}, "Üye zaten pasif"),
+        ({"anonymized": True, "deactivated_on": date(2025, 5, 1)}, "Anonimleştirilmiş üye pasifleştirilemez"),
+    ],
+)
+def test_tc53_guard_view_refuses_inactive_and_anonymized(clerk_client, today, kwargs, message) -> None:
+    make_member(member_no=9, **kwargs)
+    response = clerk_client.post("/uyeler/9/pasif/")
+    assert response.status_code == 200
+    assert message in response.content.decode()
+    assert Member.objects.get(member_no=9).deactivated_on == date(2025, 5, 1)
+
+
+def test_deactivation_unknown_member_is_404(clerk_client) -> None:
+    assert clerk_client.post("/uyeler/999/pasif/").status_code == 404

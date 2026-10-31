@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone as dt_timezone
+from datetime import date, datetime, timedelta, timezone as dt_timezone
 
 from django.db.models import Max
 
 from accounts.models import Role, StaffUser
+from billing.models import EntryKind, LedgerEntry
 from catalog.models import Book, Copy, CopyStatus
+from circulation.models import CloseReason, Loan
 from members.models import Member
 
 # Ten characters or more and not a common password (KL-9).
@@ -97,3 +99,87 @@ def make_copy(
     copy.barcode = f"{copy.pk:08d}"
     copy.save(update_fields=["barcode"])
     return copy
+
+
+# The account that owns rows built by the factories below unless a test
+# names one; a name no test uses for its own staff.
+FACTORY_STAFF = "kayit.test"
+
+
+def _factory_staff() -> StaffUser:
+    staff = StaffUser.objects.filter(username=FACTORY_STAFF).first()
+    return staff or make_staff(FACTORY_STAFF, full_name="Kayıt Testi")
+
+
+_COPY_STATUS_AFTER = {
+    None: CopyStatus.ON_LOAN,
+    CloseReason.LOST: CopyStatus.LOST,
+    CloseReason.DAMAGED: CopyStatus.DAMAGED,
+}
+
+
+def make_loan(
+    member: Member | None = None,
+    copy: Copy | None = None,
+    *,
+    loaned_on: date = date(2026, 11, 2),
+    due_on: date | None = None,
+    renewed_on: date | None = None,
+    daily_fine_kurus: int = 500,
+    fine_cap_kurus: int = 15000,
+    closed_on: date | None = None,
+    close_reason: CloseReason | None = None,
+    copy_found_on: date | None = None,
+    created_by: StaffUser | None = None,
+) -> Loan:
+    """Create a loan directly (no service, no audit).
+
+    ``due_on`` defaults to ``loaned_on`` + 14 days. The copy's status follows
+    the loan: ON_LOAN while open, LOST or DAMAGED after such a close; a
+    RETURNED loan leaves it unchanged.
+    """
+    member = member if member is not None else make_member()
+    copy = copy or make_copy()
+    if close_reason is not None and closed_on is None:
+        closed_on = due_on or loaned_on + timedelta(days=14)
+    loan = Loan.objects.create(
+        copy=copy,
+        member=member,
+        loaned_on=loaned_on,
+        due_on=due_on or loaned_on + timedelta(days=14),
+        renewed_on=renewed_on,
+        daily_fine_kurus=daily_fine_kurus,
+        fine_cap_kurus=fine_cap_kurus,
+        closed_on=closed_on,
+        close_reason=close_reason,
+        closed_by=None if closed_on is None else (created_by or _factory_staff()),
+        copy_found_on=copy_found_on,
+        created_by=created_by or _factory_staff(),
+    )
+    status = _COPY_STATUS_AFTER.get(close_reason)
+    if status is not None and copy.status != status:
+        copy.status = status
+        copy.save(update_fields=["status"])
+    return loan
+
+
+def make_charge(
+    member: Member,
+    kind: EntryKind = EntryKind.FINE,
+    amount_kurus: int = 1500,
+    *,
+    loan: Loan | None = None,
+    created_by: StaffUser | None = None,
+    created_at: datetime | None = None,
+) -> LedgerEntry:
+    """Create a FINE or FEE directly (no allocation, no audit)."""
+    if kind not in (EntryKind.FINE, EntryKind.FEE):
+        raise ValueError("make_charge builds FINE and FEE entries only")
+    return LedgerEntry.objects.create(
+        member=member,
+        loan=loan,
+        kind=kind,
+        amount_kurus=amount_kurus,
+        created_by=created_by or _factory_staff(),
+        created_at=created_at,
+    )

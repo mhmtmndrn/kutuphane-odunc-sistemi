@@ -25,7 +25,7 @@
           {% for copy in copies %}
             <tr>
               <td>{% if copy.status != "WITHDRAWN" %}<input type="checkbox" name="copy_ids" value="{{ copy.pk }}" id="copy-{{ copy.pk }}" aria-label="{{ copy.barcode }}">{% endif %}</td>
-              <td>{{ copy.barcode }}</td>
+              <td><a href="{% url 'circulation:copy' copy.barcode %}">{{ copy.barcode }}</a></td>
               <td>{{ copy.get_status_display }}</td>
             </tr>
           {% endfor %}
