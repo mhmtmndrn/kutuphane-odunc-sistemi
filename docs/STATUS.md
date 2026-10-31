@@ -21,7 +21,7 @@
 `eng-process` faz 5'e devam et:
 
 1. **`feature/foundation` PR'ı (#1):** İnceleme düzeltmeleri yapıldı. Yerelde Windows'ta `git pull`, `pip install -r requirements-dev.txt`, `python manage.py migrate`, `python -m pytest -q` yeniden çalıştırılır (R-15; beklenen 219 passed); ardından kullanıcı birleştirir.
-   - PR #1'deki "Kullanıcıya sorular" yorumunda görev dışı gözlemler var (ör. ADR-0051'in plan §3 ve architecture §9 ADR listelerine işlenmesi); karar kullanıcının.
+   - PR #1'deki inceleme düzeltmeleri özet yorumunda görev dışı gözlemler var (ör. ADR-0051'in plan §3, architecture §9 ve ADR-0009 "Ek kararlar" satırına işlenmesi); dokunulmadı, karar kullanıcının.
 2. **Onay bekleyen küçük temizlik:** Yerel `worktree-agent-a4c3b8e184eb5859a` dalı `main` ile aynı yerde (`c8a7a0b`), silinebilir (`git branch -d`). Boş `.claude/worktrees/agent-a4c3b8e184eb5859a` klasörü, oturum tuttuğu için silinemedi ("Permission denied"); oturum kapandıktan sonra elle silinir. Agent worktree'si git'ten kaldırıldı, `.gitignore`'a `.claude/worktrees/` eklendi (`4024c6b`).
 3. **Sonraki grup:** `feature/catalog-members` (G05–G08) istemi; o grubun açık noktaları istemden önce kullanıcıya sorulur. `tests/test_authorization.py` §4.1'deki 19 yönetici yolunun hepsini zaten içerir; yeni yönetici yolu eklendiği anda ADMIN koruması denetlenir (D3).
    - Genel sıra: G01 → G08, **G10 → G09 → G11** → G12 (KL-39), G13…G19.
