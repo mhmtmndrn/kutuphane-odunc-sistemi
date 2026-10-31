@@ -459,8 +459,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - KL-45: Pasifleştirilen personelin açık oturumu sonraki istekte kapanır; ek kod yazılmaz, TC-237 davranışı sabitler.
   - `tests/test_authorization.py` iki şeyi doğrular:
     - URL çözücüdeki bütün desenler gezilir ve `required_role == ADMIN` olan her view'a görevli oturumuyla GET ve POST istekleri gönderilir. Desen argümanları `1` ya da `"00000001"` ile doldurulur. Her istek için 403 beklenir.
-    - §4.1'deki yönetici yollarının listesi, testteki sabit bir listeyle karşılaştırılır. Böylece yanlışlıkla işaretsiz kalan bir yönetici view'ı da yakalanır.
-  - Bu test sonraki görevlerin URL'lerini de kapsar. Her görev kendi yönetici yollarını sabit listeye ekler.
+    - §4.1'deki 19 yönetici yolunun hepsi testteki sabit listededir. `Role.ADMIN` ile korunan yollar, bu listenin bugün var olan yollarla kesişimine eşit olmalıdır. Böylece yanlışlıkla işaretsiz kalan bir yönetici view'ı da yakalanır.
+  - Bu test sonraki görevlerin URL'lerini de kapsar: bir görev §4.1'deki yönetici yolunu eklediği anda yol kontrol edilir ve ADMIN koruması yoksa test düşer; listeye bir şey eklemek gerekmez. Görevliye açık kalması gereken `/parola/`, `/nushalar/<barcode>/bulundu/` ve `/uyeler/<no>/aktif/` de var oldukları anda görevli rolüyle kontrol edilir.
 - **Testler:** TC-27…TC-33, TC-237, TC-248…TC-252 (13 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest accounts tests/test_authorization.py -q` → hepsi geçer.
 - [x] Tamamlandı
@@ -1005,7 +1005,7 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - Rol aynıysa `set_role`, hesap zaten pasifse `deactivate_staff` hiçbir şey yazmaz. Personeli yeniden aktifleştirme §4.1'de olmadığı için yapılmadı.
   - Hesap oluşturma formu parolayı iki kez ister; yöneticinin parola sıfırlama formu tek alandır. `staff_form.html` hem oluşturma hem ayrıntı ekranıdır.
   - `accounts` URL'leri `accounts` ad alanındadır (`accounts:login` vb.); `LOGIN_URL` yine `/giris/`.
-  - TC-32 URL adları yerine URL desenlerini (`personel/<int:pk>/pasif/` gibi) sabit kümeyle karşılaştırır; §4.1 ile birebir eşlenir. Küme şimdilik 19 yolun mevcut 11'idir; kalan 8 yol (saklama listesi, dört nüsha işlemi, af, para iadesi, elle iptal) kendi görevlerinde eklenir. Ek test: `giris/` ve `cikis/` dışındaki her yolda `required_role` bulunmalı.
+  - TC-32 URL adları yerine URL desenlerini (`personel/<int:pk>/pasif/` gibi) sabit kümeyle karşılaştırır; §4.1 ile birebir eşlenir. Küme §4.1'deki 19 yolun hepsidir; test ADMIN korumalı yolları kümenin var olan yollarla kesişimiyle karşılaştırır, böylece sonraki görevlerin yönetici yolları eklendikleri anda denetlenir (inceleme D3, kullanıcı kararı 2026-10-31). Ek test: `giris/` ve `cikis/` dışındaki her yolda `required_role` bulunmalı.
 - **2026-10-31, G02–G04 — uygulayıcının seçtiği kullanıcıya görünen metinler (inceleme D2):** SRS'te, KL'de ya da ADR'de olmayan bütün metinler aşağıdadır. Kullanıcı 2026-10-31'de PR #1 incelemesinde hepsini onayladı; metin değiştirilmedi. SRS/KL/ADR'den gelen metinler (kilit mesajı, "En az bir gün açık kalmalı", "En az bir aktif yönetici kalmalı", "Kendi hesabınızı pasifleştiremezsiniz", "Parolanız değiştirildi", yedek ve dışa aktarma uyarıları, "Yönetici"/"Görevli") ve Django'nun kendi Türkçe metinleri (giriş ve parola değiştirme formu hataları, parola doğrulayıcı mesajları) listede yoktur.
   - "Personel girişi": `templates/registration/login.html`, sayfa başlığı.
   - "Giriş yap": `templates/registration/login.html`, düğme.

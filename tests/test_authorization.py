@@ -1,10 +1,10 @@
 """NFR-07: every admin view refuses a clerk (G04: TC-31, TC-32, TC-33).
 
 The admin views are found from the URL resolver through the ``required_role``
-attribute that ``require_role`` writes (plan G02). The resolver's set is also
-compared with a fixed list from plan §4.1, so an admin view that lost its
-decorator is caught. Every later task adds its admin routes to
-``EXPECTED_ADMIN_ROUTES``.
+attribute that ``require_role`` writes (plan G02). ``EXPECTED_ADMIN_ROUTES``
+holds all 19 admin routes of plan §4.1, including those that later tasks add.
+The ADMIN-guarded routes must equal the expected routes that exist today, so
+an admin route added later without the ADMIN guard fails TC-32.
 """
 
 from __future__ import annotations
@@ -22,10 +22,8 @@ from tests.support.factories import make_staff
 
 pytestmark = pytest.mark.django_db
 
-# Plan §4.1 admin routes that exist so far. The full list has 19 entries; the
-# other eight arrive with their tasks: uyeler/saklama/,
-# nushalar/<str:barcode>/{kayip,hasarli,onarildi,kayittan-dus}/ and
-# borclar/<int:member_no>/{af,para-iadesi,iptal}/.
+# All 19 admin routes of plan §4.1. Routes of later tasks are checked as
+# soon as they exist.
 EXPECTED_ADMIN_ROUTES = {
     "personel/",
     "personel/yeni/",
@@ -38,13 +36,26 @@ EXPECTED_ADMIN_ROUTES = {
     "kapali-gunler/tarih/",
     "kapali-gunler/tarih/<int:pk>/sil/",
     "denetim/",
+    "uyeler/saklama/",
+    "nushalar/<str:barcode>/kayip/",
+    "nushalar/<str:barcode>/hasarli/",
+    "nushalar/<str:barcode>/onarildi/",
+    "nushalar/<str:barcode>/kayittan-dus/",
+    "borclar/<int:member_no>/af/",
+    "borclar/<int:member_no>/para-iadesi/",
+    "borclar/<int:member_no>/iptal/",
 }
 
 # Routes that are deliberately open to every visitor.
 PUBLIC_ROUTES = {"giris/", "cikis/"}
 
-# Staff routes that must stay out of the admin set (TC-32).
-CLERK_ROUTES_NOT_ADMIN = {"parola/"}
+# Staff routes of plan §4.1 that must stay out of the admin set (TC-32);
+# checked as soon as they exist.
+CLERK_ROUTES_NOT_ADMIN = {
+    "parola/",
+    "nushalar/<str:barcode>/bulundu/",
+    "uyeler/<int:member_no>/aktif/",
+}
 
 _CONVERTER = re.compile(r"<(?:(?P<kind>\w+):)?\w+>")
 _SAMPLE = {"int": "1", "str": "00000001", None: "00000001"}
@@ -102,12 +113,14 @@ def test_tc31_clerk_gets_403_on_every_admin_view(client: Client) -> None:
 
 
 def test_tc32_admin_routes_match_plan_list() -> None:
-    admin_routes = _admin_routes()
-    assert admin_routes == EXPECTED_ADMIN_ROUTES
-    assert not admin_routes & CLERK_ROUTES_NOT_ADMIN
+    assert len(EXPECTED_ADMIN_ROUTES) == 19
+    assert not EXPECTED_ADMIN_ROUTES & CLERK_ROUTES_NOT_ADMIN
     routes = _routes()
-    for route in CLERK_ROUTES_NOT_ADMIN:
-        assert getattr(routes[route], "required_role", None) == Role.CLERK
+    existing = set(routes)
+    admin_routes = _admin_routes()
+    assert admin_routes == EXPECTED_ADMIN_ROUTES & existing
+    for route in CLERK_ROUTES_NOT_ADMIN & existing:
+        assert getattr(routes[route], "required_role", None) == Role.CLERK, route
 
 
 def test_every_non_public_route_is_role_checked() -> None:
