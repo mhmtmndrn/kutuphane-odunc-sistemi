@@ -1,7 +1,7 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-10-31 (faz 5, PR #1 inceleme düzeltmeleri)
-- **Aşama:** eng-process **faz 5**, grup `feature/foundation` (G01–G04) **tamam**, PR #1 inceleme düzeltmeleri (D1–D4 ve küçük kararlar) yapıldı; `main`'e birleştirme kullanıcı onayı bekliyor.
+- **Güncelleme:** 2026-10-31 (faz 5, `feature/catalog-members` başladı)
+- **Aşama:** eng-process **faz 5**. PR #1 birleştirildi (`main` = `1a93f2d`); grup `feature/foundation` (G01–G04) **kapandı**. Şu anki iş: grup `feature/catalog-members` (G05–G08), bulut oturumunda.
   - **G01:** `69a7b33` (yerel Windows).
   - **G02:** `2af6d70`: personel modeli, giriş, oturum süresi, django-axes kilidi (ADR-0049, ADR-0050), `require_role`.
   - **G03:** `91cbb1c`: saat, para, ayarlar, kapalı günler, denetim kaydı, görev kaydı, yönetici ana sayfası.
@@ -10,7 +10,7 @@
   - Sonuç (bulut, Linux, Python 3.11.18): `python -m pytest -q` → 219 passed; `makemigrations --check --dry-run` → "No changes detected"; `check --deploy` → "no issues (3 silenced)" (ADR-0051); `accounts` ve `administration` dal kapsamı toplam %99, `domain.py`, `permissions.py`, `middleware.py` %100.
   - Yerel Windows (R-15, Python 3.11.9, 2026-10-31): `python -m pytest -q` → 219 passed (`PYTEST_DEBUG_TEMPROOT` scratchpad'de); `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı toplam %98, `domain.py`, `permissions.py`, `middleware.py` %100, `accounts/services.py` %96, `administration/services.py` %100.
   - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G02–G04 kutuları kanıtıyla işaretli; uygulama ayrıntıları ve sapmalar §11'de. Test planında 46 TC "Geçti".
-- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`c8a7a0b`) ve `feature/foundation`.
+- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`1a93f2d`, PR #1 birleştirmesi), `feature/foundation` (kapandı) ve `feature/catalog-members` (çalışılan).
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
 - **Bulut oturumu açma yolu:** Bulut oturumlarını kullanıcı kendisi açar, Claude açılış istemini hazırlar (KL-38, plan §11). Agent aracının `isolation: "remote"` modu kullanılmaz, çünkü yerelde çalışıyor.
   - **Tarayıcı (önerilen):** claude.ai/code. İlk seferde GitHub bağlanır ve Claude GitHub App özel repoya kurulur. Repo `mhmtmndrn/kutuphane-odunc-sistemi`, dal `feature/foundation`, ortam **Default** (Trusted ağ; pip için PyPI gerekir) seçilir; istem kutuya yapıştırılıp gönderilir.
@@ -21,10 +21,10 @@
 
 `eng-process` faz 5'e devam et:
 
-1. **`feature/foundation` PR'ı (#1):** Yerel doğrulama geçti; kullanıcı merge commit ile birleştirmeyi onayladı (2026-10-31).
+1. **`feature/foundation` PR'ı (#1):** Birleştirildi (merge commit `1a93f2d`); grup kapandı.
    - PR #1 özet yorumundaki görev dışı gözlemler kararlandı: ADR-0051 plan §3'e, architecture §9'a ve ADR-0009 "Ek kararlar" satırına işlendi; `deactivate_staff`'taki ulaşılamayan son yönetici denetimi savunma olarak kalır (§11); diğerleri (§11 metin tekrarı, `TLField` boş dalı, `get_settings()` yazması, `type="date"` görünümü) olduğu gibi kalır.
 2. **Onay bekleyen küçük temizlik:** Yerel `worktree-agent-a4c3b8e184eb5859a` dalı `main` ile aynı yerde (`c8a7a0b`), silinebilir (`git branch -d`). Boş `.claude/worktrees/agent-a4c3b8e184eb5859a` klasörü, oturum tuttuğu için silinemedi ("Permission denied"); oturum kapandıktan sonra elle silinir. Agent worktree'si git'ten kaldırıldı, `.gitignore`'a `.claude/worktrees/` eklendi (`4024c6b`).
-3. **Sonraki grup:** `feature/catalog-members` (G05–G08) istemi; o grubun açık noktaları istemden önce kullanıcıya sorulur. `tests/test_authorization.py` §4.1'deki 19 yönetici yolunun hepsini zaten içerir; yeni yönetici yolu eklendiği anda ADMIN koruması denetlenir (D3).
+3. **Şu anki grup:** `feature/catalog-members` (G05–G08), bulut oturumunda; oturum grubun sonunda PR açar ve durur. `tests/test_authorization.py` §4.1'deki 19 yönetici yolunun hepsini zaten içerir; yeni yönetici yolu eklendiği anda ADMIN koruması denetlenir (D3).
    - Genel sıra: G01 → G08, **G10 → G09 → G11** → G12 (KL-39), G13…G19.
    - Not: Kum havuzu pytest'in geçici klasörünü engellerse `PYTEST_DEBUG_TEMPROOT` yalnız kabukta scratchpad'e yönlendirilir.
 
