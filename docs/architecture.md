@@ -348,6 +348,7 @@ flowchart TB
 | [0048](decisions/0048-cloud-sessions-implementation.md) | Uygulama aşaması bulut oturumlarıyla, özel GitHub reposundan (süreç kararı) |
 | [0049](decisions/0049-lockout-response-429.md) | Kilitli hesaba 429, giriş şablonu ve kilit mesajı |
 | [0050](decisions/0050-lockout-cooloff-not-reset.md) | Kilitliyken denemeler kilit süresini uzatmaz |
+| [0051](decisions/0051-axes-w006-silenced.md) | `axes.W006` susturulur; kilit yalnız kullanıcı adına göre |
 
 ## 10. Riskler ve teknik borç
 

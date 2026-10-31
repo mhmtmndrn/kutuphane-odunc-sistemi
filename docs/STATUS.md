@@ -7,7 +7,8 @@
   - **G03:** `91cbb1c`: saat, para, ayarlar, kapalı günler, denetim kaydı, görev kaydı, yönetici ana sayfası.
   - **G04:** `b2047af`: personel yönetimi, zorunlu parola değişikliği, NFR-07 yetki taraması (`tests/test_authorization.py`). Ardından `4ddac8e` küçük şablon düzeltmesi.
   - **İnceleme düzeltmeleri:** `8defa25` (ADR-0051, onaylı metin listesi), `f1edc59` (TC-32 bütün 19 yönetici yolu), `4610cde` (kural ihlalinde 200), `4dca151` (boşluklu kütüphane adı).
-  - Sonuç (bulut, Linux, Python 3.11.18): `python -m pytest -q` → 219 passed; `makemigrations --check --dry-run` → "No changes detected"; `check --deploy` → "no issues (3 silenced)" (ADR-0051); `accounts` ve `administration` dal kapsamı toplam %99, `domain.py`, `permissions.py`, `middleware.py` %100. **Yerel Windows koşusu (R-15) birleştirmeden önce yeniden yapılmalı.**
+  - Sonuç (bulut, Linux, Python 3.11.18): `python -m pytest -q` → 219 passed; `makemigrations --check --dry-run` → "No changes detected"; `check --deploy` → "no issues (3 silenced)" (ADR-0051); `accounts` ve `administration` dal kapsamı toplam %99, `domain.py`, `permissions.py`, `middleware.py` %100.
+  - Yerel Windows (R-15, Python 3.11.9, 2026-10-31): `python -m pytest -q` → 219 passed (`PYTEST_DEBUG_TEMPROOT` scratchpad'de); `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı toplam %98, `domain.py`, `permissions.py`, `middleware.py` %100, `accounts/services.py` %96, `administration/services.py` %100.
   - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G02–G04 kutuları kanıtıyla işaretli; uygulama ayrıntıları ve sapmalar §11'de. Test planında 46 TC "Geçti".
 - **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`c8a7a0b`) ve `feature/foundation`.
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
@@ -20,8 +21,8 @@
 
 `eng-process` faz 5'e devam et:
 
-1. **`feature/foundation` PR'ı (#1):** İnceleme düzeltmeleri yapıldı. Yerelde Windows'ta `git pull`, `pip install -r requirements-dev.txt`, `python manage.py migrate`, `python -m pytest -q` yeniden çalıştırılır (R-15; beklenen 219 passed); ardından kullanıcı birleştirir.
-   - PR #1'deki inceleme düzeltmeleri özet yorumunda görev dışı gözlemler var (ör. ADR-0051'in plan §3, architecture §9 ve ADR-0009 "Ek kararlar" satırına işlenmesi); dokunulmadı, karar kullanıcının.
+1. **`feature/foundation` PR'ı (#1):** Yerel doğrulama geçti; kullanıcı merge commit ile birleştirmeyi onayladı (2026-10-31).
+   - PR #1 özet yorumundaki görev dışı gözlemler kararlandı: ADR-0051 plan §3'e, architecture §9'a ve ADR-0009 "Ek kararlar" satırına işlendi; `deactivate_staff`'taki ulaşılamayan son yönetici denetimi savunma olarak kalır (§11); diğerleri (§11 metin tekrarı, `TLField` boş dalı, `get_settings()` yazması, `type="date"` görünümü) olduğu gibi kalır.
 2. **Onay bekleyen küçük temizlik:** Yerel `worktree-agent-a4c3b8e184eb5859a` dalı `main` ile aynı yerde (`c8a7a0b`), silinebilir (`git branch -d`). Boş `.claude/worktrees/agent-a4c3b8e184eb5859a` klasörü, oturum tuttuğu için silinemedi ("Permission denied"); oturum kapandıktan sonra elle silinir. Agent worktree'si git'ten kaldırıldı, `.gitignore`'a `.claude/worktrees/` eklendi (`4024c6b`).
 3. **Sonraki grup:** `feature/catalog-members` (G05–G08) istemi; o grubun açık noktaları istemden önce kullanıcıya sorulur. `tests/test_authorization.py` §4.1'deki 19 yönetici yolunun hepsini zaten içerir; yeni yönetici yolu eklendiği anda ADMIN koruması denetlenir (D3).
    - Genel sıra: G01 → G08, **G10 → G09 → G11** → G12 (KL-39), G13…G19.
@@ -39,12 +40,16 @@
 
 - **SRS:** [docs/srs.md](srs.md), onaylı. 35 FR (24 Must, 11 Should), 7 Won't, 13 NFR, 35 AC.
 - **Tasarım:** [architecture.md](architecture.md) (§3'e KL-1, KL-2, KL-22 işlendi) ve [data-design.md](data-design.md) (I6'ya ADR-0018 istisnası).
-- **ADR'ler:** [0001–0048](decisions/), hepsi kabul edildi; özet plan §3. 0048 süreç kararıdır.
+- **ADR'ler:** [0001–0051](decisions/), hepsi kabul edildi; özet plan §3. 0048 süreç kararıdır.
 - **Plan:** §3 kararlar ve KL-1…KL-46; §4 görevler G01–G19 (her birinde TC listesi); §5 test planı bağlantısı; §7 izlenebilirlik (48 gereksinim → tasarım, görev, TC); §8 tutarlılık (T-01…T-24) ve §8.2 test taslağının 27 sorusunun karşılığı; §9 commit noktaları; §10 onay.
 - **Test planı:** [docs/test-plan.md](test-plan.md): 319 TC (TC-01…TC-319), seviyeler, teknikler, kapsam hedefleri, giriş-çıkış ölçütleri, hata kaydı (§8, KL-46). Elle TC'ler: TC-223, TC-225…TC-234, TC-319 (faz 6).
 - **Araştırma:** [ISBN meta veri](research/2026-10-31-isbn-meta-veri-apileri.md), [demo veri seti](research/2026-10-31-demo-kitap-veri-seti.md).
 
 ## Son güncellemeden bu yana yapılanlar
+
+- **2026-10-31, PR #1 yerel doğrulama ve kapanış (yerel Windows):**
+  - R-15 koşusu geçti (yukarıdaki sonuçlar). İlk koşudaki 15 `test_prod_settings.py` hatası kum havuzunun pytest geçici klasörüne verdiği `PermissionError`'dı, kod hatası değil.
+  - Görev dışı gözlemler kullanıcıya soruldu; kararlar "Sıradaki adım" 1'de.
 
 - **2026-10-31, PR #1 inceleme düzeltmeleri (bulut oturumu):**
   - D1: ADR-0051 (`axes.W006` susturulur); plan §11 ve `base.py` yorumundan bağlandı; G01 doğrulamasına "(3 silenced)" notu.
