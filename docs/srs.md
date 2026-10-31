@@ -1,7 +1,7 @@
 # Yazılım Gereksinim Belirtimi (SRS-lite): Kütüphane Ödünç Sistemi
 
 - **Güncelleme:** 2026-10-31
-- **Durum:** Onaylandı (2026-10-31). Faz 2 değişiklikleri (FR-30 Won't, AC-29) kullanıcı onayıyla işlendi (2026-10-31). Faz 3 değişiklikleri (FR-04 ISBN kuralı, FR-37, FR-38, AC-25 notu, açık soru 3 ve 4) kullanıcı onayıyla işlendi (2026-10-31).
+- **Durum:** Onaylandı (2026-10-31). Faz 2 değişiklikleri (FR-30 Won't, AC-29) kullanıcı onayıyla işlendi (2026-10-31). Faz 3 değişiklikleri (FR-04 ISBN kuralı, FR-37, FR-38, AC-25 notu, açık soru 3 ve 4) kullanıcı onayıyla işlendi (2026-10-31). Faz 4 değişiklikleri (FR-23 kütüphane adı, FR-24 açık gün kuralı, FR-26 para iadesi ve raf nüshası, FR-39, AC-24, AC-31, AC-32, sözlük) kullanıcı kararlarıyla işlendi (2026-10-31; ADR-0026…0035).
 - **İlgili dokümanlar:** [Görev planı](plans/2026-10-31-kutuphane-odunc-sistemi.md)
 
 ## 1. Amaç ve kapsam
@@ -54,15 +54,16 @@ Küçük bir kütüphanenin personeli için web tabanlı ödünç sistemi. Üyel
 | FR-20 | Sistem geciken ödünçleri üye, telefon, kitap, son tarih, gecikme günü ve birikmiş cezayla listelemeli. | Must | Faz 1 cevabı (rapor) | AC-20 |
 | FR-21 | Sistem yöneticinin personel hesabı oluşturmasını, rol atamasını (Yönetici, Görevli), hesabı pasifleştirmesini ve parolayı sıfırlamasını sağlamalı. | Must | Faz 1 cevapları (roller; kişisel hesap) | AC-21 |
 | FR-22 | Sistem yönetici işlemlerini (af, bedel, ayarlar, kapalı günler, personel yönetimi) sunucu tarafında görevliye kapatmalı. | Must | Faz 1 cevabı (roller) | AC-22 |
-| FR-23 | Sistem yöneticinin şu ayarları değiştirmesini sağlamalı: ödünç süresi, aynı anda ödünç limiti, günlük ceza, ödünç başına ceza üst sınırı, borç eşiği, saklama süresi. | Must | Faz 1 cevapları | AC-23 |
-| FR-24 | Sistem yöneticinin haftalık kapalı günleri ve tek tek kapalı tarihleri tanımlamasını sağlamalı. | Must | Faz 1 cevabı (kapalı günler) | AC-24 |
+| FR-23 | Sistem yöneticinin şu ayarları değiştirmesini sağlamalı: ödünç süresi, aynı anda ödünç limiti, günlük ceza, ödünç başına ceza üst sınırı, borç eşiği, saklama süresi, kütüphane adı (etiket ve kartta basılır). | Must | Faz 1 cevapları; faz 4 (ADR-0035) | AC-23 |
+| FR-24 | Sistem yöneticinin haftalık kapalı günleri ve tek tek kapalı tarihleri tanımlamasını sağlamalı. Haftanın en az bir günü açık kalmalı; yedi günü de kapatan kayıt reddedilmeli. | Must | Faz 1 cevabı (kapalı günler); faz 4 (ADR-0028) | AC-24 |
 | FR-25 | Sistem saklama süresi dolan kişisel verileri günlük bir görevle anonimleştirmeli: pasifleştirmenin üzerinden saklama süresi geçen üyeler ve iadesinin üzerinden saklama süresi geçen ödünçlerin üye bağı. Tutarlar ve istatistik için gerekli alanlar kalmalı. | Must | Faz 1 cevabı (ayarlı anonimleştirme) | AC-25 |
-| FR-26 | Sistem şu işlemleri işlemi yapan personel ve zaman damgasıyla denetim kaydına yazmalı: ödeme, af, bedel, kayıp/hasar/bulundu, ayar değişikliği, kapalı gün değişikliği, personel hesabı değişikliği. | Must | Faz 1 cevapları (denetim izi; roller) | AC-26 |
+| FR-26 | Sistem şu işlemleri işlemi yapan personel ve zaman damgasıyla denetim kaydına yazmalı: ödeme, af, bedel, para iadesi, kayıp/hasar/bulundu/onarıldı/kayıttan düşme (raftaki nüsha dahil), ayar değişikliği, kapalı gün değişikliği, personel hesabı değişikliği. | Must | Faz 1 cevapları (denetim izi; roller); faz 4 (ADR-0026, ADR-0027) | AC-26 |
 | FR-27 | Sistem personel girişini kişisel hesap ve parolayla yapmalı; 30 dakika işlem yapılmazsa oturumu kapatmalı; 5 ardışık hatalı denemede hesabı geçici olarak kilitlemeli. | Must | Faz 1 cevabı (giriş) | AC-27 |
 | FR-28 | Sistem veritabanını her gün otomatik olarak harici diske yedeklemeli, son 30 günün yedeklerini tutmalı ve geri yükleme adımını belgelemeli. | Must | Faz 1 cevabı (yedekleme) | AC-28 |
 | FR-29 | Sistem geliştirme ve demo için tohum veri yükleyen bir komut sunmalı; üye verisi her durumda sentetik olmalı, kitap verisi lisansı uygun açık bir veri setinden ya da sentetik olmalı. | Should | Faz 1 cevabı (veri yok; veri seti ya da sentetik) | AC-29 |
 | FR-37 | Sistem haftada bir, son günlük yedekten parolayla şifrelenmiş bir dışa aktarma dosyası üretmeli ve şifreli dosyadan geri yüklemeyi sağlamalı. Son dışa aktarmanın tarihi yönetici arayüzünde görünmeli; 7 günden eskiyse uyarı gösterilmeli. | Should | Faz 3 (ADR-0006, ADR-0011; R-04) | AC-30 |
 | FR-38 | Sistem seçilen üyeler için üye no'yu Code 128 barkodla içeren, toplu basılacak bir üye kartı PDF'i üretmeli. | Should | Faz 3 (ADR-0025; AC-11'deki kart okutma) | AC-31 |
+| FR-39 | Sistem raftaki bir nüshanın yalnız yönetici tarafından Kayıp, Hasarlı ya da Kayıttan düşmüş, kayıp bir nüshanın da Kayıttan düşmüş işaretlenmesini sağlamalı. Bu işaretlemede ödünç, ceza ya da bedel oluşmamalı. | Should | Faz 4 (ADR-0026; envanter farkları) | AC-32 |
 | FR-30 | ISBN girilen kitabın meta verisini dış bir kaynaktan otomatik doldurma. (Düşürüldü 2026-10-31: Could → Won't) | Won't | Faz 2 ölçümü: en iyi ücretsiz kaynakta (Open Library) başlık+yazar isabeti %52 < %60 eşiği ([rapor](research/2026-10-31-isbn-meta-veri-apileri.md)); kullanıcı kararı. KYGM Z39.50 erişimi doğrulanırsa yeniden ele alınabilir (açık soru 8). | – |
 | FR-31 | Rezervasyon ve bekleme kuyruğu. | Won't | Faz 1 cevabı | – |
 | FR-32 | Tahsilat, popüler kitap ve üye ödünç geçmişi raporları. | Won't | Faz 1 cevabı (yalnız geciken ödünçler) | – |
@@ -378,6 +379,11 @@ Senaryo: Tek tarih kapalı gün
   Diyelim ki 2027-10-29 (cuma) kapalı tarih olarak tanımlı ve pazar günleri kapalı
   Eğer ki hesaplanan son tarih 2027-10-29 olursa
   O zaman son tarih 2027-10-30 (cumartesi) olur
+
+Senaryo: Bütün hafta günleri kapatılamaz
+  Diyelim ki pazartesiden cumartesiye kadar bütün günler haftalık kapalı
+  Eğer ki yönetici pazar gününü de kapalı yapmaya çalışırsa
+  O zaman kayıt yapılmaz ve "En az bir gün açık kalmalı" mesajı görünür
 ```
 
 ### AC-25 (FR-25)
@@ -472,6 +478,24 @@ Senaryo: Üye kartı PDF'i
   Eğer ki personel kart basımı isterse
   O zaman 3 kart içeren bir PDF üretilir
   Ve her karttaki barkod okutulduğunda ilgili üyenin üye no'su okunur
+  Ve kartlarda üyenin adı bulunmaz
+```
+
+### AC-32 (FR-39)
+
+```gherkin
+# language: tr
+Senaryo: Raftaki nüshanın kayıp işaretlenmesi
+  Diyelim ki 00000042 barkodlu nüsha Rafta
+  Eğer ki yönetici nüshayı Kayıp işaretlerse
+  O zaman nüshanın durumu Kayıp olur
+  Ve hiçbir üyenin borcu değişmez
+  Ve denetim kaydında işlem, nüsha, yönetici ve zaman damgası görünür
+
+Senaryo: Görevli raftaki nüshayı işaretleyemez
+  Diyelim ki görevli oturum açmış ve 00000042 barkodlu nüsha Rafta
+  Eğer ki görevli nüshayı Kayıttan düşmüş işaretlemeye çalışırsa
+  O zaman istek 403 ile reddedilir ve nüshanın durumu Rafta kalır
 ```
 
 ## 7. Kısıtlar
@@ -498,6 +522,8 @@ Senaryo: Üye kartı PDF'i
 | Borç | Bir üyenin ödenmemiş ceza ve bedel toplamı |
 | Borç eşiği | Borcun bu tutara ulaşması ödünç vermeyi engeller |
 | Af | Yöneticinin gerekçe yazarak borcu silmesi |
+| İade | Yalnız kitap iadesi: ödünçteki nüshanın geri alınması (FR-09) |
+| Para iadesi | Bulunan kayıp nüsha için ödenmiş bedelin üyeye geri verilmesi; borç bakiyesini değiştirmez (ADR-0020, ADR-0027) |
 | Pasif üye | Ayrılmış, ödünç alamayan üye; saklama süresi pasifleştirmeden başlar |
 | Anonimleştirme | Kişisel verinin silinmesi; tutar ve sayımlar kalır |
 | Görevli / Yönetici | Personel rolleri; ayrım bölüm 2'de |

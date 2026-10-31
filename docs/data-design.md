@@ -88,8 +88,9 @@ Ortak kurallar:
 | | fine_cap_kurus | int | NOT NULL, CHECK ≥ 0 | Varsayılan 15000 |
 | | debt_threshold_kurus | int | NOT NULL, CHECK > 0 | Varsayılan 5000; eşiğe eşit borç engeller |
 | | retention_years | smallint | NOT NULL, CHECK > 0 | Varsayılan 2 (küçük karar 4) |
+| | library_name | varchar(80) | NOT NULL, CHECK <> '' | Varsayılan "Kütüphane"; etiket ve kartta basılır ([ADR-0035](decisions/0035-library-name-setting.md)) |
 | | updated_at, updated_by_id | timestamp, FK staff_user | | |
-| weekly_closed_day | weekday | smallint | UNIQUE, CHECK 0–6 | 0 = pazartesi (Python `weekday()`) |
+| weekly_closed_day | weekday | smallint | UNIQUE, CHECK 0–6 | 0 = pazartesi (Python `weekday()`). En fazla 6 satır: yedinci gün servis katmanında reddedilir ([ADR-0028](decisions/0028-open-weekday-rule-shift-bound.md)) |
 | closed_date | date | date | UNIQUE | Tek tek kapalı günler |
 | | note | varchar(200) | NULL | |
 
@@ -303,5 +304,5 @@ n_l = 100.000 ödünç, n_c = 20.000 nüsha, n_m = 5.000 üye, e_m = bir üyenin
 ## 9. Tohum veri (FR-29)
 
 - **Kaynaklar ve lisanslar:** Üyeler sentetiktir. Kitaplar Open Library'den gelir (CC0, orta güven; [rapor](research/2026-10-31-demo-kitap-veri-seti.md)) ya da sentetiktir. Yalnız bibliyografik alanlar alınır, her kayıtta `source_ol_id` tutulur ve atıf notu konur.
-- **Açık nokta (R-06, faz 4):** Demo setinin boyutu ve seçim/temizlik ölçütü henüz karara bağlanmadı. Kayıtların yaklaşık üçte birinde Türkçe karakter kaybı ve bozuk yayınevi alanı var. Önceki notta geçen 500 kayıtlık alt sınır da teyit edilmedi.
-- NFR-01 ölçümü için tasarım ölçeğine (NFR-02) ulaşan ayrı bir sentetik yük seti gerekir. Üretim yöntemi faz 4'te belirlenecek.
+- **Demo seti:** 300 kayıt, bir kez çekilip filtrelenir ve `seed/books_openlibrary.json` dosyasında tutulur. Yayınevi alınmaz ([ADR-0033](decisions/0033-demo-books-one-time-fetch.md)).
+- **Yük seti:** `load_seed_data --profile load`, NFR-02 ölçeğinde sentetik veri üretir ([ADR-0031](decisions/0031-load-test-stdlib-script.md)).

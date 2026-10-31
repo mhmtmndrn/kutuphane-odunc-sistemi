@@ -2,7 +2,7 @@
 
 - **Tarih:** 2026-10-31
 - **İz:** Tam
-- **Durum:** Faz 1, 2 ve 3 tamamlandı (2026-10-31); sıradaki faz 4 (plan ve onay kapısı)
+- **Durum:** Faz 4 sürüyor. Kararlar alındı (ADR-0026…0035, küçük karar listesi onaylandı, 2026-10-31); görevler, testler, riskler, izlenebilirlik ve kontroller yazılacak.
 
 ## 1. Süreç uyarlaması
 
@@ -137,20 +137,52 @@ Kapsam içi FR sayısı 31 (23 Must, 8 Should), Won't sayısı 7.
 
 - (a) Onaylandı. `pytest`, `pytest-django`, `coverage` ve `argon2-cffi`, ADR-0001 kapsamında sayılır.
 - (b) Onaylandı. Hatırlatmada önce e-posta gönderilir, sonra kayıt yazılır; bedeli nadir bir tekrar (architecture §10).
-- (c) Ortam değişkeni adları, `.libx` scrypt parametreleri ve çıkış kodları (architecture §6): faz 4 karar listesinde.
-- (d) En az bir açık hafta günü kuralı: faz 4'te sorulacak.
+- (c) Onaylandı (faz 4 küçük karar 6).
+- (d) Karara bağlandı: ADR-0028.
 
-**Faz 4'e devreden açık noktalar:**
+**Faz 4 kritik kararları (2026-10-31; faz 3'ten devreden açık noktaların hepsi kapandı):**
 
-- Raftaki nüshayı hasarlı, kayıp ya da kayıttan düşmüş işaretleme SRS'te yok.
-- FR-26 listesine "iade" eklenmeli (ADR-0020).
-- Varsayılan ödünç süresi ve ödünç limiti belirlenmeli (AC-23'teki örnek 14 gün, AC-08'deki örnek 3).
-- Statik dosyaların sunumu belirlenmeli (öneri: Caddy `file_server`).
-- Kart ölçüsü, yerleşimi ve kartta ad bulunup bulunmayacağı belirlenmeli (ADR-0025).
-- Etiket ölçüleri ve barkod okunabilirlik test aracı belirlenmeli (ADR-0014).
-- Demo veri boyutu ve temizlik ölçütü belirlenmeli; 500 kayıtlık alt sınır teyit edilmeli (R-06).
-- NFR-01 yük setinin nasıl üretileceği belirlenmeli.
-- waitress iş parçacığı sayısı belirlenmeli.
+- [ADR-0026](../decisions/0026-shelf-copy-status-marking.md): Raftaki nüsha bedelsiz işaretlenir (FR-39, AC-32).
+- [ADR-0027](../decisions/0027-refund-audit-term.md): Para iadesi FR-26'ya eklenir; "iade" yalnız kitap iadesidir.
+- [ADR-0028](../decisions/0028-open-weekday-rule-shift-bound.md): En az bir açık hafta günü kuralı (FR-24) ve 366 günlük kaydırma sınırı.
+- [ADR-0029](../decisions/0029-static-files-caddy.md): Statik dosyalar Caddy `file_server` ile sunulur.
+- [ADR-0030](../decisions/0030-barcode-decode-test.md): Barkod testi pypdfium2 ve zxing-cpp ile yapılır (yalnız geliştirme bağımlılığı).
+- [ADR-0031](../decisions/0031-load-test-stdlib-script.md): NFR-01 ölçümü stdlib yük betiğiyle yapılır.
+- [ADR-0032](../decisions/0032-member-card-content-reprint.md): Kartta ad bulunmaz; kayıp kart aynı numarayla yeniden basılır.
+- [ADR-0033](../decisions/0033-demo-books-one-time-fetch.md): Demo kitapları bir kez çekilir ve depoda JSON olarak tutulur; 300 kayıt, otomatik filtre (R-06).
+- [ADR-0034](../decisions/0034-project-layout-flat.md): Düz kök klasör yapısı.
+- [ADR-0035](../decisions/0035-library-name-setting.md): Kütüphane adı bir ayar alanıdır (FR-23).
+
+**Faz 4 küçük kararları (onaylandı 2026-10-31):**
+
+1. Varsayılan ödünç süresi 14 gün, aynı anda ödünç limiti 3.
+2. waitress `threads=8`.
+3. Etiket: 70 × 37 mm, A4'te 3×8, üst ve alt boşluk 0,5 mm, yan boşluk 0. İçerik: kütüphane adı, 15 mm yüksekliğinde Code 128 (modül 0,33 mm), 8 haneli kod, başlığın ilk 30 karakteri. Ölçüler `LabelLayout` dataclass'ında parametredir.
+4. Kart: ID-1 (85,6 × 54 mm), A4'te 2×5 = 10 kart, ince gri kesim çizgileri; içerik ADR-0032'deki gibi.
+5. Paylaşılan PDF yardımcısı kökte, app olmayan `pdf/` paketinde: `pdf/sheets.py: render_sheet(items: list[SheetItem], layout: SheetLayout) -> bytes`.
+6. architecture §6.4'teki ortam değişkenleri ve `LIBRARY_STATIC_ROOT`; `.libx` için scrypt n=2^17, r=8, p=1; çıkış kodları 0 başarı, 1 hata, 2 kullanım hatası.
+7. ADR ayrıntıları olduğu gibi onaylandı:
+   - 366 günlük sınır ve hata mesajları (ADR-0028).
+   - `library_name` varchar(80), varsayılan "Kütüphane", "…" ile kısaltma (ADR-0035).
+   - Yük senaryo karışımı %40/20/20/10/10, süre 120 sn (ADR-0031).
+8. Denetim eylemleri: `PAYMENT`, `WAIVER`, `FEE`, `REFUND`, `COPY_LOST`, `COPY_DAMAGED`, `COPY_FOUND`, `COPY_REPAIRED`, `COPY_WITHDRAWN`, `SETTINGS_CHANGED`, `CLOSED_DAY_CHANGED`, `STAFF_CHANGED`. Raftaki nüsha geçişleri aynı kodları kullanır; ayrıntıda `{"from": "ON_SHELF"}` bulunur.
+9. "Bugün"ün tek kaynağı `administration/clock.py: today() -> date` (`timezone.localdate()`). Servisler bunu çağırır, domain'e parametre olarak geçer; testlerde `monkeypatch` ile sabitlenir.
+10. `requirements.txt` ve `requirements-dev.txt` dosyalarında `==` ile sabitleme. Sürümler faz 5'in ilk görevinde PyPI'deki son yamaya göre belirlenir; pip-tools kullanılmaz.
+11. Test düzeni:
+    - Her app'te `tests/test_domain.py`, `tests/test_services.py` ve `tests/test_views.py` dosyaları olur.
+    - `pyproject.toml`'da `DJANGO_SETTINGS_MODULE=library_site.settings.test` tanımlanır ve `slow` işareti kullanılır.
+    - Kapsam: `coverage run --branch -m pytest`, ardından `coverage report --include="*/domain.py" --fail-under=90`.
+    - Test verisi `tests/support/factories.py` içindeki düz fonksiyonlarla kurulur; factory_boy kullanılmaz.
+12. Tohum veri:
+    - `--profile demo`: 300 kitap, kitap başına 1–3 nüsha, 200 üye, 150 açık ödünç (10'u gecikmiş).
+    - `--profile load`: NFR-02 ölçeği.
+    - `--seed 42` ile deterministik; adlar `seed/` altındaki sabit Türkçe ad ve soyad listelerinden üretilir.
+13. Open Library atıf notu, README'nin "Veri kaynakları" bölümüne ve JSON dosyasının `_meta` alanına konur.
+14. Log: `logging` stdout'a yazar, biçim `%(asctime)s %(levelname)s %(name)s %(message)s`. Görev sonuçları ayrıca `job_run` tablosuna yazılır.
+15. URL'ler Türkçe kısa yollardır (`/odunc/`, `/iade/`, `/uyeler/`, `/kitaplar/`, `/nushalar/`, `/borclar/`, `/gecikenler/`, `/ayarlar/`, `/kapali-gunler/`, `/personel/`, `/denetim/`, `/giris/`, `/cikis/`). Tam liste görevlerde yer alır.
+16. Faz 5'te her görev grubu için bir `feature/<ad>` dalı açılır. Commit her görevin sonunda önerilir ve yalnız kullanıcı onayıyla atılır; `main`'e birleştirme de kullanıcı onayıyla yapılır.
+
+Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye No" etiketi bulunur ve kullanım kılavuzuna "adı sor" adımı eklenir.
 
 ## 4. Görevler
 

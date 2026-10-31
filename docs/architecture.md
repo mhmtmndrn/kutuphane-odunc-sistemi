@@ -198,7 +198,7 @@ Hatırlatma pencereleri (küçük karar 6): DUE_SOON için `bugün ∈ [son tari
 
 ## 5. Durum modeli
 
-### 5.1 Nüsha (FR-05, FR-09, FR-15, FR-16)
+### 5.1 Nüsha (FR-05, FR-09, FR-15, FR-16, FR-39)
 
 ```mermaid
 stateDiagram-v2
@@ -207,13 +207,17 @@ stateDiagram-v2
   ON_LOAN --> ON_SHELF: iade (görevli)
   ON_LOAN --> LOST: kayıp + bedel (yönetici)
   ON_LOAN --> DAMAGED: hasarlı + bedel (yönetici)
-  LOST --> ON_SHELF: bulundu (personel), ödenmemiş bedel iptal
+  ON_SHELF --> LOST: kayıp, bedelsiz (yönetici, FR-39)
+  ON_SHELF --> DAMAGED: hasarlı, bedelsiz (yönetici, FR-39)
+  ON_SHELF --> WITHDRAWN: kayıttan düş (yönetici, FR-39)
+  LOST --> WITHDRAWN: kayıttan düş (yönetici, FR-39)
+  LOST --> ON_SHELF: bulundu (personel), varsa ödenmemiş bedel iptal
   DAMAGED --> ON_SHELF: onarıldı (yönetici)
   DAMAGED --> WITHDRAWN: kayıttan düş (yönetici)
   WITHDRAWN --> [*]
 ```
 
-Bu diyagram dışındaki her geçiş servis katmanında reddedilir. Raftaki bir nüshayı hasarlı, kayıp ya da kayıttan düşmüş işaretleme SRS'te yok; bölüm 10'da açık soru olarak duruyor.
+Bu diyagram dışındaki her geçiş servis katmanında `InvalidTransition` hatasıyla reddedilir. Raftaki nüshanın geçişleri `mark_shelf_copy` servisiyle yapılır ve üye ya da borç kaydı oluşturmaz ([ADR-0026](decisions/0026-shelf-copy-status-marking.md)).
 
 ### 5.2 Ödünç
 
@@ -258,7 +262,7 @@ Biçim değişikliği sürüm baytını artırır. `restore_backup` bilmediği s
 
 ### 6.4 Yapılandırma (ortam değişkenleri, küçük karar 16)
 
-`DJANGO_SETTINGS_MODULE`, `LIBRARY_SECRET_KEY`, `LIBRARY_DB_PATH`, `LIBRARY_ALLOWED_HOSTS`, `LIBRARY_BACKUP_DIR`, `LIBRARY_EXPORT_DIR`, `LIBRARY_EXPORT_PASSPHRASE_FILE`, `LIBRARY_EMAIL_HOST`, `LIBRARY_EMAIL_PORT`, `LIBRARY_EMAIL_USER`, `LIBRARY_EMAIL_PASSWORD`, `LIBRARY_EMAIL_FROM`, `LIBRARY_SCHEDULER_ENABLED`.
+`DJANGO_SETTINGS_MODULE`, `LIBRARY_SECRET_KEY`, `LIBRARY_DB_PATH`, `LIBRARY_ALLOWED_HOSTS`, `LIBRARY_BACKUP_DIR`, `LIBRARY_EXPORT_DIR`, `LIBRARY_EXPORT_PASSPHRASE_FILE`, `LIBRARY_EMAIL_HOST`, `LIBRARY_EMAIL_PORT`, `LIBRARY_EMAIL_USER`, `LIBRARY_EMAIL_PASSWORD`, `LIBRARY_EMAIL_FROM`, `LIBRARY_SCHEDULER_ENABLED`, `LIBRARY_STATIC_ROOT` ([ADR-0029](decisions/0029-static-files-caddy.md)).
 
 Gizli değerler depoya girmez. Windows'ta WinSW XML'indeki `<env>` ile, Linux'ta yalnız servis hesabının okuyabildiği bir systemd `EnvironmentFile` ile verilir. Eksik zorunlu değişken açılışta açık bir hatayla süreci durdurur.
 
@@ -301,7 +305,7 @@ flowchart TB
   5. Servisler kaydedilir.
   6. Yedek diski ve dışa aktarma klasörü bağlanır.
   7. Sistem saati NTP ile eşitlenir.
-- **Statik dosyalar:** Nasıl sunulacakları faz 4 küçük kararıdır. Öneri, ek bağımlılık gerektirmeyen Caddy `file_server`.
+- **Statik dosyalar:** `collectstatic` dosyaları `LIBRARY_STATIC_ROOT` klasörüne yazar, Caddy `/static/` yolunu `file_server` ile sunar ([ADR-0029](decisions/0029-static-files-caddy.md)).
 - **Gizli değerler:** Bölüm 6.4'teki gibi verilir. Caddy'nin CA özel anahtarı ve dışa aktarma parola dosyası yalnız servis hesabının okuyabileceği izinlerle tutulur.
 - **Ortamlar:** Geliştirme ortamında `runserver`, konsol e-posta backend'i ve admin paneli açık; zamanlayıcı kapalı. Test ortamında bellek e-posta backend'i, geçici SQLite ve sabitlenmiş "bugün" kullanılır. Üretim ortamı yukarıdaki gibidir.
 
