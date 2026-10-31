@@ -1,15 +1,16 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-10-31 (faz 5, `feature/catalog-members` tamam, PR açıldı)
-- **Aşama:** eng-process **faz 5**. Grup `feature/foundation` (G01–G04) PR #1 ile birleşti (`main` = `1a93f2d`). Grup `feature/catalog-members` (G05–G08) **tamam**; `main`'e PR açıldı, kullanıcının incelemesini ve yerel Windows koşusunu bekliyor (birleştirilmedi).
+- **Güncelleme:** 2026-11-01 (faz 5, PR #2 onaylandı)
+- **Aşama:** eng-process **faz 5**. Grup `feature/foundation` (G01–G04) PR #1 ile birleşti (`main` = `1a93f2d`). Grup `feature/catalog-members` (G05–G08) **tamam**; PR #2 kullanıcı tarafından onaylandı (metinler dahil, 2026-11-01) ve merge commit'iyle `main`'e birleştirilir.
   - **G05:** `9c0d20a`: `catalog/domain.py` (`normalize_tr`, `parse_isbn`, `isbn10_to_13`).
   - **G06:** `ffc2a16`: `members` app'i: üye modeli, arama, rıza olayları, aktifleştirme, ekranlar.
   - **G07:** `e7f8d03`: kitap ve nüsha modelleri, ISBN öneri akışı, nüsha ekleme, katalog araması.
   - **G08:** `944d3ef`: `pdf/sheets.py`, nüsha etiketi ve üye kartı PDF'leri, seçim kutuları, barkod çözme testleri.
   - Sonuç (bulut, Linux, Python 3.11.18): `python -m pytest -q` → 515 passed (`slow` dahil; `-m slow` → 4 passed); `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı: `*/domain.py` %100, `catalog/services.py` %100, `members/services.py` %100, `pdf/sheets.py` %100, `accounts/permissions.py` ve `accounts/middleware.py` %100; `catalog` + `members` + `pdf` toplam %99.
+  - Yerel Windows (R-15, Python 3.11.9, 2026-11-01): `python -m pytest -q` → 515 passed (`-m slow` → 4 passed, barkod çözme Windows'ta da çalışıyor); `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı proje toplamı %99, `*/domain.py`, `catalog/services.py`, `members/services.py`, `pdf/sheets.py`, `accounts/permissions.py`, `accounts/middleware.py` %100.
   - Test planında 101 TC "Geçti" (46 + G05–G08'in 55'i).
-  - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G05–G08 kutuları kanıtıyla işaretli; uygulama ayrıntıları ve onay bekleyen metinler §11'de.
-- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`1a93f2d`), `feature/foundation` (kapandı), `feature/catalog-members` (PR açık).
+  - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G05–G08 kutuları kanıtıyla işaretli; uygulama ayrıntıları ve onaylı metinler §11'de.
+- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`1a93f2d`), `feature/foundation` (kapandı), `feature/catalog-members` (PR #2 onaylandı, birleştiriliyor).
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
 - **Bulut oturumu:** Her grup için kullanıcı yeni bir bulut oturumu açar, Claude açılış istemini hazırlar (KL-38). Oturum kritik soruyu oturumun içinde sorar; planın vermediği metinleri seçip §11'de listeler ve PR'da onaya sunar (plan §11, 2026-11-01 kararları).
   - **Tarayıcı (önerilen):** claude.ai/code; repo `mhmtmndrn/kutuphane-odunc-sistemi`, ortam **Default** (Trusted ağ; pip için PyPI gerekir).
@@ -33,7 +34,7 @@
 
 ## Sıradaki adım
 
-1. **PR incelemesi (kullanıcı):** `feature/catalog-members` → `main` PR'ı. Kullanıcı inceler, yerel Windows'ta `python -m pytest -q` (R-15) koşar ve §11'deki "G05–G08 onay bekleyen metinler" listesini onaylar ya da düzeltir. Birleştirme kullanıcı onayıyla.
+1. **PR #2 tamam (2026-11-01):** Yerel Windows koşusu geçti, G05–G08 metinleri değişmeden onaylandı, birleştirme onaylandı. Sonraki dalın ilk commit'i `main`'in yeni hash'ini bu nota yazar.
 2. **Sonraki grup:** `feature/circulation`: **G10 → G09 → G11 → G12** (KL-39). O grubun açık noktaları açılış isteminden önce kullanıcıya sorulur; istem yeni bir bulut oturumunda verilir.
    - G11, üye ayrıntısına açık ödünçleri, bakiyeyi ve pasifleştirme yolunu (`/uyeler/<no>/pasif/`, `circulation.services.deactivate_member` → `members.services.set_inactive`) ekler.
    - Genel sıra: G01 → G08 (tamam), G10 → G09 → G11 → G12, G13…G19.
@@ -53,7 +54,7 @@
 - **SRS:** [docs/srs.md](srs.md), onaylı. 35 FR (24 Must, 11 Should), 7 Won't, 13 NFR, 35 AC.
 - **Tasarım:** [architecture.md](architecture.md) ve [data-design.md](data-design.md).
 - **ADR'ler:** [0001–0051](decisions/), hepsi kabul edildi; özet plan §3.
-- **Plan:** §3 kararlar ve KL-1…KL-46; §4 görevler G01–G19; §7 izlenebilirlik; §8 tutarlılık; §11 sapmalar ve onay bekleyen metinler.
+- **Plan:** §3 kararlar ve KL-1…KL-46; §4 görevler G01–G19; §7 izlenebilirlik; §8 tutarlılık; §11 sapmalar ve onaylı metinler.
 - **Test planı:** [docs/test-plan.md](test-plan.md): 319 TC; 101'i "Geçti". Elle TC'ler: TC-223, TC-225…TC-234, TC-319 (faz 6).
 - **Araştırma:** [ISBN meta veri](research/2026-10-31-isbn-meta-veri-apileri.md), [demo veri seti](research/2026-10-31-demo-kitap-veri-seti.md).
 
