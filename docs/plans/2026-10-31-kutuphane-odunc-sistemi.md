@@ -478,7 +478,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - `isbn10_to_13(isbn10: str) -> str`
 - **Testler:** TC-34…TC-43, TC-253 (11 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest catalog/tests/test_domain.py -q` → hepsi geçer.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, bulut oturumu, Linux, Python 3.11.18): `python -m pytest catalog/tests/test_domain.py -q` → 48 passed; `python -m pytest -q` → 267 passed; `coverage report --include="*/domain.py" --fail-under=90` → %100 (dal; `catalog/domain.py` %100); `makemigrations --check --dry-run` → "No changes detected".
 
 ### Görev G06: Üyeler
 
@@ -503,7 +504,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Üye modelinde FR-01 dışında kişisel alan yoktur (NFR-08).
 - **Testler:** TC-44…TC-52, TC-57…TC-59, TC-254…TC-261 (20 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest members -q` → hepsi geçer.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, bulut oturumu, Linux, Python 3.11.18): `python -m pytest members -q` → 112 passed; `python -m pytest -q` → 379 passed (TC-31…TC-33 dahil; `uyeler/<int:member_no>/aktif/` görevli rolüyle korunuyor); `coverage report --include="*/domain.py" --fail-under=90` → %100 (dal; `members/domain.py` %100); `members/services.py` %100 (dal); `makemigrations --check --dry-run` → "No changes detected".
 
 ### Görev G07: Kitaplar ve nüshalar
 
@@ -521,7 +523,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Kitap ayrıntısında nüshalar barkod ve durumuyla listelenir.
 - **Testler:** TC-60…TC-68, TC-262…TC-264 (12 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest catalog -q` → hepsi geçer.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, bulut oturumu, Linux, Python 3.11.18): `python -m pytest catalog -q` → 117 passed; `python -m pytest -q` → 448 passed (TC-31…TC-33 dahil); `coverage report --include="*/domain.py" --fail-under=90` → %100 (dal); `catalog/services.py` %100 (dal); `makemigrations --check --dry-run` → "No changes detected".
 
 ### Görev G08: PDF sayfa yardımcısı, nüsha etiketi ve üye kartı
 
@@ -544,7 +547,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Kart yerleşiminin kenar boşlukları kartları A4'te ortalar: (210 − 2 × 85,6) / 2 = 19,4 mm ve (297 − 5 × 54) / 2 = 13,5 mm.
 - **Testler:** TC-69…TC-75, TC-265…TC-269 (12 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest pdf catalog members -q` → hepsi geçer (`slow` testleri dahil).
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, bulut oturumu, Linux, Python 3.11.18): `python -m pytest pdf catalog members -q` → 296 passed (`slow` dahil; `python -m pytest -q -m slow` → 4 passed: TC-70 iki test, TC-71, TC-74; barkodlar pypdfium2 5.14.0 ve zxing-cpp 3.1.1 ile bu ortamda çözüldü); `python -m pytest -q` → 515 passed; `coverage report --include="pdf/*"` → %100 (satır ve dal); `*/domain.py` %100 (dal); `catalog/services.py` ve `members/services.py` %100 (dal); `accounts/permissions.py`, `accounts/middleware.py` %100; `makemigrations --check --dry-run` → "No changes detected".
 
 ### Görev G09: Borç defteri
 
@@ -1119,3 +1123,121 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
 - **2026-10-31, inceleme D4 — kural ihlalinde aynı ekran 200 ile:** `staff_deactivate` (`accounts/views.py`) ve `closed_date_remove` (`administration/views.py`) `RuleViolation`'da artık 302 ile yönlendirmez; personel ayrıntısı ve kapalı günler ekranını 200 ile, mesajı hata mesajı olarak göstererek yeniden çizer. Gerekçe plan §4.0'daki kural; bu iki view'da form olmadığı için mesaj form hatası yerine sayfanın mesaj alanında görünür ve sonraki istekte tekrar çıkmaz (kullanıcı kararı 2026-10-31).
 - **2026-10-31, inceleme küçük kararı 3 — yalnız boşluktan oluşan kütüphane adı:** `validate_settings` doğrudan çağrıldığında boşluklu adı kabul ediyordu (form alanı boşlukları zaten kırpıyordu). Artık boş adla aynı mesajla ("Kütüphane adı 1 ile 80 karakter arasında olmalı") reddeder; ad kaydedilirken kırpılmaz, yalnız boş sayılır (kullanıcı onayı 2026-10-31).
 - **2026-10-31, inceleme gözlemi — `deactivate_staff` son yönetici denetimi:** `accounts/services.py`'deki `user.role == Role.ADMIN and not _other_active_admins(user)` dalına bugünkü kurallarla ulaşılamaz: aktör her zaman aktif bir yöneticidir (`require_role(Role.ADMIN)`) ve kendini pasifleştirme bu denetimden önce reddedilir; bu yüzden hedef dışında en az bir aktif yönetici hep vardır. Dal, "en az bir aktif yönetici" değişmezini aktör kuralından bağımsız koruyan bir savunma olarak kalır; `accounts/services.py`'nin dal kapsamının %96 olmasının bir nedeni budur (kullanıcı kararı 2026-10-31).
+- **2026-11-01, kullanıcı kararı — grup başına bir bulut oturumu:** Her görev grubu kendi bulut oturumunda yapılır; grup bitince oturum PR açar ve durur. Sonraki grup yeni bir oturumda ve yeni bir açılış istemiyle başlar (KL-38'deki "grup başına bir oturum" kuralının açık hali).
+- **2026-11-01, kullanıcı kararı — bulut oturumunda kritik soru:** Bulut oturumunda kritik bir açık nokta çıkarsa oturum durup raporlamak yerine soruyu oturumun içinde kullanıcıya sorar ve cevabı bekler; cevap ADR ya da §11 maddesi olarak kaydedilir (ADR-0048'deki "soru soramaz" varsayımının yerine).
+- **2026-11-01, kullanıcı kararı — planın vermediği kullanıcıya görünen metinler:** Plan, SRS, KL ya da ADR'nin vermediği etiket, başlık, düğme ve mesaj metinlerini uygulayıcı mevcut şablonların üslubuyla seçer, §11'de metin ve dosyasıyla listeler; metinler G02–G04'teki D2 gibi PR'da onaylanır. Uygulayıcı bu metinler için durmaz.
+- **2026-10-31, G05 — uygulama ayrıntıları (bulut oturumu):**
+  - `catalog` app'i G05'te `INSTALLED_APPS`'e eklendi (`library_site/settings/base.py`). G05'in dosya listesinde `base.py` yok, ama `catalog/apps.py` bu görevde oluşuyor; model G07'de gelir ve app'in o zaman ayrıca eklenmesi gerekmez.
+  - `normalize_tr`'nin 4. adımı (`" ".join(text.split())`) boşlukları teke indirirken baştaki ve sondaki boşluğu da atar. Gerekçe: " ayşe" gibi bir arama terimi `search_key LIKE %…%` ile baştaki boşluk yüzünden eşleşmeyi kaçırmasın.
+  - `parse_isbn` tireleri ve bütün boşluk karakterlerini (sekme dahil) atar, sonra büyük harfe çevirir (KL-40'taki küçük "x" böyle kabul edilir). Yalnız ASCII rakamlar kabul edilir; Python'un `isdigit()`'inin kabul ettiği başka rakamlar (ör. Arapça-Hint rakamları) reddedilir.
+  - `IsbnInvalid.reason` seçimi: biçim hataları (10 ya da 13 karakter değil, ISBN-10'un son hanesi dışında harf, ISBN-13'te "X", boş giriş) "ISBN 10 ya da 13 haneli olmalı"; kontrol hanesi tutmayan 10 ya da 13 haneli giriş "ISBN kontrol hanesi hatalı" verir (TC-40…TC-43). Son hanesi "X" olan ve kontrol hanesi tutmayan ISBN-10'a öneri verilmez, çünkü "978" + "…X" bir ISBN-13 değildir.
+  - `isbn10_to_13` ISBN-10 kontrol hanesini doğrulamaz (ilk dokuz haneyi alır ve ISBN-13 kontrol hanesini yeniden hesaplar); biçimi bozuk girişte `ValueError` fırlatır. Doğrulama `parse_isbn`'in işidir.
+- **2026-10-31, G06 — kullanıcı kararı: anonimleştirilmiş üye güncellenemez:** Plan anonimleştirilmiş üyenin düzenlenip düzenlenemeyeceğini söylemiyordu; düzenlemeye izin vermek, KVKK saklama süresinin sildiği kişisel veriyi geri yazmayı mümkün kılardı. Oturumda kullanıcıya soruldu, önerilen seçenek seçildi: `update_member` "Anonimleştirilmiş üye güncellenemez" mesajıyla `RuleViolation` fırlatır; düzenleme ekranı 200 ile mesajı gösterir; anonim üyenin ayrıntısında "Düzenle" bağlantısı ve rıza formu yoktur (ADR-0042'deki "Anonimleştirilmiş üye aktifleştirilemez" ile aynı yön).
+- **2026-10-31, G06 — uygulama ayrıntıları (bulut oturumu):**
+  - G06'nın dosya listesi dışında değişenler: `library_site/settings/base.py` (`members` app'i), `library_site/urls.py` (`members.urls`), `templates/base.html` (üst menüde "Üyeler") ve `administration/home.html` (modül bağlantısı; G03 §11'deki "her görev kendi ekranının bağlantısını ekler" kuralı).
+  - `search_key` ve `phone_digits`, `Member.save()` içinde tek noktada yazılır (ADR-0019'daki "model katmanında tek noktada"); servisler ve `make_member` bunları hesaplamaz. `update_fields` verilse de iki türetilmiş alan kayda eklenir. Anonim üyede `search_key` boş metin, `phone_digits` NULL olur.
+  - Üye alanı kuralları `members/domain.py: validate_member_fields(full_name, phone)` içindedir: ad soyad ve telefon zorunlu, ad soyad en fazla 200, telefon en fazla 30 karakter (data-design §2.2) ve telefonda 1–20 rakam (`phone_digits` varchar(20)). Değerler kırpılarak kaydedilir. E-posta Django `validate_email` ile denetlenir ve en fazla 254 karakterdir; boş e-posta NULL olur. Telefon biçimi ayrıca denetlenmez.
+  - `MemberQuery` frozen dataclass'tır: `digits` ve `text` alanları (biri dolu) ve `is_empty`. Temizlendikten sonra boş kalan sorgu boş sonuç verir; arama ekranı `q` boşken yalnız formu gösterir. Rakam sorgusunda üye no tam eşleşmesi önce, sonra üye no sırasıyla telefon eşleşmeleri gelir; 18 haneden uzun rakam dizisi yalnız telefonda aranır (SQLite tam sayı sınırı). Metin sorgusu `search_key`'e, sonra üye no'ya göre sıralanır. Django `contains` LIKE joker karakterlerini kaçırır (TC-50).
+  - `set_consent` denetim sırası: gelecek tarih, e-posta yokluğu (yalnız rıza verirken), geçerli durumu tekrarlama. Rızayı geri almak e-posta istemez. E-posta silinmeyip değiştirilirse rıza durumu değişmez (ADR-0047 yalnız silmeyi kapsar).
+  - Üye oluşturma, güncelleme ve rıza denetim kaydı yazmaz: faz 4 küçük karar 8'deki eylem listesinde üye oluşturma ve güncelleme yok, rıza olayları KL-36'ya göre kendi izidir. Yalnız `reactivate_member` `MEMBER_REACTIVATED` yazar.
+  - Okuma servisleri (`search_members`, `member_by_no`, `consent_dates`) aktör almaz ve `require_role` taşımaz (plan imzaları; G03'teki `get_settings` gibi); koruma view'dadır. Bilinmeyen üye no ayrıntı, düzenleme, aktifleştirme ve rıza yollarında 404 verir ("Üye bulunamadı"; G04'teki personel ayrıntısıyla aynı).
+  - `consent_dates` her eylem için en büyük `effective_on` değerini döndürür.
+  - Rıza formu tek formdur: gizli `given` alanı ("1" ver, "0" geri al) geçerli duruma uyan düğmeyle gelir; tarih varsayılanı bugündür (`clock.today()`), `YYYY-AA-GG` ve `GG.AA.YYYY` biçimleri kabul edilir. E-postası ve rızası olmayan üyede form yerine "Rıza için e-posta adresi gerekli." notu görünür. Rıza ve aktifleştirme hataları ayrıntı ekranını 200 ile yeniden gösterir (§4.0, G04 D4).
+  - `tests/support/factories.py: make_member(full_name, phone, email, *, member_no, is_active, deactivated_on, anonymized)` üyeyi ORM ile doğrudan kurar (aktör ve denetim yok); pasif üyede `deactivated_on` verilmezse 2026-10-01 olur.
+  - TC-52 (model alan listesi) veritabanı istemediği için `members/tests/test_domain.py`'dedir.
+- **2026-10-31, G07 — uygulama ayrıntıları (bulut oturumu):**
+  - G07'nin dosya listesi dışında değişenler: `library_site/urls.py` (`catalog.urls`), `templates/base.html` (üst menüde "Kitaplar") ve `administration/home.html` (modül bağlantısı).
+  - `Book.save()` `search_key`'i (`normalize_tr(title + " " + author)`), `Copy.save()` `status_changed_at`'i yazar: eklemede ve durum her değiştiğinde (`update_fields` verilse de alan kayda eklenir). Alanın veritabanı varsayılanı yoktur; zaman `save()` içinde `timezone.now()` ile alınır, böylece testlerdeki `FrozenClock` geçerli olur.
+  - Geçici barkod (§8.1'de uygulayıcıya bırakılan ayrıntı): `add_copies` her nüshayı `"PENDING-"` barkoduyla ekler, id'yi alır ve aynı işlemde `f"{id:08d}"` yazar. Bir sonraki ekleme bundan sonra yapıldığı için benzersiz sütunda aynı anda tek geçici değer olur; değer hiçbir zaman commit edilmez. id'ler Django'nun SQLite'taki `AUTOINCREMENT` sütunundan gelir, silinen id yeniden kullanılmaz. KL-42 denetimi her eklemeden sonra yapılır; 99.999.999'u aşan ilk id bütün grubu geri alır. TC-65 ve TC-263 sırayı `sqlite_sequence` tablosuyla ayarlar.
+  - `create_book` ve `update_book` ISBN'i ham haliyle alır ve `parse_isbn` ile normalize eder; boş ISBN NULL olur. `IsbnSuggest` sonucunu servis de reddeder (mesaj formdakiyle aynı öneri metnidir); öneriyi kabul etmek formun işidir. Alan kuralları ve mesajları servistedir: başlık ve yazar zorunlu, başlık ve yazar en fazla 300, yayınevi en fazla 200 karakter (data-design §2.3), yıl 1–9999. Değerler kırpılır; boş yayınevi NULL olur.
+  - Plandaki arayüzlere ek servisler: `get_book(pk) -> Book | None`, `book_copies(book)` (barkod sırasıyla), `shelf_counts(books)` (tek sorguda kitap başına raftaki ve toplam nüsha), `is_barcode(q)` ve `suggestion_message(suggestion)`. Bilinmeyen kitap 404 verir ("Kitap bulunamadı").
+  - `search_books` sıralaması: ISBN ya da barkod tam eşleşmeleri önce, sonra `search_key` ve id. Boş sorgu boş sonuç verir. Arama ekranı her kitapta "Rafta / Toplam" sayısını gösterir; 8 haneli sorgu bir nüshaya denk gelirse listenin üstünde "Nüsha 00000042: Tutunamayanlar · Rafta" satırı çıkar (TC-66, AC-04).
+  - `BookForm`: ham ISBN alanı en fazla 40 karakterdir. `isbn_accept` düğmesinin metni "Öneriyi kabul et ve kaydet"tir. `isbn_accept` ile gelen değer yalnız bir öneri üretiyorsa (elle değiştirilmiş istek) "ISBN kontrol hanesi hatalı" ile reddedilir.
+  - Nüsha ekleme formunun alanı `count`'tur. 1–50 aralığını servis denetler ve mesaj alan hatası olarak görünür; tarayıcıya `min`/`max` ipucu verilir. Kural ihlalinde kitap ayrıntısı 200 ile yeniden gösterilir.
+  - Kitap ve nüsha işlemleri denetim kaydı yazmaz (faz 4 küçük karar 8'deki listede yoklar).
+  - `tests/support/factories.py`: `make_book(title, author, *, isbn13, publisher, year)` ISBN'i olduğu gibi yazar; `make_copy(book, *, pk, status)` barkodu `f"{id:08d}"` yapar.
+- **2026-10-31, G08 — uygulama ayrıntıları (bulut oturumu):**
+  - **Yazı tipi:** PDF'lerdeki metin, reportlab paketinin içinde gelen Vera TrueType yazı tipiyle (`Vera.ttf`, Bitstream Vera lisansı gömmeye izin verir) yazılır ve PDF'e alt küme olarak gömülür. PDF'in temel yazı tipleri (Helvetica, WinAnsi kodlaması) ş, ğ, ı ve İ harflerini içermiyor; "İstanbul Şehir Kütüphanesi" kare kutularla basılıyordu. Yeni bağımlılık ya da dosya eklenmedi; yazı tipi reportlab'ın kendi yazı tipi yolundan bulunur (Windows'ta da).
+  - **Öğe yerleşimi:** Üstte başlık (8 pt), ortada 15 mm Code 128 barkod (modül 0,33 mm, reportlab'ın varsayılan 10 modüllük sessiz bölgeleriyle), altında açıklama (9 pt) ve varsa alt metin (7 pt) bulunur. Blok öğenin içinde yatay ve dikey ortalanır; metinler için yanlarda 2 mm boşluk kalır. Her metin satırı öğe genişliğine sığmazsa "…" ile kısaltılır, başlık ayrıca 80 karakterle sınırlıdır (ADR-0035; yazı boyutu küçültülmez). Etikette alt metin `title[:30]`'dur ve genişliğe sığdığı sürece kısaltılmaz (TC-72). Kart kesim çizgileri her kartın çevresinde 0,25 pt açık gri dikdörtgendir.
+  - `SheetLayout` `kw_only` frozen dataclass'tır (varsayılanlı `page_w`, `page_h` zorunlu alanlardan önce geldiği için); `__post_init__` öğelerin sayfaya sığmadığı yerleşimi `ValueError` ile reddeder ve `per_page` özelliği vardır. Plandaki arayüze ek olarak `item_position(index, layout)` ve `fit_text(text, size, max_width, max_chars)` dışa açıktır. `render_sheet([])` `ValueError` verir. Çıktı `invariant=True` ile üretilir; aynı girdi aynı baytları verir.
+  - `tests/support/barcode.py`: `decode_pdf_barcodes`'a ek olarak `read_pdf_barcodes` (sayfa, değer, biçim), `pdf_page_count` ve `pdf_text` (pypdfium2 ile metin çıkarma; TC-72, TC-73, TC-74). Aynı satırdaki barkodlar, merkezleri arasındaki dikey fark 7,5 mm'den azsa bir satır sayılır.
+  - Barkod çözen testler (TC-70, TC-71, TC-74) ADR-0030'a göre `slow` işaretlidir; TC-70'in seviyesi test planında "birim" olsa da çözme yapar. Bu oturumda dört `slow` testin hepsi Linux'ta koştu.
+  - **Seçim kuralları (KL-25):** İki uçtan biri dolu ise aralık kullanılmış sayılır. Etikette uçlardan biri boş ya da 8 haneli barkod değilse "Başlangıç ve bitiş 8 haneli barkod olmalı", kartta pozitif tam sayı değilse "Başlangıç ve bitiş pozitif üye no olmalı" verilir. Seçim kutusu listesinde 240 sınırı tekrarsız öğe sayısına uygulanır. Hariç tutmadan sonra listede öğe kalmazsa "En az bir nüsha seçin" ya da "En az bir üye seçin" verilir (aralıktaki "Aralıkta basılacak … yok" mesajının liste karşılığı). Aralıkta yalnız Kayıttan düşmüş nüshalar atlanır; Kayıp, Hasarlı ve Ödünçteki nüshaların etiketi basılabilir. Barkod aralığı, sıfırla doldurulmuş 8 haneli barkodların metin karşılaştırmasıyla seçilir.
+  - `label_pdf` ve `member_card_pdf` kütüphane adını `administration.services.get_settings()` ile okur; listede olmayan id atlanır.
+  - `/nushalar/etiket/` ve `/uyeler/kart/` kural ihlalinde aralık formunu 200 ile ve mesajla gösterir; istek kitap ayrıntısındaki ya da üye aramasındaki seçim kutularından gelse de hata bu ekranda görünür. Seçim formu boş POST'ta da bağlanır (boş istek "En az bir … seçin" alır). Ortak `IntListField` (`administration/forms.py`) seçim kutusu değerlerini tam sayıya çevirir; geçersiz değer "Geçersiz seçim" verir.
+  - **URL sırası (§8.1'de uygulayıcıya bırakılan ayrıntı):** `nushalar/etiket/` `catalog.urls` içindedir; `library_site/urls.py`'de `catalog.urls`, G12'de eklenecek circulation yollarından önce gelmelidir, yoksa `nushalar/<str:barcode>/` "etiket"i barkod sanar. `catalog/urls.py`'de bu not yorum olarak duruyor.
+  - "Etiket bas" düğmesi yalnız basılabilir nüsha varsa, "Kart bas" düğmesi yalnız seçilebilir üye varsa görünür. Kitap arama ekranında "Nüsha etiketleri", üye arama ekranında "Üye kartları" bağlantısı aralık formuna gider.
+  - G08'in dosya listesi dışında değişenler: `administration/forms.py` (`IntListField`), `catalog/forms.py`, `members/forms.py`, `catalog/templates/catalog/search.html` ve `members/templates/members/search.html` (bağlantılar), `catalog/tests/*` ve `members/tests/*` (TC-71…TC-75, TC-265…TC-269), `pdf/tests/__init__.py`.
+- **2026-10-31, G05–G08 uygulayıcının seçtiği kullanıcıya görünen metinler:** Plan, SRS, KL ya da ADR'nin vermediği ve uygulayıcının seçtiği kullanıcıya görünen metinler (2026-11-01 kullanıcı kararı; PR'da onaylanır). Kullanıcı 2026-11-01'de PR #2 incelemesinde hepsini onayladı; metin değiştirilmedi. G02–G04 listesinde zaten onaylı olup aynen yeniden kullanılanlar "(G02–G04'te onaylı)" ile işaretlidir.
+  - G06:
+    - "Üyeler": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `members/search.html` sayfa başlığı; `members/form.html` ve `members/detail.html` geri bağlantısı.
+    - "Yeni üye": `members/search.html` bağlantı; `members/form.html` sayfa başlığı.
+    - "Üye no, ad soyad ya da telefon": `members/search.html`, arama alanı etiketi.
+    - "Ara": `members/search.html`, düğme.
+    - "Üye no": `members/search.html`, sütun başlığı.
+    - "Ad soyad" (G02–G04'te onaylı): `members/forms.py` `MemberForm` alan etiketi; `members/search.html` sütun başlığı; `members/detail.html` satır başlığı.
+    - "Telefon": `members/forms.py` `MemberForm` alan etiketi; `members/search.html` sütun başlığı; `members/detail.html` satır başlığı.
+    - "E-posta": `members/forms.py` `MemberForm` alan etiketi; `members/detail.html` satır başlığı.
+    - "Durum", "Aktif", "Pasif" (G02–G04'te onaylı): `members/search.html` ve `members/detail.html`; pasif üyede "Pasif (GG.AA.YYYY)" pasifleştirme tarihiyle.
+    - "Anonimleştirilmiş üye": `members/search.html` ad yerine; `members/detail.html` ("Anonimleştirilmiş üye · Pasif").
+    - "Sonuç yok.": `members/search.html`, boş sonuç.
+    - "Üye N": `members/detail.html` sayfa başlığı; `members/form.html` düzenleme ekranının `<title>`'ı ve geri bağlantısı.
+    - "Üyeyi düzenle": `members/form.html`, düzenleme ekranı başlığı.
+    - "Kaydet" (G02–G04'te onaylı): `members/form.html`, düğme.
+    - "Düzenle": `members/detail.html`, bağlantı.
+    - "—": `members/detail.html`, e-posta ya da rıza tarihi yoksa.
+    - "E-posta rızası": `members/detail.html`, bölüm başlığı.
+    - "Rıza: var" / "Rıza: yok": `members/detail.html`, geçerli durum.
+    - "Son verme:" ve "Son geri alma:": `members/detail.html`, rıza tarihleri.
+    - "Tarih" (G02–G04'te onaylı): `members/forms.py` `ConsentForm` alan etiketi.
+    - "Rıza ver" ve "Rızayı geri al": `members/detail.html` düğmeleri; `members/forms.py` `ConsentForm.given` seçenekleri.
+    - "Rıza verildi" ve "Rıza geri alındı": `members/models.py` `ConsentAction` etiketleri.
+    - "Üye kaydedildi": `members/views.py` `member_create`, başarı mesajı.
+    - "Üye bilgileri kaydedildi": `members/views.py` `member_edit`, başarı mesajı.
+    - "Üye aktifleştirildi": `members/views.py` `member_reactivate`, başarı mesajı.
+    - "Rıza kaydedildi" ve "Rıza geri alındı": `members/views.py` `member_consent`, başarı mesajları.
+    - "Ad soyad boş olamaz" (G02–G04'te onaylı): `members/domain.py` `validate_member_fields`, `RuleViolation`.
+    - "Ad soyad en fazla 200 karakter olabilir": `members/domain.py` `validate_member_fields`, `RuleViolation`.
+    - "Telefon boş olamaz": `members/domain.py` `validate_member_fields`, `RuleViolation`.
+    - "Telefon en fazla 30 karakter olabilir": `members/domain.py` `validate_member_fields`, `RuleViolation`.
+    - "Telefon 1 ile 20 rakam içermeli": `members/domain.py` `validate_member_fields`, `RuleViolation`.
+    - "Geçerli bir e-posta adresi girin": `members/services.py` `_clean_email`, `RuleViolation`.
+    - "Anonimleştirilmiş üye güncellenemez": `members/services.py` `update_member`, `RuleViolation` (davranış oturumda kullanıcı kararıyla; metin onay bekliyor).
+  - G07:
+    - "Kitaplar": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `catalog/search.html` sayfa başlığı; `catalog/form.html` ve `catalog/detail.html` geri bağlantısı.
+    - "Yeni kitap": `catalog/search.html` bağlantı; `catalog/form.html` sayfa başlığı.
+    - "Başlık, yazar, ISBN ya da barkod": `catalog/search.html`, arama alanı etiketi.
+    - "Ara", "Sonuç yok.", "Düzenle", "—" (G06'daki gibi): `catalog/search.html` ve `catalog/detail.html`.
+    - "Başlık": `catalog/forms.py` `BookForm` alan etiketi; `catalog/search.html` sütun başlığı.
+    - "Yazar", "ISBN", "Yıl": `catalog/forms.py` `BookForm` alan etiketleri; `catalog/search.html` sütun başlıkları; `catalog/detail.html` satır başlıkları.
+    - "Yayınevi": `catalog/forms.py` `BookForm` alan etiketi; `catalog/detail.html` satır başlığı.
+    - "Rafta / Toplam": `catalog/search.html`, sütun başlığı.
+    - "Nüsha NNNNNNNN: <başlık> · <durum>": `catalog/search.html`, barkod eşleşmesi satırı.
+    - "Kitabı düzenle": `catalog/form.html`, düzenleme ekranı başlığı (`<title>` kitabın başlığıdır).
+    - "Kaydet" (G02–G04'te onaylı): `catalog/form.html`, düğme.
+    - "Öneriyi kabul et ve kaydet": `catalog/form.html`, `isbn_accept` düğmesi.
+    - "Nüshalar": `catalog/detail.html`, bölüm başlığı.
+    - "Barkod", "Durum": `catalog/detail.html`, nüsha tablosu sütun başlıkları.
+    - "Nüsha yok.": `catalog/detail.html`, boş nüsha listesi.
+    - "Nüsha ekle": `catalog/detail.html`, bölüm başlığı.
+    - "Nüsha sayısı": `catalog/forms.py` `AddCopiesForm` alan etiketi.
+    - "Ekle" (G02–G04'te onaylı): `catalog/detail.html`, düğme.
+    - "Kitap kaydedildi": `catalog/views.py` `book_create`, başarı mesajı.
+    - "Kitap bilgileri kaydedildi": `catalog/views.py` `book_edit`, başarı mesajı.
+    - "N nüsha eklendi": `catalog/views.py` `book_add_copies`, başarı mesajı.
+    - "Kitap bulunamadı": `catalog/views.py` `_get_book`, 404 nedeni (yalnız `DEBUG` açıkken görünür).
+    - "Başlık boş olamaz", "Yazar boş olamaz": `catalog/services.py` `_clean_book`, `RuleViolation` (TC-61).
+    - "Başlık en fazla 300 karakter olabilir", "Yazar en fazla 300 karakter olabilir", "Yayınevi en fazla 200 karakter olabilir": `catalog/services.py` `_clean_book`, `RuleViolation`.
+    - "Yıl 1 ile 9999 arasında olmalı": `catalog/services.py` `_clean_book`, `RuleViolation`.
+    - "Nüsha sayısı 1 ile 50 arasında olmalı": `catalog/services.py` `add_copies`, `RuleViolation` (TC-262).
+  - G08:
+    - "Nüsha etiketleri": `catalog/search.html` bağlantı; `catalog/label_range.html` sayfa başlığı.
+    - "Üye kartları": `members/search.html` bağlantı; `members/card_range.html` sayfa başlığı.
+    - "Başlangıç barkodu" ve "Bitiş barkodu": `catalog/forms.py` `LabelSelectionForm` alan etiketleri.
+    - "Başlangıç üye no" ve "Bitiş üye no": `members/forms.py` `CardSelectionForm` alan etiketleri.
+    - "Aralıkta kayıttan düşmüş nüshalar atlanır; bir seferde en fazla 240 etiket (10 sayfa) basılır.": `catalog/label_range.html`, not.
+    - "Aralıkta pasif ve anonimleştirilmiş üyeler atlanır; bir seferde en fazla 240 kart basılır.": `members/card_range.html`, not.
+    - "Başlangıç ve bitiş 8 haneli barkod olmalı": `catalog/services.py` `copies_for_labels`, `RuleViolation`.
+    - "Başlangıç ve bitiş pozitif üye no olmalı": `members/services.py` `members_for_cards`, `RuleViolation`.
+    - "Geçersiz seçim": `administration/forms.py` `IntListField`, alan hatası.
+    - "Etiket bas" ve "Kart bas" ADR-0036'dan gelir; aralık formlarının düğmesinde de aynı metin kullanıldı.

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Nüsha etiketleri · Kütüphane{% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'catalog:search' %}">Kitaplar</a></p>
+  <h1>Nüsha etiketleri</h1>
+  <form method="post" action="{% url 'catalog:labels' %}">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {{ form.copy_ids.errors }}
+    {% for field in form.visible_fields %}
+      <p>
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+      </p>
+    {% endfor %}
+    <p class="note">Aralıkta kayıttan düşmüş nüshalar atlanır; bir seferde en fazla 240 etiket (10 sayfa) basılır.</p>
+    <p><button type="submit">Etiket bas</button></p>
+  </form>
+{% endblock %}

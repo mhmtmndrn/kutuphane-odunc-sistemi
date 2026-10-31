@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Üye {{ member.member_no }} · Kütüphane{% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'members:search' %}">Üyeler</a></p>
+  <h1>Üye {{ member.member_no }}</h1>
+  {% if member.is_anonymized %}
+    <p>Anonimleştirilmiş üye · Pasif</p>
+  {% else %}
+    <table>
+      <tbody>
+        <tr><th>Ad soyad</th><td>{{ member.full_name }}</td></tr>
+        <tr><th>Telefon</th><td>{{ member.phone }}</td></tr>
+        <tr><th>E-posta</th><td>{{ member.email|default:"—" }}</td></tr>
+        <tr><th>Durum</th><td>{% if member.is_active %}Aktif{% else %}Pasif ({{ member.deactivated_on|date:"d.m.Y" }}){% endif %}</td></tr>
+      </tbody>
+    </table>
+    <p><a href="{% url 'members:edit' member.member_no %}">Düzenle</a></p>
+  {% endif %}
+
+  {% if can_reactivate %}
+    <form class="inline-form" method="post" action="{% url 'members:reactivate' member.member_no %}">
+      {% csrf_token %}
+      <button type="submit">Aktifleştir</button>
+    </form>
+  {% endif %}
+
+  {% if not member.is_anonymized %}
+    <h2>E-posta rızası</h2>
+    <p>Rıza: {% if member.has_email_consent %}var{% else %}yok{% endif %}</p>
+    <p>Son verme: {{ given_on|date:"d.m.Y"|default:"—" }} · Son geri alma: {{ withdrawn_on|date:"d.m.Y"|default:"—" }}</p>
+    {% if member.has_email_consent or member.email %}
+      <form method="post" action="{% url 'members:consent' member.member_no %}">
+        {% csrf_token %}
+        {{ consent_form.non_field_errors }}
+        <input type="hidden" name="given" value="{% if member.has_email_consent %}0{% else %}1{% endif %}">
+        <p>
+          <label for="{{ consent_form.on.id_for_label }}">{{ consent_form.on.label }}</label>
+          {{ consent_form.on }}
+          {{ consent_form.on.errors }}
+        </p>
+        <p><button type="submit">{% if member.has_email_consent %}Rızayı geri al{% else %}Rıza ver{% endif %}</button></p>
+      </form>
+    {% else %}
+      <p class="note">Rıza için e-posta adresi gerekli.</p>
+    {% endif %}
+  {% endif %}
+{% endblock %}

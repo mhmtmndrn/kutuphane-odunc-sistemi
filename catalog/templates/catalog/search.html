@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Kitaplar · Kütüphane{% endblock %}
+
+{% block content %}
+  <h1>Kitaplar</h1>
+  <p><a href="{% url 'catalog:create' %}">Yeni kitap</a> · <a href="{% url 'catalog:labels' %}">Nüsha etiketleri</a></p>
+  <form method="get" action="{% url 'catalog:search' %}">
+    <p>
+      <label for="id_q">Başlık, yazar, ISBN ya da barkod</label>
+      <input type="search" name="q" id="id_q" value="{{ q }}" autofocus>
+      <button type="submit">Ara</button>
+    </p>
+  </form>
+  {% if matched_copy %}
+    <p>Nüsha {{ matched_copy.barcode }}: <a href="{% url 'catalog:detail' matched_copy.book.pk %}">{{ matched_copy.book.title }}</a> · {{ matched_copy.get_status_display }}</p>
+  {% endif %}
+  {% if q %}
+    {% if rows %}
+      <table>
+        <thead><tr><th>Başlık</th><th>Yazar</th><th>ISBN</th><th>Yıl</th><th>Rafta / Toplam</th></tr></thead>
+        <tbody>
+          {% for book, on_shelf, total in rows %}
+            <tr>
+              <td><a href="{% url 'catalog:detail' book.pk %}">{{ book.title }}</a></td>
+              <td>{{ book.author }}</td>
+              <td>{{ book.isbn13|default:"" }}</td>
+              <td>{{ book.year|default:"" }}</td>
+              <td>{{ on_shelf }} / {{ total }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>Sonuç yok.</p>
+    {% endif %}
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }} · Kütüphane{% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'catalog:search' %}">Kitaplar</a></p>
+  <h1>{{ book.title }}</h1>
+  <table>
+    <tbody>
+      <tr><th>Yazar</th><td>{{ book.author }}</td></tr>
+      <tr><th>ISBN</th><td>{{ book.isbn13|default:"—" }}</td></tr>
+      <tr><th>Yayınevi</th><td>{{ book.publisher|default:"—" }}</td></tr>
+      <tr><th>Yıl</th><td>{{ book.year|default:"—" }}</td></tr>
+    </tbody>
+  </table>
+  <p><a href="{% url 'catalog:edit' book.pk %}">Düzenle</a></p>
+
+  <h2>Nüshalar</h2>
+  {% if copies %}
+    <form method="post" action="{% url 'catalog:labels' %}">
+      {% csrf_token %}
+      <table>
+        <thead><tr><th></th><th>Barkod</th><th>Durum</th></tr></thead>
+        <tbody>
+          {% for copy in copies %}
+            <tr>
+              <td>{% if copy.status != "WITHDRAWN" %}<input type="checkbox" name="copy_ids" value="{{ copy.pk }}" id="copy-{{ copy.pk }}" aria-label="{{ copy.barcode }}">{% endif %}</td>
+              <td>{{ copy.barcode }}</td>
+              <td>{{ copy.get_status_display }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if has_printable %}<p><button type="submit">Etiket bas</button></p>{% endif %}
+    </form>
+  {% else %}
+    <p>Nüsha yok.</p>
+  {% endif %}
+
+  <h2>Nüsha ekle</h2>
+  <form method="post" action="{% url 'catalog:add-copies' book.pk %}">
+    {% csrf_token %}
+    {{ copies_form.non_field_errors }}
+    <p>
+      <label for="{{ copies_form.count.id_for_label }}">{{ copies_form.count.label }}</label>
+      {{ copies_form.count }}
+      {{ copies_form.count.errors }}
+      <button type="submit">Ekle</button>
+    </p>
+  </form>
+{% endblock %}
