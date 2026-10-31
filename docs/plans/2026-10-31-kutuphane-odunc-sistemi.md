@@ -404,7 +404,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Giriş için Django `LoginView` kullanılır, şablon Türkçedir. Çıkış yalnız POST ile yapılır.
 - **Testler:** TC-04…TC-12 (9 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest accounts -q` → hepsi geçer.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, bulut oturumu, Linux, Python 3.11): `python -m pytest accounts -q` → 35 passed; `python -m pytest -q` → 54 passed; `coverage report --include="accounts/permissions.py"` → %100 (dal); `makemigrations --check --dry-run` → "No changes detected"; `check --deploy --settings=library_site.settings.prod` → "System check identified no issues (3 silenced)." (axes.W006 eklendi, §11). TC-12'nin `create_staff` ve `reset_password` kısmı G04'te.
 
 ### Görev G03: Yönetim çekirdeği: saat, para, ayarlar, kapalı günler, denetim kaydı, görev kaydı, ana sayfa
 
@@ -980,3 +981,10 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
     - (c) Personelin `full_name` değeri şema değişikliği olmadan `first_name` alanında tutulur (§8.1'de uygulayıcıya bırakılan ayrıntı).
     - (d) Yönetici view'ları yalnız `require_role(Role.ADMIN)` ile sarılır; böylece en dıştaki sarmalayıcıdaki `required_role` doğru kalır. Oturumsuz kullanıcı `redirect_to_login`'e gider (architecture §6.1).
     - (e) Testlerde saat, `axes.attempts.now`, `axes.handlers.proxy.now` ve `django.utils.timezone.now` patch'lenerek sabitlenir. TC-08'in 14:59 ve 15:01 sınırları ayrı testlerde yazılır.
+- **2026-10-31, G02 — uygulama ayrıntıları (bulut oturumu):**
+  - `accounts/tests/test_domain.py` yazılmadı: `accounts`'ta saf kural (`domain.py`) yok. Testler `test_services.py` ve `test_views.py`'de.
+  - Test yardımcıları: `tests/support/clock.py` (`FrozenClock`, G02 (e)'deki üç `now`'ı patch'ler), `tests/support/factories.py` (`make_staff`), `tests/support/urls.py` (G02 (a)). django-axes istek nesnesi olmadan `authenticate` çağrısını reddettiği için testlerde `client.login` yerine `client.force_login` kullanılır.
+  - `staff_view` tek sarmalayıcıdır: `require_role(Role.CLERK)`. `require_role` oturumsuz isteği zaten `redirect_to_login`'e gönderdiği için `login_required` ile aynı sonucu verir ve `required_role` en dıştaki nesnede kalır.
+  - `StaffUser.role` varsayılanı `CLERK`'tir (en az yetki); `createsuperuser` `ADMIN` atar. Tablo adları data-design'daki gibidir (`db_table = "staff_user"`).
+  - django-axes `axes.W006` uyarısı ("AXES_LOCKOUT_PARAMETERS 'ip_address' içermiyor") gerekçe yorumuyla `base.py`'de `SILENCED_SYSTEM_CHECKS` listesine alındı; `prod.py` bu listeyi genişletir. Gerekçe ADR-0009'daki kullanıcı adına göre kilit: Caddy arkasında bütün istekler 127.0.0.1'den gelir, IP'ye göre kilit bütün personeli birden kilitler. G01'deki `check --deploy` çıktısı bu yüzden "(3 silenced)" oldu.
+  - Kilitli hesabın 5. hatalı denemesi de 429 alır (axes kilidi bu denemede koyar); TC-07 6. denemeyi doğrular.

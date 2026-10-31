@@ -3,7 +3,7 @@
 from django.core.exceptions import ImproperlyConfigured
 
 from .base import *  # noqa: F403
-from .base import env
+from .base import SILENCED_SYSTEM_CHECKS, env
 
 DEBUG = False
 
@@ -45,6 +45,7 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
 SILENCED_SYSTEM_CHECKS = [
+    *SILENCED_SYSTEM_CHECKS,
     # W004 (HSTS) and W008 (SSL redirect): Caddy redirects HTTP to HTTPS and
     # owns the TLS policy (ADR-0005), so Django does not set them itself.
     "security.W004",
