@@ -462,7 +462,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Bu test sonraki görevlerin URL'lerini de kapsar. Her görev kendi yönetici yollarını sabit listeye ekler.
 - **Testler:** TC-27…TC-33, TC-237, TC-248…TC-252 (13 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest accounts tests/test_authorization.py -q` → hepsi geçer.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, bulut oturumu, Linux, Python 3.11): `python -m pytest accounts tests/test_authorization.py -q` → 79 passed; `python -m pytest -q` → 216 passed; `coverage report --include="accounts/permissions.py,accounts/middleware.py" --fail-under=100` → %100 (dal); `coverage report --include="*/domain.py" --fail-under=90` → %100; `makemigrations --check --dry-run` → "No changes detected"; `check --deploy` → "no issues (3 silenced)".
 
 ### Görev G05: Katalog domain'i: Türkçe normalizasyon ve ISBN
 
@@ -997,3 +998,10 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - Denetim kaydı modeli güncellemeyi ve silmeyi reddeder (`save` ve `delete` `ValueError`). Ayar değişmezse ve haftalık kapalı günler aynıysa kayıt yazılmaz.
   - Ana sayfadaki modül bağlantıları yalnız var olan ekranları gösterir; her görev kendi ekranının bağlantısını ekler. Denetim listesinde sayfa parametresi `?sayfa=`dır.
   - Ayar ve kapalı gün işlemleri başarıda 302 ile aynı ekrana döner ve mesaj gösterir.
+- **2026-10-31, G04 — uygulama ayrıntıları (bulut oturumu):**
+  - Plandaki arayüzlere ek servisler: `staff_list(actor)` ve `get_staff(actor, pk)` (yönetici; view ORM'e dokunmasın diye). Bilinmeyen `pk` yetki denetiminden sonra 404 verir.
+  - `create_staff` ad soyadı, kullanıcı adı biçimini (Django `username_validator`) ve benzersizliği denetler. Mesajlar uygulayıcı seçimidir: "Ad soyad boş olamaz", "Kullanıcı adı yalnız harf, rakam ve @ . + - _ karakterlerinden oluşabilir", "Bu kullanıcı adı zaten kullanılıyor". Parola hataları Django doğrulayıcılarının Türkçe mesajlarıyla `RuleViolation` olur. `change_own_password` de doğrulayıcıları yeniden çalıştırır.
+  - Rol aynıysa `set_role`, hesap zaten pasifse `deactivate_staff` hiçbir şey yazmaz. Personeli yeniden aktifleştirme §4.1'de olmadığı için yapılmadı.
+  - Hesap oluşturma formu parolayı iki kez ister; yöneticinin parola sıfırlama formu tek alandır. `staff_form.html` hem oluşturma hem ayrıntı ekranıdır.
+  - `accounts` URL'leri `accounts` ad alanındadır (`accounts:login` vb.); `LOGIN_URL` yine `/giris/`.
+  - TC-32 URL adları yerine URL desenlerini (`personel/<int:pk>/pasif/` gibi) sabit kümeyle karşılaştırır; §4.1 ile birebir eşlenir. Küme şimdilik 19 yolun mevcut 11'idir; kalan 8 yol (saklama listesi, dört nüsha işlemi, af, para iadesi, elle iptal) kendi görevlerinde eklenir. Ek test: `giris/` ve `cikis/` dışındaki her yolda `required_role` bulunmalı.

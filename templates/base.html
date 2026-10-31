@@ -12,9 +12,11 @@
       {% if user.is_authenticated %}
         <nav>
           <a href="{% url 'administration:home' %}">Ana sayfa</a>
+          {% if user.role == "ADMIN" %}<a href="{% url 'accounts:staff-list' %}">Personel</a>{% endif %}
         </nav>
         <span class="user">{{ user.get_username }}</span>
-        <form class="inline-form" method="post" action="{% url 'logout' %}">
+        <a href="{% url 'accounts:password-change' %}">Parola</a>
+        <form class="inline-form" method="post" action="{% url 'accounts:logout' %}">
           {% csrf_token %}
           <button type="submit">Çıkış</button>
         </form>

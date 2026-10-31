@@ -257,3 +257,244 @@ def test_staff_view_redirects_anonymous_to_login(client: Client) -> None:
 def test_view_wrappers_carry_required_role() -> None:
     assert _admin_view.required_role == Role.ADMIN
     assert _clerk_view.required_role == Role.CLERK
+
+
+# =============================================================================
+# G04: staff screens and forced password change (FR-21, FR-41, KL-32, KL-45)
+# =============================================================================
+
+NEW_PASSWORD = "Yeni-Parola-2026"
+
+
+def _staff_events():
+    from administration.models import AuditEvent
+
+    return list(AuditEvent.objects.filter(action="STAFF_CHANGED").order_by("id"))
+
+
+@pytest.fixture
+def admin_user():
+    return make_staff("ayse.y", role=Role.ADMIN, full_name="Ayşe Yılmaz")
+
+
+@pytest.fixture
+def admin_client(admin_user) -> Client:
+    client = Client()
+    client.force_login(admin_user)
+    return client
+
+
+def test_staff_list_shows_accounts(admin_client: Client) -> None:
+    make_staff("ali", full_name="Ali Yılmaz")
+    response = admin_client.get("/personel/")
+    assert response.status_code == 200
+    body = response.content.decode()
+    assert "ali" in body and "Ali Yılmaz" in body and "Görevli" in body
+
+
+def test_create_staff_screen(admin_client: Client) -> None:
+    assert admin_client.get("/personel/yeni/").status_code == 200
+    response = admin_client.post(
+        "/personel/yeni/",
+        {
+            "username": "ali",
+            "full_name": "Ali Yılmaz",
+            "role": "CLERK",
+            "password1": NEW_PASSWORD,
+            "password2": NEW_PASSWORD,
+        },
+    )
+    assert response.status_code == 302
+    from accounts.models import StaffUser
+
+    ali = StaffUser.objects.get(username="ali")
+    assert response["Location"] == f"/personel/{ali.pk}/"
+    assert ali.must_change_password is True
+
+
+def test_create_staff_screen_rejects_mismatch_and_short_password(admin_client: Client) -> None:
+    data = {"username": "ali", "full_name": "Ali", "role": "CLERK"}
+    response = admin_client.post(
+        "/personel/yeni/", {**data, "password1": NEW_PASSWORD, "password2": NEW_PASSWORD + "x"}
+    )
+    assert response.status_code == 200
+    assert response.context["form"].errors
+    response = admin_client.post(
+        "/personel/yeni/", {**data, "password1": "Kx7#mQ2vL", "password2": "Kx7#mQ2vL"}
+    )
+    assert response.status_code == 200
+    assert response.context["form"].non_field_errors()
+    assert _staff_events() == []
+
+
+def test_staff_detail_changes_role(admin_client: Client) -> None:
+    ali = make_staff("ali")
+    assert admin_client.get(f"/personel/{ali.pk}/").status_code == 200
+    response = admin_client.post(f"/personel/{ali.pk}/", {"role": "ADMIN"})
+    assert response.status_code == 302
+    ali.refresh_from_db()
+    assert ali.role == Role.ADMIN
+
+
+def test_staff_detail_shows_last_admin_error(admin_client: Client, admin_user) -> None:
+    response = admin_client.post(f"/personel/{admin_user.pk}/", {"role": "CLERK"})
+    assert response.status_code == 200
+    assert "En az bir aktif yönetici kalmalı" in response.content.decode()
+
+
+def test_staff_detail_unknown_pk_is_404_for_admin(admin_client: Client) -> None:
+    assert admin_client.get("/personel/999/").status_code == 404
+    assert admin_client.post("/personel/999/pasif/").status_code == 404
+
+
+def test_self_deactivation_message(admin_client: Client, admin_user) -> None:
+    response = admin_client.post(f"/personel/{admin_user.pk}/pasif/", follow=True)
+    assert "Kendi hesabınızı pasifleştiremezsiniz" in response.content.decode()
+    admin_user.refresh_from_db()
+    assert admin_user.is_active
+
+
+def test_reset_password_screen(admin_client: Client) -> None:
+    ali = make_staff("ali")
+    response = admin_client.post(f"/personel/{ali.pk}/parola/", {"password": NEW_PASSWORD})
+    assert response.status_code == 302
+    ali.refresh_from_db()
+    assert ali.check_password(NEW_PASSWORD) and ali.must_change_password
+
+
+def test_reset_password_screen_rejects_short_password(admin_client: Client) -> None:
+    ali = make_staff("ali")
+    response = admin_client.post(f"/personel/{ali.pk}/parola/", {"password": "Kx7#mQ2vL"})
+    assert response.status_code == 200
+    ali.refresh_from_db()
+    assert ali.check_password(DEFAULT_PASSWORD)
+
+
+def test_tc28_deactivated_staff_cannot_log_in(admin_client: Client) -> None:
+    ali = make_staff("ali")
+    response = admin_client.post(f"/personel/{ali.pk}/pasif/")
+    assert response.status_code == 302
+    ali.refresh_from_db()
+    assert ali.is_active is False
+    assert _staff_events()[-1].details == {"change": "deactivated"}
+
+    other = Client()
+    response = _login(other, DEFAULT_PASSWORD)
+    assert response.status_code == 200
+    assert not _is_logged_in(other)
+
+
+def test_tc30_unlock_lets_staff_log_in_at_once(admin_client: Client) -> None:
+    ali = make_staff("ali")
+    desk = Client()
+    _fail(desk, 5)
+    assert _login(desk, DEFAULT_PASSWORD).status_code == 429
+    response = admin_client.post(f"/personel/{ali.pk}/kilit-ac/")
+    assert response.status_code == 302
+    assert _login(desk, DEFAULT_PASSWORD).status_code == 302
+    assert _is_logged_in(desk)
+
+
+@pytest.mark.urls("tests.support.urls")
+def test_tc237_deactivation_ends_open_session(admin_client: Client) -> None:
+    ali = make_staff("ali")
+    desk = Client()
+    desk.force_login(ali)
+    assert desk.get("/odunc/").status_code == 200
+    admin_client.post(f"/personel/{ali.pk}/pasif/")
+    response = desk.get("/odunc/")
+    assert response.status_code == 302
+    assert response["Location"] == "/giris/?next=/odunc/"
+
+
+@pytest.mark.urls("tests.support.urls")
+def test_tc248_reset_password_forces_change_on_first_login(admin_client: Client) -> None:
+    ali = make_staff("ali")
+    admin_client.post(f"/personel/{ali.pk}/parola/", {"password": NEW_PASSWORD})
+
+    desk = Client()
+    assert _login(desk, NEW_PASSWORD).status_code == 302
+    response = desk.get("/odunc/")
+    assert response.status_code == 302
+    assert response["Location"] == "/parola/"
+
+    response = desk.post(
+        "/parola/",
+        {
+            "old_password": NEW_PASSWORD,
+            "new_password1": "Baska-Parola-2027",
+            "new_password2": "Baska-Parola-2027",
+        },
+        follow=True,
+    )
+    assert response.redirect_chain == [("/", 302)]
+    assert "Parolanız değiştirildi" in response.content.decode()
+    assert desk.get("/odunc/").status_code == 200
+
+
+@pytest.mark.urls("tests.support.urls")
+def test_tc249_change_own_password_keeps_session(client: Client) -> None:
+    ali = make_staff("ali")
+    client.force_login(ali)
+    assert client.get("/parola/").status_code == 200
+    response = client.post(
+        "/parola/",
+        {"old_password": DEFAULT_PASSWORD, "new_password1": NEW_PASSWORD, "new_password2": NEW_PASSWORD},
+    )
+    assert response.status_code == 302 and response["Location"] == "/"
+    ali.refresh_from_db()
+    assert ali.check_password(NEW_PASSWORD)
+    assert client.get("/odunc/").status_code == 200
+    event = _staff_events()[-1]
+    assert event.actor == ali and event.details == {"change": "password_changed"}
+
+
+def test_tc249_wrong_current_password_changes_nothing(client: Client) -> None:
+    ali = make_staff("ali", must_change_password=True)
+    client.force_login(ali)
+    response = client.post(
+        "/parola/",
+        {"old_password": "Yanlis-Parola-99", "new_password1": NEW_PASSWORD, "new_password2": NEW_PASSWORD},
+    )
+    assert response.status_code == 200
+    assert response.context["form"].errors["old_password"]
+    ali.refresh_from_db()
+    assert ali.check_password(DEFAULT_PASSWORD)
+    assert ali.must_change_password is True
+    assert _staff_events() == []
+
+
+def test_tc250_exempt_paths_are_not_redirected(client: Client, settings) -> None:
+    client.force_login(make_staff("ali", must_change_password=True))
+    assert client.get("/parola/").status_code == 200
+    static = client.get(f"{settings.STATIC_URL}css/app.css")
+    assert static.get("Location") != "/parola/"
+    response = client.post("/cikis/")
+    assert response.status_code == 302
+    assert response["Location"] == "/giris/"
+
+
+def test_flagged_session_is_redirected_from_other_pages(client: Client) -> None:
+    client.force_login(make_staff("ali", must_change_password=True))
+    response = client.get("/")
+    assert response.status_code == 302
+    assert response["Location"] == "/parola/"
+
+
+def test_unflagged_and_anonymous_requests_pass(client: Client) -> None:
+    assert client.get("/giris/").status_code == 200
+    client.force_login(make_staff("ali"))
+    assert client.get("/").status_code == 200
+
+
+@pytest.mark.parametrize(("password", "accepted"), [("Kx7#mQ2vL", False), ("Kx7#mQ2vLp", True)])
+def test_tc251_new_password_length(client: Client, password: str, accepted: bool) -> None:
+    ali = make_staff("ali", must_change_password=True)
+    client.force_login(ali)
+    response = client.post(
+        "/parola/",
+        {"old_password": DEFAULT_PASSWORD, "new_password1": password, "new_password2": password},
+    )
+    ali.refresh_from_db()
+    assert ali.must_change_password is (not accepted)
+    assert response.status_code == (302 if accepted else 200)
