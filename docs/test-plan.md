@@ -190,26 +190,26 @@ Sütunlar: Görev, TC'nin yazıldığı görev (plan §4); Seviye, §2'deki sat�
 | TC-101 | FR-17, I6 | G09 | servis | Senaryo | TC-100'den önce ledger_entry ve allocation satırlarının anlık görüntüsü alınır | Önceki satırlar alan alan aynı kalır; yalnız yeni satırlar eklenir. I6'nın tek istisnası (saklama görevinin `loan_id` bağını koparması, ADR-0018) TC-202'de | Planlandı |
 | TC-102 | NFR-12 | G09 | servis | Hata tahmini | 3 × 5,00 TL ceza, 15,00 TL ödeme | Bakiye tam 0 (`int`), "0,00 TL" | Planlandı |
 | TC-103 | FR-13, I1 | G09 | servis (eşzamanlı) | Hata tahmini | Borç 10,00; iki iş parçacığı aynı anda 6,00 öder | Biri kabul edilir, diğeri borçtan fazla diye reddedilir; borç 4,00 | Planlandı |
-| TC-104 | FR-07 | G10 | birim | Denklik sınıfı | `due_date(2026-11-02, 14, kapalı gün yok)` | 2026-11-16 | Planlandı |
-| TC-105 | FR-07, AC-07 | G10 | birim | Denklik sınıfı | Süre 13, pazar kapalı, başlangıç 2026-11-02 | 2026-11-16 | Planlandı |
-| TC-106 | FR-24, AC-24 | G10 | birim | Denklik sınıfı | Pazar ve 2027-10-29 kapalı; 2027-10-15 + 14 | 2027-10-30 | Planlandı |
-| TC-107 | FR-07 | G10 | birim | Hata tahmini | Cumartesi ve pazar haftalık kapalı, 2026-11-16 tek tarih kapalı; 2026-10-31 + 14 | 2026-11-17 (salı) | Planlandı |
-| TC-108 | FR-07 | G10 | birim | Hata tahmini | 2028-02-20 + 14; 2026-12-25 + 14 | 2028-03-05; 2027-01-08 | Planlandı |
-| TC-109 | FR-07 (ADR-0028) | G10 | birim | Sınır değer | Aday + 0…365 kapalı, aday + 366 açık; ayrı testte aday + 0…366 kapalı | İlkinde aday + 366 döner; ikincisinde `NoOpenDayError` | Planlandı |
-| TC-110 | FR-12, AC-12 (ADR-0040) | G10 | birim | Sınır değer (üç değerli) | `late_days(2026-11-16, on, frozenset())`, on = 11-15, 11-16, 11-17 | 0, 0, 1 | Planlandı |
-| TC-111 | FR-12, AC-09 (ADR-0040) | G10 | birim | Denklik sınıfı | `late_days(2026-11-16, 2026-11-19, frozenset())` | 3 | Planlandı |
-| TC-112 | FR-12, AC-12 | G10 | birim | Sınır değer (üç değerli) | `fine(gün, 500, 15000)`, gün = 0, 29, 30, 31, 40 | 0, 14500, 15000, 15000, 15000 | Planlandı |
-| TC-113 | FR-12 | G10 | birim | Hata tahmini | Oran 0; üst sınır 0; 100000 gün | 0; 0; 15000 | Planlandı |
-| TC-114 | FR-08 | G10 | birim | Karar tablosu | Aktif üye, açık 2/limit 3, gecikme yok, borç 4999/eşik 5000, nüsha ON_SHELF | Engel yok | Planlandı |
-| TC-115 | FR-02, AC-02 | G10 | birim | Karar tablosu | Yalnız üye pasif | ["Üye pasif"] | Planlandı |
-| TC-116 | FR-08, AC-08 | G10 | birim | Karar tablosu | Yalnız açık 3/limit 3 (ve 4/limit 3) | ["Ödünç limiti dolu"] | Planlandı |
-| TC-117 | FR-08, AC-08 | G10 | birim | Karar tablosu | Yalnız gecikmiş ödünç var | ["Gecikmiş ödünç var"] | Planlandı |
-| TC-118 | FR-08, AC-08 | G10 | birim | Karar tablosu | Yalnız borç 5000/eşik 5000 (ve 5001) | ["Borç eşiği aşıldı"] | Planlandı |
-| TC-119 | FR-08, AC-08 | G10 | birim | Karar tablosu | Yalnız nüsha ON_LOAN, LOST, DAMAGED ya da WITHDRAWN (her biri ayrı) | ["Nüsha rafta değil"] | Planlandı |
-| TC-120 | FR-10 | G10 | birim | Karar tablosu | `renewed_on` boş, son tarih = bugün, borç 0 | Engel yok | Planlandı |
-| TC-121 | FR-10, AC-10 | G10 | birim | Karar tablosu | Yalnız `renewed_on` dolu | ["Uzatma hakkı kullanıldı"] | Planlandı |
-| TC-122 | FR-10 (KL-6) | G10 | birim | Karar tablosu | Yalnız son tarih = bugün − 1 | ["Ödünç gecikmiş"] | Planlandı |
-| TC-123 | FR-10, AC-10 | G10 | birim | Karar tablosu | Yalnız borç 200 (ve 1) kuruş | ["Ödenmemiş borç var"] | Planlandı |
+| TC-104 | FR-07 | G10 | birim | Denklik sınıfı | `due_date(2026-11-02, 14, kapalı gün yok)` | 2026-11-16 | Geçti |
+| TC-105 | FR-07, AC-07 | G10 | birim | Denklik sınıfı | Süre 13, pazar kapalı, başlangıç 2026-11-02 | 2026-11-16 | Geçti |
+| TC-106 | FR-24, AC-24 | G10 | birim | Denklik sınıfı | Pazar ve 2027-10-29 kapalı; 2027-10-15 + 14 | 2027-10-30 | Geçti |
+| TC-107 | FR-07 | G10 | birim | Hata tahmini | Cumartesi ve pazar haftalık kapalı, 2026-11-16 tek tarih kapalı; 2026-10-31 + 14 | 2026-11-17 (salı) | Geçti |
+| TC-108 | FR-07 | G10 | birim | Hata tahmini | 2028-02-20 + 14; 2026-12-25 + 14 | 2028-03-05; 2027-01-08 | Geçti |
+| TC-109 | FR-07 (ADR-0028) | G10 | birim | Sınır değer | Aday + 0…365 kapalı, aday + 366 açık; ayrı testte aday + 0…366 kapalı | İlkinde aday + 366 döner; ikincisinde `NoOpenDayError` | Geçti |
+| TC-110 | FR-12, AC-12 (ADR-0040) | G10 | birim | Sınır değer (üç değerli) | `late_days(2026-11-16, on, frozenset())`, on = 11-15, 11-16, 11-17 | 0, 0, 1 | Geçti |
+| TC-111 | FR-12, AC-09 (ADR-0040) | G10 | birim | Denklik sınıfı | `late_days(2026-11-16, 2026-11-19, frozenset())` | 3 | Geçti |
+| TC-112 | FR-12, AC-12 | G10 | birim | Sınır değer (üç değerli) | `fine(gün, 500, 15000)`, gün = 0, 29, 30, 31, 40 | 0, 14500, 15000, 15000, 15000 | Geçti |
+| TC-113 | FR-12 | G10 | birim | Hata tahmini | Oran 0; üst sınır 0; 100000 gün | 0; 0; 15000 | Geçti |
+| TC-114 | FR-08 | G10 | birim | Karar tablosu | Aktif üye, açık 2/limit 3, gecikme yok, borç 4999/eşik 5000, nüsha ON_SHELF | Engel yok | Geçti |
+| TC-115 | FR-02, AC-02 | G10 | birim | Karar tablosu | Yalnız üye pasif | ["Üye pasif"] | Geçti |
+| TC-116 | FR-08, AC-08 | G10 | birim | Karar tablosu | Yalnız açık 3/limit 3 (ve 4/limit 3) | ["Ödünç limiti dolu"] | Geçti |
+| TC-117 | FR-08, AC-08 | G10 | birim | Karar tablosu | Yalnız gecikmiş ödünç var | ["Gecikmiş ödünç var"] | Geçti |
+| TC-118 | FR-08, AC-08 | G10 | birim | Karar tablosu | Yalnız borç 5000/eşik 5000 (ve 5001) | ["Borç eşiği aşıldı"] | Geçti |
+| TC-119 | FR-08, AC-08 | G10 | birim | Karar tablosu | Yalnız nüsha ON_LOAN, LOST, DAMAGED ya da WITHDRAWN (her biri ayrı) | ["Nüsha rafta değil"] | Geçti |
+| TC-120 | FR-10 | G10 | birim | Karar tablosu | `renewed_on` boş, son tarih = bugün, borç 0 | Engel yok | Geçti |
+| TC-121 | FR-10, AC-10 | G10 | birim | Karar tablosu | Yalnız `renewed_on` dolu | ["Uzatma hakkı kullanıldı"] | Geçti |
+| TC-122 | FR-10 (KL-6) | G10 | birim | Karar tablosu | Yalnız son tarih = bugün − 1 | ["Ödünç gecikmiş"] | Geçti |
+| TC-123 | FR-10, AC-10 | G10 | birim | Karar tablosu | Yalnız borç 200 (ve 1) kuruş | ["Ödenmemiş borç var"] | Geçti |
 | TC-124 | FR-07, FR-08 (ADR-0023) | G11 | servis | Denklik sınıfı | Bugün 2026-11-02; aktif üye ve ON_SHELF nüshayla `check_out` | Ödünç son tarihi 2026-11-16; 500/15000 oran kopyası; `created_by` = aktör; nüsha ON_LOAN | Planlandı |
 | TC-125 | FR-08 | G11 | servis | Sınır değer (iki değerli) | Üyenin açık ödüncünün son tarihi bugün; ayrı testte dün | Bugün: ödünç verilir; dün: "Gecikmiş ödünç var" | Planlandı |
 | TC-126 | FR-02, FR-08, AC-02, AC-08 | G11 | servis | Denklik sınıfı | Veritabanı durumundan (S2, S3): pasif üye, AC-08'in üç örneği, Ödünçte nüsha | Her biri kendi nedeniyle reddedilir; ödünç satırı yazılmaz, nüsha durumu değişmez | Planlandı |
@@ -362,11 +362,11 @@ Sütunlar: Görev, TC'nin yazıldığı görev (plan §4); Seviye, §2'deki sat�
 | TC-273 | FR-16, FR-26, AC-16 (ADR-0041, KL-30) | G09 | servis | Senaryo | Bağı koparılmış (`loan_id` NULL) bedelin 80,00'ı ödenmemiş; yönetici "Nüsha bulundu" gerekçesiyle `cancel_fee_manual`; ardından aynı bedele para iadesi | Bakiye 80,00 azalır; CANCELLATION'ın `reason` alanı dolu; CANCELLATION denetim kaydında `amount_kurus` 8000, `member_no`, `target_entry_id`, `reason`, aktör ve zaman; para iadesi reddedilir | Planlandı |
 | TC-274 | FR-16 (ADR-0041) | G09 | servis | Karar tablosu | `cancel_fee_manual`: gerekçe "" ve "   "; ödüncüne bağlı bedel; ödenmemiş kısmı 0 olan bağsız bedel; bağsız FINE | "İptal için gerekçe zorunlu"; "Bu bedel ödüncüne bağlı; nüshayı Bulundu olarak işaretleyin"; "Bedelin ödenmemiş kısmı yok"; FINE reddedilir; hiçbirinde hareket yazılmaz | Planlandı |
 | TC-275 | FR-16, FR-22 (ADR-0041, KL-26) | G09 | view | Karar tablosu | Görevli POST `/borclar/<no>/iptal/`; döküm ekranı yönetici ve görevliyle; bedeller: iade edilebilir tutarlı, bağsız ve ödenmemiş, ikisi de değil | 403; yönetici para iadesi formunu yalnız ilk bedelde, iptal formunu yalnız ikincide görür; görevli iki formu da görmez | Planlandı |
-| TC-276 | FR-12, AC-12 (ADR-0040) | G10 | birim | Denklik sınıfı | `late_days(2026-11-16, 2026-11-20, {2026-11-18})`; `fine(3, 500, 15000)` | 3; 1500 | Planlandı |
-| TC-277 | FR-12 (ADR-0040) | G10 | birim | Sınır değer | Son tarih 11-16, iade 11-20; kapalı tarih kümesi {11-16}, {11-20}, {11-15, 11-21}; ayrıca `late_days(11-16, 11-17, {11-17})` | 4 (son tarih düşülmez); 3 (iade günü düşülür); 4 (aralık dışı); 0 | Planlandı |
+| TC-276 | FR-12, AC-12 (ADR-0040) | G10 | birim | Denklik sınıfı | `late_days(2026-11-16, 2026-11-20, {2026-11-18})`; `fine(3, 500, 15000)` | 3; 1500 | Geçti |
+| TC-277 | FR-12 (ADR-0040) | G10 | birim | Sınır değer | Son tarih 11-16, iade 11-20; kapalı tarih kümesi {11-16}, {11-20}, {11-15, 11-21}; ayrıca `late_days(11-16, 11-17, {11-17})` | 4 (son tarih düşülmez); 3 (iade günü düşülür); 4 (aralık dışı); 0 | Geçti |
 | TC-278 | FR-12 (ADR-0040, KL-29) | G11 | servis | Denklik sınıfı | Pazar haftalık kapalı; son tarih 2026-11-14 (cumartesi), iade 2026-11-17; ayrı testte 2026-11-15 (pazar) ayrıca kapalı tarih | İlkinde 3 gün, 15,00 TL FINE; ikincisinde 2 gün, 10,00 TL | Planlandı |
-| TC-279 | FR-11 (ADR-0046, KL-35) | G10 | birim | Denklik sınıfı | `classify_member_input`: "00000042", "05551112233", "5551112233", "0555 111 22 33", "(0555) 111-22-33", "1042", "12345678", "0000042", "012345678", "ayşe" | COPY_BARCODE; PHONE "05551112233"; PHONE "5551112233"; PHONE "05551112233"; PHONE "05551112233"; MEMBER_NO "1042"; MEMBER_NO; MEMBER_NO; MEMBER_NO; TEXT | Planlandı |
-| TC-280 | FR-08, FR-10 (KL-6) | G10 | birim | Karar tablosu | `checkout_blockers`: pasif, limit dolu, gecikmiş, eşik aşılmış, nüsha ON_LOAN; `renew_blockers`: uzatılmış, gecikmiş, borçlu | Beş engel enum sırasıyla; [ALREADY_RENEWED, LOAN_OVERDUE, HAS_DEBT] | Planlandı |
+| TC-279 | FR-11 (ADR-0046, KL-35) | G10 | birim | Denklik sınıfı | `classify_member_input`: "00000042", "05551112233", "5551112233", "0555 111 22 33", "(0555) 111-22-33", "1042", "12345678", "0000042", "012345678", "ayşe" | COPY_BARCODE; PHONE "05551112233"; PHONE "5551112233"; PHONE "05551112233"; PHONE "05551112233"; MEMBER_NO "1042"; MEMBER_NO; MEMBER_NO; MEMBER_NO; TEXT | Geçti |
+| TC-280 | FR-08, FR-10 (KL-6) | G10 | birim | Karar tablosu | `checkout_blockers`: pasif, limit dolu, gecikmiş, eşik aşılmış, nüsha ON_LOAN; `renew_blockers`: uzatılmış, gecikmiş, borçlu | Beş engel enum sırasıyla; [ALREADY_RENEWED, LOAN_OVERDUE, HAS_DEBT] | Geçti |
 | TC-281 | FR-11, AC-11 (ADR-0046) | G11 | view | Denklik sınıfı | 42 no'lu üye ve "00000042" barkodlu nüsha var; GET `/odunc/?uye=00000042` | Hiçbir üye açılmaz; "Bu bir nüsha barkodu. Üye kartını okutun." görünür; nüsha alanı ve onay düğmesi yok | Planlandı |
 | TC-282 | FR-11 (ADR-0046, KL-35) | G11 | view | Denklik sınıfı | GET `/odunc/?uye=0555 111 22 33` (tek eşleşme); GET `/odunc/?uye=ayşe` (iki eşleşme) | İkisinde de liste; her satır `?uye=<no>` bağlantısı; tek sonuçta da üye otomatik açılmaz | Planlandı |
 | TC-283 | FR-09, FR-12, AC-12 (ADR-0040) | G11 | view | Senaryo | Günlük ceza 5,00; son tarih 2026-11-16; 2026-11-18 kapalı tarih; 2026-11-20'de iade | 15,00 TL FINE; "İade alındı; 15,00 TL ceza yazıldı" | Planlandı |

@@ -598,7 +598,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - `check_transition(from_status: str, to_status: str) -> Literal["ADMIN", "CLERK"]`. Tabloda olmayan geçişte `InvalidTransition("Bu durum değişikliği yapılamaz: <eski> → <yeni>")` fırlatır.
 - **Testler:** TC-104…TC-123, TC-276…TC-277, TC-279…TC-280 (24 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `coverage run --branch -m pytest circulation/tests/test_domain.py && coverage report --include="circulation/domain.py" --fail-under=90` → çıkış 0. `python manage.py makemigrations --check --dry-run` → "No changes detected".
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-11-01, bulut oturumu, Linux, Python 3.11.18): `coverage run --branch -m pytest circulation/tests/test_domain.py` → 67 passed; `coverage report --include="circulation/domain.py" --fail-under=90` → %100 (dal), çıkış 0; `python -m pytest circulation -q` → 73 passed (6'sı `Loan` kısıt testi); `python -m pytest -q` → 588 passed; `makemigrations --check --dry-run` → "No changes detected".
 
 ### Görev G11: Ödünç verme, iade ve uzatma
 
@@ -1169,6 +1170,14 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - **URL sırası (§8.1'de uygulayıcıya bırakılan ayrıntı):** `nushalar/etiket/` `catalog.urls` içindedir; `library_site/urls.py`'de `catalog.urls`, G12'de eklenecek circulation yollarından önce gelmelidir, yoksa `nushalar/<str:barcode>/` "etiket"i barkod sanar. `catalog/urls.py`'de bu not yorum olarak duruyor.
   - "Etiket bas" düğmesi yalnız basılabilir nüsha varsa, "Kart bas" düğmesi yalnız seçilebilir üye varsa görünür. Kitap arama ekranında "Nüsha etiketleri", üye arama ekranında "Üye kartları" bağlantısı aralık formuna gider.
   - G08'in dosya listesi dışında değişenler: `administration/forms.py` (`IntListField`), `catalog/forms.py`, `members/forms.py`, `catalog/templates/catalog/search.html` ve `members/templates/members/search.html` (bağlantılar), `catalog/tests/*` ve `members/tests/*` (TC-71…TC-75, TC-265…TC-269), `pdf/tests/__init__.py`.
+- **2026-11-01, G10 — uygulama ayrıntıları (bulut oturumu):**
+  - `circulation` app'i G10'da `INSTALLED_APPS`'e eklendi (`library_site/settings/base.py`; G05'teki `catalog` gibi, dosya listesinde yok ama model bu görevde oluşuyor).
+  - `InvalidTransition` mesajında durumlar Türkçe etiketleriyle yazılır ("Bu durum değişikliği yapılamaz: Kayıp → Hasarlı"); kodlar (`LOST`) personele anlamsızdır. Etiketler domain ORM modülü import etmesin diye `circulation.domain.STATUS_LABELS`'ta tutulur; bir test bunları `catalog.models.CopyStatus` etiketleriyle eşit tutar.
+  - `NoOpenDayError` mesajı ADR-0028'deki metindir ve `NO_OPEN_DAY_MESSAGE` sabitidir; `RuleViolation`'ın alt sınıfı olduğu için view'lar onu ayrıca yakalamaz.
+  - `classify_member_input`: temizlikten sonra boş kalan girdi `TEXT` ve boş değerdir (ekran boş girdiyi aramaz). `TEXT` değeri özgün metnin kırpılmış halidir; normalizasyonu `search_members` yapar. Yalnız ASCII rakamlar rakam sayılır (`members.domain` ile aynı).
+  - `late_days`, takvim farkı 0 ya da negatifse kapalı tarihleri saymadan 0 döner; sonuç formülle aynıdır.
+  - `Loan` modeli: `db_table = "loan"`; data-design §2.4'teki CHECK'ler (`due_on > loaned_on`, `close_reason` değerleri, `closed_on` ile `close_reason`'ın birlikte dolu ya da boş olması, `copy_found_on` için `closed_on IS NOT NULL AND close_reason = 'LOST' AND copy_found_on >= closed_on`) ve §4'teki indeksler (`loan_one_open_per_copy` kısmi benzersiz, `loan(member_id, closed_on)`, kısmi `loan(due_on) WHERE closed_on IS NULL`, `loan(closed_on)`) migration'dadır. `copy_found_on` CHECK'ine `closed_on IS NOT NULL` eklendi: SQL'de `close_reason` NULL iken karşılaştırma bilinmez sonuç verir ve CHECK geçerdi; açık ödünçte `copy_found_on` böylece reddedilir. `CloseReason` etiketleri: "İade edildi", "Kayıp", "Hasarlı".
+  - Model kısıt testleri `circulation/tests/test_services.py`'nin başındadır (KL-11'deki üç dosya düzeni; `test_domain.py` veritabanına dokunmaz).
 - **2026-10-31, G05–G08 uygulayıcının seçtiği kullanıcıya görünen metinler:** Plan, SRS, KL ya da ADR'nin vermediği ve uygulayıcının seçtiği kullanıcıya görünen metinler (2026-11-01 kullanıcı kararı; PR'da onaylanır). Kullanıcı 2026-11-01'de PR #2 incelemesinde hepsini onayladı; metin değiştirilmedi. G02–G04 listesinde zaten onaylı olup aynen yeniden kullanılanlar "(G02–G04'te onaylı)" ile işaretlidir.
   - G06:
     - "Üyeler": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `members/search.html` sayfa başlığı; `members/form.html` ve `members/detail.html` geri bağlantısı.
