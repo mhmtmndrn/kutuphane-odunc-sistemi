@@ -12,4 +12,7 @@ urlpatterns = [
     path("kitaplar/<int:pk>/", views.book_detail, name="detail"),
     path("kitaplar/<int:pk>/duzenle/", views.book_edit, name="edit"),
     path("kitaplar/<int:pk>/nusha/", views.book_add_copies, name="add-copies"),
+    # Must stay before circulation's "nushalar/<str:barcode>/" (G12) in
+    # library_site/urls.py, or "etiket" would be read as a barcode.
+    path("nushalar/etiket/", views.label_print, name="labels"),
 ]

@@ -15,6 +15,8 @@ from django.db.models import Case, Count, IntegerField, Q, Value, When
 from accounts.models import Role
 from accounts.permissions import require_role
 from administration.errors import RuleViolation
+from administration.services import get_settings
+from pdf.sheets import LABEL_LAYOUT, SheetItem, render_sheet
 
 from .domain import IsbnOk, IsbnSuggest, normalize_tr, parse_isbn
 from .models import Book, Copy, CopyStatus
@@ -173,3 +175,74 @@ def search_books(q: str, limit: int = SEARCH_LIMIT) -> list[Book]:
         rank = Case(When(exact_match, then=Value(0)), default=Value(1), output_field=IntegerField())
     matches = Book.objects.filter(condition).order_by(rank, "search_key", "pk")
     return list(matches[:limit])
+
+
+# --- Labels (G08: FR-06, ADR-0036, KL-25) -------------------------------------
+
+SELECTION_MAX = 240  # KL-25: ten label pages
+RANGE_AND_LIST = "Aralık ya da seçim kutuları kullanın, ikisini birden değil"
+START_AFTER_END = "Başlangıç bitişten büyük olamaz"
+TOO_MANY = "En fazla 240 öğe seçilebilir"
+TITLE_ON_LABEL = 30  # phase 4 small decision 3
+
+
+def _blank(value: str | None) -> bool:
+    return value is None or not value.strip()
+
+
+@transaction.atomic
+def copies_for_labels(
+    copy_ids: list[int] | None, start: str | None, end: str | None
+) -> list[int]:
+    """Copy ids to print, ascending by barcode (KL-25).
+
+    Either a barcode range (both ends, 8 digits, at most 240 wide) or the
+    checkbox list (at most 240 ids). Unknown and WITHDRAWN copies are
+    skipped; the server applies the same rule to the checkbox list.
+    """
+    has_list = bool(copy_ids)
+    has_range = not (_blank(start) and _blank(end))
+    if has_list and has_range:
+        raise RuleViolation(RANGE_AND_LIST)
+    if not (has_list or has_range):
+        raise RuleViolation("En az bir nüsha seçin")
+    printable = Copy.objects.exclude(status=CopyStatus.WITHDRAWN).order_by("barcode")
+    if has_range:
+        start, end = (start or "").strip(), (end or "").strip()
+        if not (is_barcode(start) and is_barcode(end)):
+            raise RuleViolation("Başlangıç ve bitiş 8 haneli barkod olmalı")
+        if start > end:
+            raise RuleViolation(START_AFTER_END)
+        if int(end) - int(start) + 1 > SELECTION_MAX:
+            raise RuleViolation(TOO_MANY)
+        # Barcodes are zero-padded to eight digits, so text order is numeric order.
+        ids = list(printable.filter(barcode__gte=start, barcode__lte=end).values_list("pk", flat=True))
+        if not ids:
+            raise RuleViolation("Aralıkta basılacak nüsha yok")
+        return ids
+    wanted = set(copy_ids or [])
+    if len(wanted) > SELECTION_MAX:
+        raise RuleViolation(TOO_MANY)
+    ids = list(printable.filter(pk__in=wanted).values_list("pk", flat=True))
+    if not ids:
+        raise RuleViolation("En az bir nüsha seçin")
+    return ids
+
+
+@transaction.atomic
+def label_pdf(copy_ids: list[int]) -> bytes:
+    """One label per copy, in the given order: library name, barcode, code
+    and the first 30 characters of the title (phase 4 small decision 3)."""
+    library_name = get_settings().library_name
+    copies = Copy.objects.select_related("book").in_bulk(copy_ids)
+    items = [
+        SheetItem(
+            header=library_name,
+            barcode_value=copies[pk].barcode,
+            caption=copies[pk].barcode,
+            footer=copies[pk].book.title[:TITLE_ON_LABEL],
+        )
+        for pk in copy_ids
+        if pk in copies
+    ]
+    return render_sheet(items, LABEL_LAYOUT)

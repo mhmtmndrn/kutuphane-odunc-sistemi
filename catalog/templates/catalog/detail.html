@@ -17,14 +17,22 @@
 
   <h2>Nüshalar</h2>
   {% if copies %}
-    <table>
-      <thead><tr><th>Barkod</th><th>Durum</th></tr></thead>
-      <tbody>
-        {% for copy in copies %}
-          <tr><td>{{ copy.barcode }}</td><td>{{ copy.get_status_display }}</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <form method="post" action="{% url 'catalog:labels' %}">
+      {% csrf_token %}
+      <table>
+        <thead><tr><th></th><th>Barkod</th><th>Durum</th></tr></thead>
+        <tbody>
+          {% for copy in copies %}
+            <tr>
+              <td>{% if copy.status != "WITHDRAWN" %}<input type="checkbox" name="copy_ids" value="{{ copy.pk }}" id="copy-{{ copy.pk }}" aria-label="{{ copy.barcode }}">{% endif %}</td>
+              <td>{{ copy.barcode }}</td>
+              <td>{{ copy.get_status_display }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if has_printable %}<p><button type="submit">Etiket bas</button></p>{% endif %}
+    </form>
   {% else %}
     <p>Nüsha yok.</p>
   {% endif %}

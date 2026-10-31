@@ -19,6 +19,8 @@ from accounts.permissions import require_role
 from administration import clock
 from administration.audit import AuditAction, record_audit
 from administration.errors import RuleViolation
+from administration.services import get_settings
+from pdf.sheets import CARD_LAYOUT, SheetItem, render_sheet
 
 from . import domain
 from .models import CONSENT_ORDER, ConsentAction, ConsentEvent, Member
@@ -185,3 +187,62 @@ def consent_dates(member: Member) -> tuple[date | None, date | None]:
         for row in member.consent_events.values("action").annotate(last=Max("effective_on"))
     }
     return latest.get(ConsentAction.GIVEN), latest.get(ConsentAction.WITHDRAWN)
+
+
+# --- Member cards (G08: FR-38, ADR-0032, ADR-0036, KL-25) -----------------------
+
+SELECTION_MAX = 240  # KL-25
+RANGE_AND_LIST = "Aralık ya da seçim kutuları kullanın, ikisini birden değil"
+
+
+@transaction.atomic
+def members_for_cards(
+    member_nos: list[int] | None, start: int | None, end: int | None
+) -> list[int]:
+    """Member numbers to print, ascending (KL-25).
+
+    Either a member number range (both ends positive, at most 240 wide) or
+    the checkbox list (at most 240). Inactive and anonymized members are
+    skipped, for the list too.
+    """
+    has_list = bool(member_nos)
+    has_range = start is not None or end is not None
+    if has_list and has_range:
+        raise RuleViolation(RANGE_AND_LIST)
+    if not (has_list or has_range):
+        raise RuleViolation("En az bir üye seçin")
+    printable = Member.objects.filter(is_active=True, anonymized_at__isnull=True).order_by(
+        "member_no"
+    )
+    if has_range:
+        if start is None or end is None or start < 1 or end < 1:
+            raise RuleViolation("Başlangıç ve bitiş pozitif üye no olmalı")
+        if start > end:
+            raise RuleViolation("Başlangıç bitişten büyük olamaz")
+        if end - start + 1 > SELECTION_MAX:
+            raise RuleViolation("En fazla 240 öğe seçilebilir")
+        nos = list(printable.filter(member_no__range=(start, end)).values_list("member_no", flat=True))
+        if not nos:
+            raise RuleViolation("Aralıkta basılacak üye yok")
+        return nos
+    wanted = set(member_nos or [])
+    if len(wanted) > SELECTION_MAX:
+        raise RuleViolation("En fazla 240 öğe seçilebilir")
+    nos = list(printable.filter(member_no__in=wanted).values_list("member_no", flat=True))
+    if not nos:
+        raise RuleViolation("En az bir üye seçin")
+    return nos
+
+
+@transaction.atomic
+def member_card_pdf(member_nos: list[int]) -> bytes:
+    """One card per member: library name, "Üye No" and the barcode of the
+    unpadded member number. No name is printed (ADR-0032)."""
+    library_name = get_settings().library_name
+    items = [
+        SheetItem(
+            header=library_name, barcode_value=str(no), caption=f"Üye No: {no}", footer=""
+        )
+        for no in member_nos
+    ]
+    return render_sheet(items, CARD_LAYOUT)

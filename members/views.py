@@ -12,7 +12,7 @@ from administration import clock
 from administration.errors import RuleViolation
 
 from . import services
-from .forms import ConsentForm, MemberForm
+from .forms import CardSelectionForm, ConsentForm, MemberForm
 from .models import Member
 
 
@@ -28,7 +28,9 @@ def _get_member(member_no: int) -> Member:
 def member_search(request: HttpRequest) -> HttpResponse:
     q = request.GET.get("q", "").strip()
     results = services.search_members(q) if q else []
-    return render(request, "members/search.html", {"q": q, "results": results})
+    has_printable = any(m.is_active and not m.is_anonymized for m in results)
+    context = {"q": q, "results": results, "has_printable": has_printable}
+    return render(request, "members/search.html", context)
 
 
 @staff_view
@@ -117,3 +119,23 @@ def member_consent(request: HttpRequest, member_no: int) -> HttpResponse:
             messages.success(request, "Rıza kaydedildi" if given else "Rıza geri alındı")
             return redirect("members:detail", member_no=member_no)
     return _detail_page(request, _get_member(member_no), consent_form=form)
+
+
+@staff_view
+@require_http_methods(["GET", "POST"])
+def card_print(request: HttpRequest) -> HttpResponse:
+    """GET: the range form; POST: a range or ``member_nos`` -> card PDF (ADR-0036)."""
+    form = CardSelectionForm(request.POST if request.method == "POST" else None)
+    if request.method == "POST" and form.is_valid():
+        data = form.cleaned_data
+        try:
+            member_nos = services.members_for_cards(data["member_nos"], data["start"], data["end"])
+        except RuleViolation as exc:
+            form.add_error(None, exc.message)
+        else:
+            response = HttpResponse(
+                services.member_card_pdf(member_nos), content_type="application/pdf"
+            )
+            response["Content-Disposition"] = 'inline; filename="uye-kartlari.pdf"'
+            return response
+    return render(request, "members/card_range.html", {"form": form})

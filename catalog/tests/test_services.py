@@ -301,3 +301,137 @@ def test_empty_book_query_returns_nothing() -> None:
 def test_like_wildcards_are_literal_in_book_search() -> None:
     make_book("Tutunamayanlar", "Oğuz Atay")
     assert services.search_books("%") == []
+
+
+# --- Labels (G08: FR-06, ADR-0036, KL-25) --------------------------------------
+
+from administration import services as admin_services  # noqa: E402
+from tests.support.barcode import pdf_page_count, pdf_text, read_pdf_barcodes  # noqa: E402
+
+RANGE_AND_LIST = "Aralık ya da seçim kutuları kullanın, ikisini birden değil"
+NOTHING_SELECTED = "En az bir nüsha seçin"
+TOO_MANY = "En fazla 240 öğe seçilebilir"
+
+
+def _copies(ids, status_by_id=None) -> dict[int, Copy]:
+    book = make_book()
+    status_by_id = status_by_id or {}
+    return {i: make_copy(book, pk=i, status=status_by_id.get(i, CopyStatus.ON_SHELF)) for i in ids}
+
+
+def test_tc265_range_skips_missing_and_withdrawn_copies() -> None:
+    _copies([10, 11, 13, 14, 15], {13: CopyStatus.WITHDRAWN})
+    assert services.copies_for_labels(None, "00000010", "00000015") == [10, 11, 14, 15]
+
+
+def test_range_includes_lost_damaged_and_lent_copies() -> None:
+    _copies([1, 2, 3], {1: CopyStatus.LOST, 2: CopyStatus.DAMAGED, 3: CopyStatus.ON_LOAN})
+    assert services.copies_for_labels(None, "00000001", "00000003") == [1, 2, 3]
+
+
+@pytest.mark.parametrize(
+    ("args", "message"),
+    [
+        ((None, "00000015", "00000010"), "Başlangıç bitişten büyük olamaz"),
+        ((None, "00000001", "00000241"), TOO_MANY),
+        ((list(range(1, 242)), None, None), TOO_MANY),
+        ((None, "00000100", "00000105"), "Aralıkta basılacak nüsha yok"),
+    ],
+)
+def test_tc266_range_and_size_refusals(args, message) -> None:
+    _copies([1, 2])
+    with pytest.raises(RuleViolation) as exc:
+        services.copies_for_labels(*args)
+    assert exc.value.message == message
+
+
+def test_tc266_range_of_240_is_accepted() -> None:
+    _copies([1, 240])
+    assert services.copies_for_labels(None, "00000001", "00000240") == [1, 240]
+
+
+def test_tc266_range_with_only_withdrawn_copies_is_empty() -> None:
+    _copies([5], {5: CopyStatus.WITHDRAWN})
+    with pytest.raises(RuleViolation) as exc:
+        services.copies_for_labels(None, "00000005", "00000005")
+    assert exc.value.message == "Aralıkta basılacak nüsha yok"
+
+
+@pytest.mark.parametrize(
+    ("args", "message"),
+    [
+        (([1], "00000001", "00000002"), RANGE_AND_LIST),
+        (([1], "00000001", None), RANGE_AND_LIST),
+        ((None, None, None), NOTHING_SELECTED),
+        (([], "", ""), NOTHING_SELECTED),
+    ],
+)
+def test_tc267_range_and_list_together_or_neither(args, message) -> None:
+    _copies([1, 2])
+    with pytest.raises(RuleViolation) as exc:
+        services.copies_for_labels(*args)
+    assert exc.value.message == message
+
+
+def test_tc267_withdrawn_copy_in_the_list_is_skipped() -> None:
+    _copies([1, 2, 3], {2: CopyStatus.WITHDRAWN})
+    assert services.copies_for_labels([3, 2, 1, 99, 3], None, None) == [1, 3]
+
+
+def test_list_of_only_withdrawn_or_unknown_copies_selects_nothing() -> None:
+    _copies([2], {2: CopyStatus.WITHDRAWN})
+    with pytest.raises(RuleViolation) as exc:
+        services.copies_for_labels([2, 99], None, None)
+    assert exc.value.message == NOTHING_SELECTED
+
+
+@pytest.mark.parametrize(("start", "end"), [("1", "00000002"), ("00000001", ""), ("0000000a", "00000002")])
+def test_range_ends_must_be_eight_digit_barcodes(start, end) -> None:
+    with pytest.raises(RuleViolation) as exc:
+        services.copies_for_labels(None, start, end)
+    assert exc.value.message == "Başlangıç ve bitiş 8 haneli barkod olmalı"
+
+
+def test_tc72_label_holds_library_name_code_and_first_30_title_characters() -> None:
+    admin_services.get_settings()
+    title_30 = "Saatleri Ayarlama Enstitüsü 12"
+    assert len(title_30) == 30
+    short = make_copy(make_book(title_30), pk=7)
+    long_ = make_copy(make_book(title_30 + "X"), pk=8)
+    text = pdf_text(services.label_pdf([short.pk, long_.pk]))
+    assert "Kütüphane" in text
+    assert "00000007" in text and "00000008" in text
+    assert text.count(title_30) == 2
+    assert "X" not in text
+
+
+def test_tc73_long_library_name_is_shortened_on_labels(monkeypatch) -> None:
+    settings = admin_services.get_settings()
+    settings.library_name = "W" * 80
+    settings.save()
+    text = pdf_text(services.label_pdf([make_copy(pk=1).pk]))
+    assert "…" in text
+    assert "W" * 80 not in text
+
+
+def test_label_pdf_follows_the_given_order_and_layout() -> None:
+    copies = _copies(range(1, 26))
+    pdf = services.label_pdf([c.pk for c in copies.values()])
+    assert pdf.startswith(b"%PDF")
+    assert pdf_page_count(pdf) == 2
+
+
+@pytest.mark.slow
+def test_tc71_thirty_labels_from_several_books_decode_in_order() -> None:
+    first, second, third = make_book("Birinci"), make_book("İkinci"), make_book("Üçüncü")
+    ids = []
+    for i in range(30):
+        ids.append(make_copy((first, second, third)[i % 3], pk=100 + i).pk)
+    selected = services.copies_for_labels(None, "00000100", "00000129")
+    assert selected == ids
+    pdf = services.label_pdf(selected)
+    assert pdf_page_count(pdf) == 2
+    decoded = read_pdf_barcodes(pdf)
+    assert [b.value for b in decoded] == [f"{i:08d}" for i in ids]
+    assert [b.page for b in decoded] == [0] * 24 + [1] * 6
+    assert {b.format for b in decoded} == {"Code128"}

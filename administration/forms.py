@@ -83,3 +83,21 @@ class ClosedDateForm(forms.Form):
         widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
     )
     note = forms.CharField(label="Not", max_length=200, required=False)
+
+
+class IntListField(forms.Field):
+    """A repeated POST field of integers, such as checkbox values (ADR-0036)."""
+
+    widget = forms.MultipleHiddenInput
+
+    def __init__(self, **kwargs) -> None:
+        kwargs.setdefault("required", False)
+        super().__init__(**kwargs)
+
+    def to_python(self, value):
+        if not value:
+            return []
+        try:
+            return [int(item) for item in value]
+        except (TypeError, ValueError):
+            raise forms.ValidationError("Geçersiz seçim") from None

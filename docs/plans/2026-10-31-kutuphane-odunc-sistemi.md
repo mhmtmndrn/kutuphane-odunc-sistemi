@@ -547,7 +547,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Kart yerleşiminin kenar boşlukları kartları A4'te ortalar: (210 − 2 × 85,6) / 2 = 19,4 mm ve (297 − 5 × 54) / 2 = 13,5 mm.
 - **Testler:** TC-69…TC-75, TC-265…TC-269 (12 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest pdf catalog members -q` → hepsi geçer (`slow` testleri dahil).
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, bulut oturumu, Linux, Python 3.11.18): `python -m pytest pdf catalog members -q` → 296 passed (`slow` dahil; `python -m pytest -q -m slow` → 4 passed: TC-70 iki test, TC-71, TC-74; barkodlar pypdfium2 5.14.0 ve zxing-cpp 3.1.1 ile bu ortamda çözüldü); `python -m pytest -q` → 515 passed; `coverage report --include="pdf/*"` → %100 (satır ve dal); `*/domain.py` %100 (dal); `catalog/services.py` ve `members/services.py` %100 (dal); `accounts/permissions.py`, `accounts/middleware.py` %100; `makemigrations --check --dry-run` → "No changes detected".
 
 ### Görev G09: Borç defteri
 
@@ -1155,6 +1156,18 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - Nüsha ekleme formunun alanı `count`'tur. 1–50 aralığını servis denetler ve mesaj alan hatası olarak görünür; tarayıcıya `min`/`max` ipucu verilir. Kural ihlalinde kitap ayrıntısı 200 ile yeniden gösterilir.
   - Kitap ve nüsha işlemleri denetim kaydı yazmaz (faz 4 küçük karar 8'deki listede yoklar).
   - `tests/support/factories.py`: `make_book(title, author, *, isbn13, publisher, year)` ISBN'i olduğu gibi yazar; `make_copy(book, *, pk, status)` barkodu `f"{id:08d}"` yapar.
+- **2026-10-31, G08 — uygulama ayrıntıları (bulut oturumu):**
+  - **Yazı tipi:** PDF'lerdeki metin, reportlab paketinin içinde gelen Vera TrueType yazı tipiyle (`Vera.ttf`, Bitstream Vera lisansı gömmeye izin verir) yazılır ve PDF'e alt küme olarak gömülür. PDF'in temel yazı tipleri (Helvetica, WinAnsi kodlaması) ş, ğ, ı ve İ harflerini içermiyor; "İstanbul Şehir Kütüphanesi" kare kutularla basılıyordu. Yeni bağımlılık ya da dosya eklenmedi; yazı tipi reportlab'ın kendi yazı tipi yolundan bulunur (Windows'ta da).
+  - **Öğe yerleşimi:** Üstte başlık (8 pt), ortada 15 mm Code 128 barkod (modül 0,33 mm, reportlab'ın varsayılan 10 modüllük sessiz bölgeleriyle), altında açıklama (9 pt) ve varsa alt metin (7 pt) bulunur. Blok öğenin içinde yatay ve dikey ortalanır; metinler için yanlarda 2 mm boşluk kalır. Her metin satırı öğe genişliğine sığmazsa "…" ile kısaltılır, başlık ayrıca 80 karakterle sınırlıdır (ADR-0035; yazı boyutu küçültülmez). Etikette alt metin `title[:30]`'dur ve genişliğe sığdığı sürece kısaltılmaz (TC-72). Kart kesim çizgileri her kartın çevresinde 0,25 pt açık gri dikdörtgendir.
+  - `SheetLayout` `kw_only` frozen dataclass'tır (varsayılanlı `page_w`, `page_h` zorunlu alanlardan önce geldiği için); `__post_init__` öğelerin sayfaya sığmadığı yerleşimi `ValueError` ile reddeder ve `per_page` özelliği vardır. Plandaki arayüze ek olarak `item_position(index, layout)` ve `fit_text(text, size, max_width, max_chars)` dışa açıktır. `render_sheet([])` `ValueError` verir. Çıktı `invariant=True` ile üretilir; aynı girdi aynı baytları verir.
+  - `tests/support/barcode.py`: `decode_pdf_barcodes`'a ek olarak `read_pdf_barcodes` (sayfa, değer, biçim), `pdf_page_count` ve `pdf_text` (pypdfium2 ile metin çıkarma; TC-72, TC-73, TC-74). Aynı satırdaki barkodlar, merkezleri arasındaki dikey fark 7,5 mm'den azsa bir satır sayılır.
+  - Barkod çözen testler (TC-70, TC-71, TC-74) ADR-0030'a göre `slow` işaretlidir; TC-70'in seviyesi test planında "birim" olsa da çözme yapar. Bu oturumda dört `slow` testin hepsi Linux'ta koştu.
+  - **Seçim kuralları (KL-25):** İki uçtan biri dolu ise aralık kullanılmış sayılır. Etikette uçlardan biri boş ya da 8 haneli barkod değilse "Başlangıç ve bitiş 8 haneli barkod olmalı", kartta pozitif tam sayı değilse "Başlangıç ve bitiş pozitif üye no olmalı" verilir. Seçim kutusu listesinde 240 sınırı tekrarsız öğe sayısına uygulanır. Hariç tutmadan sonra listede öğe kalmazsa "En az bir nüsha seçin" ya da "En az bir üye seçin" verilir (aralıktaki "Aralıkta basılacak … yok" mesajının liste karşılığı). Aralıkta yalnız Kayıttan düşmüş nüshalar atlanır; Kayıp, Hasarlı ve Ödünçteki nüshaların etiketi basılabilir. Barkod aralığı, sıfırla doldurulmuş 8 haneli barkodların metin karşılaştırmasıyla seçilir.
+  - `label_pdf` ve `member_card_pdf` kütüphane adını `administration.services.get_settings()` ile okur; listede olmayan id atlanır.
+  - `/nushalar/etiket/` ve `/uyeler/kart/` kural ihlalinde aralık formunu 200 ile ve mesajla gösterir; istek kitap ayrıntısındaki ya da üye aramasındaki seçim kutularından gelse de hata bu ekranda görünür. Seçim formu boş POST'ta da bağlanır (boş istek "En az bir … seçin" alır). Ortak `IntListField` (`administration/forms.py`) seçim kutusu değerlerini tam sayıya çevirir; geçersiz değer "Geçersiz seçim" verir.
+  - **URL sırası (§8.1'de uygulayıcıya bırakılan ayrıntı):** `nushalar/etiket/` `catalog.urls` içindedir; `library_site/urls.py`'de `catalog.urls`, G12'de eklenecek circulation yollarından önce gelmelidir, yoksa `nushalar/<str:barcode>/` "etiket"i barkod sanar. `catalog/urls.py`'de bu not yorum olarak duruyor.
+  - "Etiket bas" düğmesi yalnız basılabilir nüsha varsa, "Kart bas" düğmesi yalnız seçilebilir üye varsa görünür. Kitap arama ekranında "Nüsha etiketleri", üye arama ekranında "Üye kartları" bağlantısı aralık formuna gider.
+  - G08'in dosya listesi dışında değişenler: `administration/forms.py` (`IntListField`), `catalog/forms.py`, `members/forms.py`, `catalog/templates/catalog/search.html` ve `members/templates/members/search.html` (bağlantılar), `catalog/tests/*` ve `members/tests/*` (TC-71…TC-75, TC-265…TC-269), `pdf/tests/__init__.py`.
 - **2026-10-31, G05–G08 onay bekleyen metinler:** Plan, SRS, KL ya da ADR'nin vermediği ve uygulayıcının seçtiği kullanıcıya görünen metinler (2026-11-01 kullanıcı kararı; PR'da onaylanır). G02–G04 listesinde zaten onaylı olup aynen yeniden kullanılanlar "(G02–G04'te onaylı)" ile işaretlidir.
   - G06:
     - "Üyeler": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `members/search.html` sayfa başlığı; `members/form.html` ve `members/detail.html` geri bağlantısı.
@@ -1217,3 +1230,14 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
     - "Başlık en fazla 300 karakter olabilir", "Yazar en fazla 300 karakter olabilir", "Yayınevi en fazla 200 karakter olabilir": `catalog/services.py` `_clean_book`, `RuleViolation`.
     - "Yıl 1 ile 9999 arasında olmalı": `catalog/services.py` `_clean_book`, `RuleViolation`.
     - "Nüsha sayısı 1 ile 50 arasında olmalı": `catalog/services.py` `add_copies`, `RuleViolation` (TC-262).
+  - G08:
+    - "Nüsha etiketleri": `catalog/search.html` bağlantı; `catalog/label_range.html` sayfa başlığı.
+    - "Üye kartları": `members/search.html` bağlantı; `members/card_range.html` sayfa başlığı.
+    - "Başlangıç barkodu" ve "Bitiş barkodu": `catalog/forms.py` `LabelSelectionForm` alan etiketleri.
+    - "Başlangıç üye no" ve "Bitiş üye no": `members/forms.py` `CardSelectionForm` alan etiketleri.
+    - "Aralıkta kayıttan düşmüş nüshalar atlanır; bir seferde en fazla 240 etiket (10 sayfa) basılır.": `catalog/label_range.html`, not.
+    - "Aralıkta pasif ve anonimleştirilmiş üyeler atlanır; bir seferde en fazla 240 kart basılır.": `members/card_range.html`, not.
+    - "Başlangıç ve bitiş 8 haneli barkod olmalı": `catalog/services.py` `copies_for_labels`, `RuleViolation`.
+    - "Başlangıç ve bitiş pozitif üye no olmalı": `members/services.py` `members_for_cards`, `RuleViolation`.
+    - "Geçersiz seçim": `administration/forms.py` `IntListField`, alan hatası.
+    - "Etiket bas" ve "Kart bas" ADR-0036'dan gelir; aralık formlarının düğmesinde de aynı metin kullanıldı.

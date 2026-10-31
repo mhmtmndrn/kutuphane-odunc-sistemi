@@ -4,7 +4,7 @@
 
 {% block content %}
   <h1>Kitaplar</h1>
-  <p><a href="{% url 'catalog:create' %}">Yeni kitap</a></p>
+  <p><a href="{% url 'catalog:create' %}">Yeni kitap</a> · <a href="{% url 'catalog:labels' %}">Nüsha etiketleri</a></p>
   <form method="get" action="{% url 'catalog:search' %}">
     <p>
       <label for="id_q">Başlık, yazar, ISBN ya da barkod</label>

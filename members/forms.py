@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from django import forms
 
+from administration.forms import IntListField
+
 DATE_FORMATS = ["%Y-%m-%d", "%d.%m.%Y"]
 
 
@@ -26,3 +28,12 @@ class ConsentForm(forms.Form):
         input_formats=DATE_FORMATS,
         widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
     )
+
+
+class CardSelectionForm(forms.Form):
+    """A member number range or the ``member_nos`` checkboxes (ADR-0036); the
+    rules are in ``members_for_cards``."""
+
+    start = forms.IntegerField(label="Başlangıç üye no", required=False)
+    end = forms.IntegerField(label="Bitiş üye no", required=False)
+    member_nos = IntListField()

@@ -268,3 +268,57 @@ def test_reactivate_and_consent_are_post_only(clerk_client) -> None:
 
 def test_home_links_to_members(clerk_client) -> None:
     assert 'href="/uyeler/"' in clerk_client.get("/").content.decode()
+
+
+# --- Member cards (G08: TC-269) -------------------------------------------------
+
+
+def test_tc269_card_range_form(clerk_client) -> None:
+    response = clerk_client.get("/uyeler/kart/")
+    html = response.content.decode()
+    assert response.status_code == 200
+    assert 'name="start"' in html and 'name="end"' in html
+
+
+def test_tc269_card_pdf_from_a_range_and_from_checkboxes(clerk_client) -> None:
+    make_member(member_no=1)
+    make_member(member_no=2)
+    for data in ({"start": "1", "end": "2"}, {"member_nos": ["2", "1"]}):
+        response = clerk_client.post("/uyeler/kart/", data)
+        assert response.status_code == 200
+        assert response["Content-Type"] == "application/pdf"
+        assert response["Content-Disposition"] == 'inline; filename="uye-kartlari.pdf"'
+        assert response.content.startswith(b"%PDF")
+
+
+def test_tc269_inactive_member_has_no_checkbox_in_search_results(clerk_client) -> None:
+    make_member("Ayşe Yılmaz", member_no=1)
+    make_member("Ayşe Demir", member_no=2, is_active=False)
+    make_member(member_no=3, anonymized=True)
+    html = clerk_client.get("/uyeler/", {"q": "ayse"}).content.decode()
+    assert 'name="member_nos" value="1"' in html
+    assert 'name="member_nos" value="2"' not in html
+    assert 'action="/uyeler/kart/"' in html
+    assert "Kart bas</button>" in html
+    html = clerk_client.get("/uyeler/", {"q": "3"}).content.decode()
+    assert 'name="member_nos" value="3"' not in html
+
+
+def test_card_selection_error_reshows_the_range_form_with_200(clerk_client) -> None:
+    response = clerk_client.post("/uyeler/kart/", {"start": "5", "end": "1"})
+    assert response.status_code == 200
+    assert "Başlangıç bitişten büyük olamaz" in response.content.decode()
+
+
+def test_card_form_rejects_non_numbers(clerk_client) -> None:
+    response = clerk_client.post("/uyeler/kart/", {"start": "a", "end": "2"})
+    assert response.status_code == 200
+    assert response["Content-Type"].startswith("text/html")
+    response = clerk_client.post("/uyeler/kart/", {"member_nos": ["x"]})
+    assert "Geçersiz seçim" in response.content.decode()
+
+
+def test_no_card_button_when_no_result_is_printable(clerk_client) -> None:
+    make_member("Ayşe Demir", member_no=2, is_active=False)
+    html = clerk_client.get("/uyeler/", {"q": "ayse"}).content.decode()
+    assert "Kart bas</button>" not in html

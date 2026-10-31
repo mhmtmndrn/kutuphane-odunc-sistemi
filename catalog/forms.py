@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from django import forms
 
+from administration.forms import IntListField
+
 from .domain import CHECK_REASON, IsbnOk, IsbnSuggest, parse_isbn
 from .services import COPIES_MAX, COPIES_MIN, suggestion_message
 
@@ -51,3 +53,12 @@ class AddCopiesForm(forms.Form):
         initial=1,
         widget=forms.NumberInput(attrs={"min": COPIES_MIN, "max": COPIES_MAX}),
     )
+
+
+class LabelSelectionForm(forms.Form):
+    """A barcode range or the ``copy_ids`` checkboxes (ADR-0036); the rules
+    are in ``copies_for_labels``."""
+
+    start = forms.CharField(label="Başlangıç barkodu", max_length=20, required=False)
+    end = forms.CharField(label="Bitiş barkodu", max_length=20, required=False)
+    copy_ids = IntListField()

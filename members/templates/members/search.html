@@ -4,7 +4,7 @@
 
 {% block content %}
   <h1>Üyeler</h1>
-  <p><a href="{% url 'members:create' %}">Yeni üye</a></p>
+  <p><a href="{% url 'members:create' %}">Yeni üye</a> · <a href="{% url 'members:cards' %}">Üye kartları</a></p>
   <form method="get" action="{% url 'members:search' %}">
     <p>
       <label for="id_q">Üye no, ad soyad ya da telefon</label>
@@ -14,19 +14,24 @@
   </form>
   {% if q %}
     {% if results %}
-      <table>
-        <thead><tr><th>Üye no</th><th>Ad soyad</th><th>Telefon</th><th>Durum</th></tr></thead>
-        <tbody>
-          {% for member in results %}
-            <tr>
-              <td><a href="{% url 'members:detail' member.member_no %}">{{ member.member_no }}</a></td>
-              <td>{% if member.is_anonymized %}Anonimleştirilmiş üye{% else %}{{ member.full_name }}{% endif %}</td>
-              <td>{{ member.phone|default:"" }}</td>
-              <td>{% if member.is_active %}Aktif{% else %}Pasif{% endif %}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <form method="post" action="{% url 'members:cards' %}">
+        {% csrf_token %}
+        <table>
+          <thead><tr><th></th><th>Üye no</th><th>Ad soyad</th><th>Telefon</th><th>Durum</th></tr></thead>
+          <tbody>
+            {% for member in results %}
+              <tr>
+                <td>{% if member.is_active and not member.is_anonymized %}<input type="checkbox" name="member_nos" value="{{ member.member_no }}" id="member-{{ member.member_no }}" aria-label="{{ member.member_no }}">{% endif %}</td>
+                <td><a href="{% url 'members:detail' member.member_no %}">{{ member.member_no }}</a></td>
+                <td>{% if member.is_anonymized %}Anonimleştirilmiş üye{% else %}{{ member.full_name }}{% endif %}</td>
+                <td>{{ member.phone|default:"" }}</td>
+                <td>{% if member.is_active %}Aktif{% else %}Pasif{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% if has_printable %}<p><button type="submit">Kart bas</button></p>{% endif %}
+      </form>
     {% else %}
       <p>Sonuç yok.</p>
     {% endif %}

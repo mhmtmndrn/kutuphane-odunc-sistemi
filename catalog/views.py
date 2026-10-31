@@ -11,8 +11,8 @@ from accounts.permissions import staff_view
 from administration.errors import RuleViolation
 
 from . import services
-from .forms import AddCopiesForm, BookForm
-from .models import Book
+from .forms import AddCopiesForm, BookForm, LabelSelectionForm
+from .models import Book, CopyStatus
 
 
 def _get_book(pk: int) -> Book:
@@ -93,9 +93,11 @@ def book_edit(request: HttpRequest, pk: int) -> HttpResponse:
 
 
 def _detail_page(request: HttpRequest, book: Book, *, copies_form=None) -> HttpResponse:
+    copies = services.book_copies(book)
     context = {
         "book": book,
-        "copies": services.book_copies(book),
+        "copies": copies,
+        "has_printable": any(copy.status != CopyStatus.WITHDRAWN for copy in copies),
         "copies_form": copies_form or AddCopiesForm(),
     }
     return render(request, "catalog/detail.html", context)
@@ -121,3 +123,21 @@ def book_add_copies(request: HttpRequest, pk: int) -> HttpResponse:
             messages.success(request, f"{len(copies)} nüsha eklendi")
             return redirect("catalog:detail", pk=pk)
     return _detail_page(request, book, copies_form=form)
+
+
+@staff_view
+@require_http_methods(["GET", "POST"])
+def label_print(request: HttpRequest) -> HttpResponse:
+    """GET: the range form; POST: a range or ``copy_ids`` -> label PDF (ADR-0036)."""
+    form = LabelSelectionForm(request.POST if request.method == "POST" else None)
+    if request.method == "POST" and form.is_valid():
+        data = form.cleaned_data
+        try:
+            copy_ids = services.copies_for_labels(data["copy_ids"], data["start"], data["end"])
+        except RuleViolation as exc:
+            form.add_error(None, exc.message)
+        else:
+            response = HttpResponse(services.label_pdf(copy_ids), content_type="application/pdf")
+            response["Content-Disposition"] = 'inline; filename="etiketler.pdf"'
+            return response
+    return render(request, "catalog/label_range.html", {"form": form})

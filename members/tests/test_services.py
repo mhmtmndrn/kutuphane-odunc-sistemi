@@ -435,3 +435,84 @@ def test_member_save_derives_search_key_and_phone_digits() -> None:
     anonymous = make_member(anonymized=True)
     assert (anonymous.search_key, anonymous.phone_digits) == ("", None)
     assert anonymous.anonymized_at == datetime(2026, 1, 1, tzinfo=dt_timezone.utc)
+
+
+# --- Member cards (G08: FR-38, ADR-0032, ADR-0036, KL-25) ------------------------
+
+from administration import services as admin_services  # noqa: E402
+from tests.support.barcode import pdf_page_count, pdf_text, read_pdf_barcodes  # noqa: E402
+
+
+def _members_1_to_6() -> None:
+    for no in range(1, 7):
+        make_member(f"Üye {no}", "0555", member_no=no, is_active=no != 3, anonymized=no == 4)
+
+
+def test_tc268_card_selection_skips_inactive_and_anonymized() -> None:
+    _members_1_to_6()
+    assert services.members_for_cards(None, 1, 6) == [1, 2, 5, 6]
+    assert services.members_for_cards([5, 2], None, None) == [2, 5]
+
+
+@pytest.mark.parametrize(
+    ("args", "message"),
+    [
+        ((None, 3, 4), "Aralıkta basılacak üye yok"),
+        ((None, None, None), "En az bir üye seçin"),
+        (([], None, None), "En az bir üye seçin"),
+        (([3, 4, 99], None, None), "En az bir üye seçin"),
+        (([1], 1, 2), "Aralık ya da seçim kutuları kullanın, ikisini birden değil"),
+        ((None, 6, 1), "Başlangıç bitişten büyük olamaz"),
+        ((None, 1, 241), "En fazla 240 öğe seçilebilir"),
+        ((list(range(1, 242)), None, None), "En fazla 240 öğe seçilebilir"),
+        ((None, 0, 5), "Başlangıç ve bitiş pozitif üye no olmalı"),
+        ((None, 1, None), "Başlangıç ve bitiş pozitif üye no olmalı"),
+    ],
+)
+def test_tc268_card_selection_refusals(args, message) -> None:
+    _members_1_to_6()
+    with pytest.raises(RuleViolation) as exc:
+        services.members_for_cards(*args)
+    assert exc.value.message == message
+
+
+def test_card_range_of_240_is_accepted() -> None:
+    make_member(member_no=1)
+    make_member(member_no=240)
+    assert services.members_for_cards(None, 1, 240) == [1, 240]
+
+
+@pytest.mark.parametrize(("count", "pages"), [(10, 1), (11, 2)])
+def test_tc75_ten_cards_per_page(count, pages) -> None:
+    nos = [make_member(f"Üye {i}", "0555").member_no for i in range(count)]
+    assert pdf_page_count(services.member_card_pdf(nos)) == pages
+
+
+def test_tc73_long_library_name_is_shortened_on_cards() -> None:
+    settings = admin_services.get_settings()
+    settings.library_name = "W" * 80
+    settings.save()
+    text = pdf_text(services.member_card_pdf([make_member().member_no]))
+    assert "…" in text
+    assert "W" * 80 not in text
+
+
+@pytest.mark.slow
+def test_tc74_three_cards_decode_to_member_numbers_without_names() -> None:
+    settings = admin_services.get_settings()
+    settings.library_name = "İlçe Halk Kütüphanesi"
+    settings.save()
+    members = [
+        make_member("Ayşe Yılmaz", "0555", member_no=1042),
+        make_member("Mehmet Demir", "0532", member_no=1043),
+        make_member("Zeynep Kaya", "0505", member_no=7),
+    ]
+    pdf = services.member_card_pdf([m.member_no for m in members])
+    decoded = read_pdf_barcodes(pdf)
+    assert [b.value for b in decoded] == ["1042", "1043", "7"]
+    assert {b.format for b in decoded} == {"Code128"}
+    text = pdf_text(pdf)
+    assert text.count("Üye No") == 3
+    assert "İlçe Halk Kütüphanesi" in text
+    for name in ("Ayşe", "Yılmaz", "Mehmet", "Demir", "Zeynep", "Kaya"):
+        assert name not in text

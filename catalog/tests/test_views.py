@@ -201,3 +201,62 @@ def test_book_pages_need_login(client: Client) -> None:
 
 def test_home_links_to_books(clerk_client) -> None:
     assert 'href="/kitaplar/"' in clerk_client.get("/").content.decode()
+
+
+# --- Labels (G08: TC-269) -------------------------------------------------------
+
+
+def test_tc269_label_range_form(clerk_client) -> None:
+    response = clerk_client.get("/nushalar/etiket/")
+    html = response.content.decode()
+    assert response.status_code == 200
+    assert 'name="start"' in html and 'name="end"' in html
+
+
+def test_tc269_label_pdf_from_a_range(clerk_client) -> None:
+    make_copy(pk=1)
+    response = clerk_client.post("/nushalar/etiket/", {"start": "00000001", "end": "00000001"})
+    assert response.status_code == 200
+    assert response["Content-Type"] == "application/pdf"
+    assert response["Content-Disposition"] == 'inline; filename="etiketler.pdf"'
+    assert response.content.startswith(b"%PDF")
+
+
+def test_tc269_label_pdf_from_checkboxes(clerk_client) -> None:
+    book = make_book()
+    make_copy(book, pk=1)
+    make_copy(book, pk=2)
+    response = clerk_client.post("/nushalar/etiket/", {"copy_ids": ["2", "1"]})
+    assert response.status_code == 200
+    assert response["Content-Disposition"] == 'inline; filename="etiketler.pdf"'
+
+
+def test_tc269_withdrawn_copy_has_no_checkbox_on_the_book_page(clerk_client) -> None:
+    book = make_book()
+    make_copy(book, pk=1)
+    make_copy(book, pk=2, status=CopyStatus.WITHDRAWN)
+    html = clerk_client.get(f"/kitaplar/{book.pk}/").content.decode()
+    assert 'name="copy_ids" value="1"' in html
+    assert 'name="copy_ids" value="2"' not in html
+    assert 'action="/nushalar/etiket/"' in html
+    assert "Etiket bas</button>" in html
+
+
+def test_label_selection_error_reshows_the_range_form_with_200(clerk_client) -> None:
+    response = clerk_client.post("/nushalar/etiket/", {})
+    assert response.status_code == 200
+    assert response["Content-Type"].startswith("text/html")
+    assert "En az bir nüsha seçin" in response.content.decode()
+
+
+def test_label_selection_with_bad_ids_is_refused(clerk_client) -> None:
+    response = clerk_client.post("/nushalar/etiket/", {"copy_ids": ["x"]})
+    assert response.status_code == 200
+    assert "Geçersiz seçim" in response.content.decode()
+
+
+def test_no_label_button_when_every_copy_is_withdrawn(clerk_client) -> None:
+    book = make_book()
+    make_copy(book, status=CopyStatus.WITHDRAWN)
+    html = clerk_client.get(f"/kitaplar/{book.pk}/").content.decode()
+    assert "Etiket bas</button>" not in html
