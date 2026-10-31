@@ -13,13 +13,13 @@ from django.db import IntegrityError, connection, transaction
 from accounts.models import Role, StaffUser
 from administration import clock
 from administration.errors import RuleViolation
-from administration.models import ClosedDate, LibrarySettings, WeeklyClosedDay
+from administration.models import AuditEvent, ClosedDate, LibrarySettings, WeeklyClosedDay
 from administration.services import update_settings
 from billing import services as billing
 from billing.models import EntryKind, LedgerEntry
 from catalog.models import Copy, CopyStatus
 from circulation import services
-from circulation.domain import Blocker
+from circulation.domain import Blocker, InvalidTransition
 from circulation.models import CloseReason, Loan
 from members.services import reactivate_member
 from tests.support.concurrency import file_db, run_parallel  # noqa: F401
@@ -592,3 +592,432 @@ def test_tc148_double_renewal(file_db, today) -> None:
     assert errors[0].message == "Uzatma hakkı kullanıldı"
     loan.refresh_from_db()
     assert loan.due_on == date(2026, 11, 30)
+
+
+# ================================================================================
+# G12: copy status operations (FR-15, FR-16, FR-39; architecture §5.1)
+# ================================================================================
+
+
+def _late_loan(member, days_late: int, today_fixture, **kwargs) -> Loan:
+    loan = _loan_due(member, **kwargs)
+    today_fixture(date(2026, 11, 16) + timedelta(days=days_late))
+    return loan
+
+
+def _copy_events(action: str) -> list[AuditEvent]:
+    return list(AuditEvent.objects.filter(action=action))
+
+
+def _status(copy: Copy) -> str:
+    copy.refresh_from_db()
+    return copy.status
+
+
+def test_tc150_lost_with_fine_and_fee(today, admin, member) -> None:
+    loan = _late_loan(member, 10, today)
+    closed = services.mark_lost(admin, loan.copy.barcode, 12000, "Üye kaybettiğini söyledi")
+    _refresh(loan)
+    assert closed == loan
+    assert (loan.close_reason, loan.closed_on, loan.closed_by) == ("LOST", date(2026, 11, 26), admin)
+    assert _status(loan.copy) == CopyStatus.LOST
+    entries = list(LedgerEntry.objects.order_by("id").values_list("kind", "amount_kurus", "loan"))
+    assert entries == [("FINE", 5000, loan.pk), ("FEE", 12000, loan.pk)]
+    fee_event = AuditEvent.objects.get(action="FEE")
+    assert fee_event.details == {"amount_kurus": 12000, "member_no": 1042}
+    event = AuditEvent.objects.get(action="COPY_LOST")
+    assert (event.actor, event.target_type, event.target_id) == (admin, "copy", loan.copy.pk)
+    assert event.details == {"from": "ON_LOAN", "note": "Üye kaybettiğini söyledi", "fee_kurus": 12000}
+
+
+def test_tc151_damaged_on_time_has_only_a_fee(today, admin, member) -> None:
+    loan = _loan_due(member)
+    today(date(2026, 11, 10))
+    services.mark_damaged(admin, loan.copy.barcode, 5000)
+    _refresh(loan)
+    assert loan.close_reason == "DAMAGED" and _status(loan.copy) == CopyStatus.DAMAGED
+    assert list(LedgerEntry.objects.values_list("kind", "amount_kurus")) == [("FEE", 5000)]
+    assert AuditEvent.objects.filter(action="FEE").count() == 1
+    event = AuditEvent.objects.get(action="COPY_DAMAGED")
+    assert event.details == {"from": "ON_LOAN", "note": "", "fee_kurus": 5000}
+
+
+@pytest.mark.parametrize(("days_late", "expected"), [(0, []), (1, [500]), (40, [15000])])
+def test_tc152_accrued_fine_when_lost(today, admin, member, days_late, expected) -> None:
+    loan = _late_loan(member, days_late, today)
+    services.mark_lost(admin, loan.copy.barcode, 0)
+    assert list(LedgerEntry.objects.filter(kind="FINE").values_list("amount_kurus", flat=True)) == expected
+
+
+def test_tc289_zero_fee_writes_no_fee(today, admin, member) -> None:
+    loan = _late_loan(member, 10, today)
+    services.mark_lost(admin, loan.copy.barcode, 0)
+    assert list(LedgerEntry.objects.values_list("kind", "amount_kurus")) == [("FINE", 5000)]
+    assert not AuditEvent.objects.filter(action="FEE").exists()
+    assert AuditEvent.objects.get(action="COPY_LOST").details["fee_kurus"] == 0
+
+
+def test_tc290_fine_before_fee_so_payment_goes_to_the_fine(today, admin, clerk, member) -> None:
+    loan = _late_loan(member, 10, today)
+    services.mark_lost(admin, loan.copy.barcode, 12000)
+    fine = LedgerEntry.objects.get(kind="FINE")
+    fee = LedgerEntry.objects.get(kind="FEE")
+    assert fine.id < fee.id
+    billing.record_payment(clerk, member, 5000)
+    unpaid = {c.id: c.unpaid for c in billing.open_charges(member)}
+    assert unpaid == {fee.id: 12000}
+
+
+def test_lost_needs_admin_a_loaned_copy_and_a_non_negative_fee(today, clerk, admin, member) -> None:
+    loan = _loan_due(member)
+    with pytest.raises(PermissionDenied):
+        services.mark_lost(clerk, loan.copy.barcode, 100)
+    with pytest.raises(RuleViolation, match="^Bedel negatif olamaz$"):
+        services.mark_lost(admin, loan.copy.barcode, -1)
+    shelf = _shelf_copy()
+    with pytest.raises(InvalidTransition):
+        services.mark_damaged(admin, shelf.barcode, 100)
+    with pytest.raises(RuleViolation, match="^Nüsha bulunamadı$"):
+        services.mark_lost(admin, "99999999", 100)
+    assert _status(loan.copy) == CopyStatus.ON_LOAN and not LedgerEntry.objects.exists()
+
+
+# --- Found (FR-16, ADR-0037) -----------------------------------------------------
+
+
+def _lost_with_paid_fee(member, admin, clerk, today, paid: int, fee: int = 12000) -> Loan:
+    loan = _loan_due(member)
+    today(date(2026, 11, 10))
+    services.mark_lost(admin, loan.copy.barcode, fee)
+    if paid:
+        billing.record_payment(clerk, member, paid)
+    today(date(2026, 11, 20))
+    return loan
+
+
+def test_tc153_found_cancels_the_unpaid_fee(today, admin, clerk, member) -> None:
+    loan = _lost_with_paid_fee(member, admin, clerk, today, 2000)
+    result = services.mark_found(clerk, loan.copy.barcode)
+    _refresh(loan)
+    assert result.copy == loan.copy and _status(loan.copy) == CopyStatus.ON_SHELF
+    assert loan.copy_found_on == date(2026, 11, 20)
+    assert (result.cancelled_kurus, result.refundable_kurus) == (10000, 2000)
+    cancellation = LedgerEntry.objects.get(kind="CANCELLATION")
+    assert cancellation.amount_kurus == 10000 and cancellation.reason is None
+    event = AuditEvent.objects.get(action="COPY_FOUND")
+    assert (event.actor, event.target_type, event.target_id) == (clerk, "copy", loan.copy.pk)
+    assert event.details == {"from": "LOST", "note": ""}
+    assert not AuditEvent.objects.filter(action="CANCELLATION").exists()
+
+
+def test_tc154_found_after_a_shelf_loss(today, admin, clerk) -> None:
+    copy = _shelf_copy()
+    services.mark_shelf_copy(admin, copy.barcode, "LOST")
+    result = services.mark_found(clerk, copy.barcode)
+    assert _status(copy) == CopyStatus.ON_SHELF
+    assert (result.cancelled_kurus, result.refundable_kurus) == (0, 0)
+    assert not LedgerEntry.objects.exists()
+
+
+def test_tc155_fully_paid_fee_is_refundable(today, admin, clerk, member) -> None:
+    loan = _lost_with_paid_fee(member, admin, clerk, today, 12000)
+    result = services.mark_found(clerk, loan.copy.barcode)
+    _refresh(loan)
+    assert loan.copy_found_on is not None and _status(loan.copy) == CopyStatus.ON_SHELF
+    assert not LedgerEntry.objects.filter(kind="CANCELLATION").exists()
+    assert (result.cancelled_kurus, result.refundable_kurus) == (0, 12000)
+
+
+def test_tc156_unlinked_fee_is_left_for_manual_cancellation(today, admin, clerk, member) -> None:
+    loan = _lost_with_paid_fee(member, admin, clerk, today, 4000)
+    # Retention cut the links (ADR-0018): the only allowed ledger update (I6).
+    LedgerEntry.objects.filter(loan=loan).update(loan=None)
+    result = services.mark_found(clerk, loan.copy.barcode)
+    _refresh(loan)
+    assert loan.copy_found_on == date(2026, 11, 20)
+    assert not LedgerEntry.objects.filter(kind="CANCELLATION").exists()
+    assert (result.cancelled_kurus, result.refundable_kurus) == (0, 0)
+    assert billing.member_balance(member) == 8000
+
+
+def test_tc157_repair_keeps_the_fee(today, admin, member) -> None:
+    loan = _loan_due(member)
+    services.mark_damaged(admin, loan.copy.barcode, 5000)
+    copy = services.repair(admin, loan.copy.barcode, "Cilt yenilendi")
+    assert copy.status == CopyStatus.ON_SHELF
+    assert billing.member_balance(member) == 5000
+    event = AuditEvent.objects.get(action="COPY_REPAIRED")
+    assert (event.target_type, event.target_id, event.details) == (
+        "copy",
+        copy.pk,
+        {"from": "DAMAGED", "note": "Cilt yenilendi"},
+    )
+
+
+def test_tc158_withdraw_a_damaged_copy_keeps_the_fee(today, admin, member) -> None:
+    loan = _loan_due(member)
+    services.mark_damaged(admin, loan.copy.barcode, 5000)
+    copy = services.withdraw(admin, loan.copy.barcode)
+    assert copy.status == CopyStatus.WITHDRAWN
+    assert billing.member_balance(member) == 5000
+    assert AuditEvent.objects.get(action="COPY_WITHDRAWN").details == {"from": "DAMAGED", "note": ""}
+
+
+@pytest.mark.parametrize(
+    ("start", "operation", "target", "action"),
+    [
+        (CopyStatus.ON_SHELF, "shelf", "DAMAGED", "COPY_DAMAGED"),
+        (CopyStatus.ON_SHELF, "shelf", "WITHDRAWN", "COPY_WITHDRAWN"),
+        (CopyStatus.LOST, "withdraw", "WITHDRAWN", "COPY_WITHDRAWN"),
+    ],
+)
+@pytest.mark.parametrize("note", ["", "Raf sayımı"])
+def test_tc160_shelf_transitions_write_no_loan_or_ledger(
+    today, admin, start, operation, target, action, note
+) -> None:
+    copy = make_copy(status=start)
+    if operation == "shelf":
+        services.mark_shelf_copy(admin, copy.barcode, target, note)
+    else:
+        services.withdraw(admin, copy.barcode, note)
+    assert _status(copy) == target
+    assert not Loan.objects.exists() and not LedgerEntry.objects.exists()
+    event = AuditEvent.objects.get(action=action)
+    assert event.details == {"from": start, "note": note}
+
+
+def test_mark_shelf_copy_refuses_other_targets(today, admin) -> None:
+    with pytest.raises(ValueError):
+        services.mark_shelf_copy(admin, _shelf_copy().barcode, "ON_LOAN")
+
+
+# --- Invalid transitions (TC-163…TC-167) -------------------------------------------
+
+
+def _refused_ops(copy: Copy, ops, clerk) -> None:
+    status = _status(copy)
+    for op in ops:
+        with pytest.raises(InvalidTransition):
+            op()
+        assert _status(copy) == status
+
+
+def _ops(admin, clerk, copy: Copy) -> dict:
+    barcode = copy.barcode
+    return {
+        "repair": lambda: services.repair(admin, barcode),
+        "found": lambda: services.mark_found(clerk, barcode),
+        "shelf_lost": lambda: services.mark_shelf_copy(admin, barcode, "LOST"),
+        "shelf_damaged": lambda: services.mark_shelf_copy(admin, barcode, "DAMAGED"),
+        "shelf_withdrawn": lambda: services.mark_shelf_copy(admin, barcode, "WITHDRAWN"),
+        "lost": lambda: services.mark_lost(admin, barcode, 0),
+        "damaged": lambda: services.mark_damaged(admin, barcode, 0),
+        "withdraw": lambda: services.withdraw(admin, barcode),
+    }
+
+
+def test_tc163_on_shelf(today, admin, clerk) -> None:
+    copy = _shelf_copy()
+    ops = _ops(admin, clerk, copy)
+    _refused_ops(copy, [ops["repair"], ops["found"], ops["lost"], ops["withdraw"]], clerk)
+    with pytest.raises(RuleViolation, match="^Bu nüshanın açık ödüncü yok$"):
+        services.check_in(clerk, copy.barcode)
+    assert _status(copy) == CopyStatus.ON_SHELF
+
+
+def test_tc164_on_loan(today, admin, clerk, member) -> None:
+    loan = _loan_due(member)
+    ops = _ops(admin, clerk, loan.copy)
+    _refused_ops(
+        loan.copy,
+        [ops[k] for k in ("shelf_lost", "shelf_damaged", "shelf_withdrawn", "repair", "found", "withdraw")],
+        clerk,
+    )
+    make_member("Başka", member_no=2)
+    with pytest.raises(RuleViolation, match="^Nüsha rafta değil$"):
+        services.check_out(clerk, 2, loan.copy.barcode)
+    assert Loan.objects.get().is_open
+
+
+def test_tc165_lost(today, admin, clerk) -> None:
+    copy = make_copy(status=CopyStatus.LOST)
+    ops = _ops(admin, clerk, copy)
+    _refused_ops(copy, [ops["repair"], ops["shelf_damaged"], ops["shelf_lost"], ops["lost"]], clerk)
+    make_member("Bir", member_no=1)
+    with pytest.raises(RuleViolation, match="^Nüsha rafta değil$"):
+        services.check_out(clerk, 1, copy.barcode)
+    with pytest.raises(RuleViolation, match="^Bu nüshanın açık ödüncü yok$"):
+        services.check_in(clerk, copy.barcode)
+    assert _status(copy) == CopyStatus.LOST
+
+
+def test_tc166_damaged(today, admin, clerk) -> None:
+    copy = make_copy(status=CopyStatus.DAMAGED)
+    ops = _ops(admin, clerk, copy)
+    _refused_ops(copy, [ops["found"], ops["shelf_lost"], ops["lost"]], clerk)
+    make_member("Bir", member_no=1)
+    with pytest.raises(RuleViolation, match="^Nüsha rafta değil$"):
+        services.check_out(clerk, 1, copy.barcode)
+    assert _status(copy) == CopyStatus.DAMAGED
+
+
+def test_tc167_withdrawn_is_final(today, admin, clerk) -> None:
+    copy = make_copy(status=CopyStatus.WITHDRAWN)
+    ops = _ops(admin, clerk, copy)
+    _refused_ops(
+        copy,
+        [ops[k] for k in ("found", "repair", "shelf_lost", "shelf_damaged", "lost", "damaged", "withdraw")],
+        clerk,
+    )
+    make_member("Bir", member_no=1)
+    with pytest.raises(RuleViolation, match="^Nüsha rafta değil$"):
+        services.check_out(clerk, 1, copy.barcode)
+    assert _status(copy) == CopyStatus.WITHDRAWN
+
+
+def test_invalid_transition_message(today, admin) -> None:
+    copy = make_copy(status=CopyStatus.WITHDRAWN)
+    with pytest.raises(InvalidTransition, match="^Bu durum değişikliği yapılamaz: Kayıttan düşmüş → Rafta$"):
+        services.repair(admin, copy.barcode)
+
+
+def test_found_is_open_to_clerks_others_are_admin_only(today, clerk) -> None:
+    damaged = make_copy(status=CopyStatus.DAMAGED)
+    for op in (
+        lambda: services.repair(clerk, damaged.barcode),
+        lambda: services.withdraw(clerk, damaged.barcode),
+        lambda: services.mark_shelf_copy(clerk, _shelf_copy().barcode, "LOST"),
+        lambda: services.mark_damaged(clerk, damaged.barcode, 0),
+    ):
+        with pytest.raises(PermissionDenied):
+            op()
+    lost = make_copy(status=CopyStatus.LOST)
+    assert services.mark_found(clerk, lost.barcode).copy.status == CopyStatus.ON_SHELF
+
+
+# --- 1-switch sequences (TC-168, TC-169, TC-291) ------------------------------------
+
+
+def test_tc168_lost_found_and_lent_again(today, admin, clerk, member) -> None:
+    copy = _shelf_copy()
+    services.check_out(clerk, 1042, copy.barcode)
+    today(date(2026, 11, 20))  # 4 days late
+    services.mark_lost(admin, copy.barcode, 0)
+    services.mark_found(clerk, copy.barcode)
+    make_member("Başka", member_no=2)
+    second = services.check_out(clerk, 2, copy.barcode)
+    assert second.member.member_no == 2 and _status(copy) == CopyStatus.ON_LOAN
+    assert list(LedgerEntry.objects.values_list("kind", "amount_kurus", "member")) == [
+        ("FINE", 2000, member.pk)
+    ]
+
+
+def test_tc169_damaged_repaired_and_lent_again(today, admin, clerk, member) -> None:
+    copy = _shelf_copy()
+    services.check_out(clerk, 1042, copy.barcode)
+    services.mark_damaged(admin, copy.barcode, 5000)
+    services.repair(admin, copy.barcode)
+    make_member("Başka", member_no=2)
+    assert services.check_out(clerk, 2, copy.barcode).member.member_no == 2
+    assert LedgerEntry.objects.get().amount_kurus == 5000
+
+
+def test_tc291_second_found_touches_only_the_second_loan(today, admin, clerk, member) -> None:
+    copy = _shelf_copy()
+    first = services.check_out(clerk, 1042, copy.barcode)
+    services.mark_lost(admin, copy.barcode, 3000)
+    services.mark_found(clerk, copy.barcode)
+    today(date(2026, 11, 3))
+    second = services.check_out(clerk, 1042, copy.barcode)
+    services.mark_lost(admin, copy.barcode, 4000)
+    today(date(2026, 11, 5))
+    services.mark_found(clerk, copy.barcode)
+    _refresh(first, second)
+    assert first.copy_found_on == date(2026, 11, 2)
+    assert second.copy_found_on == date(2026, 11, 5)
+    cancellations = LedgerEntry.objects.filter(kind="CANCELLATION").order_by("id")
+    assert [(c.amount_kurus, c.target_entry.loan_id) for c in cancellations] == [
+        (3000, first.pk),
+        (4000, second.pk),
+    ]
+
+
+def test_tc291_found_after_a_later_shelf_loss_changes_nothing(today, admin, clerk, member) -> None:
+    copy = _shelf_copy()
+    loan = services.check_out(clerk, 1042, copy.barcode)
+    services.mark_lost(admin, copy.barcode, 3000)
+    services.mark_found(clerk, copy.barcode)
+    services.mark_shelf_copy(admin, copy.barcode, "LOST")
+    today(date(2026, 11, 9))
+    result = services.mark_found(clerk, copy.barcode)
+    loan.refresh_from_db()
+    assert loan.copy_found_on == date(2026, 11, 2)
+    assert LedgerEntry.objects.filter(kind="CANCELLATION").count() == 1
+    assert (result.cancelled_kurus, result.refundable_kurus) == (0, 0)
+
+
+# --- TC-170: every audit action once (FR-26, KL-15, KL-30, KL-31) -------------------
+
+
+def test_tc170_each_audit_action_once(today, admin, clerk) -> None:
+    from django.utils import timezone
+
+    from accounts.services import set_role
+    from administration.services import add_closed_date
+
+    # ``AuditEvent.occurred_at`` defaults to the real clock (plan §11, G02 (e)).
+    started = timezone.now()
+    member = make_member("Denetim Üyesi", member_no=500)
+    targets: dict[str, tuple[str, int]] = {}
+
+    # Money (KL-15: target ledger_entry).
+    loan = _loan_due(member)
+    services.mark_lost(admin, loan.copy.barcode, 12000)  # FEE + COPY_LOST
+    fee = LedgerEntry.objects.get(kind="FEE")
+    targets["FEE"] = ("ledger_entry", fee.pk)
+    targets["COPY_LOST"] = ("copy", loan.copy.pk)
+    payment = billing.record_payment(clerk, member, 2000)
+    targets["PAYMENT"] = ("ledger_entry", payment.pk)
+    waiver = billing.waive(admin, fee, 1000, "İndirim")
+    targets["WAIVER"] = ("ledger_entry", waiver.pk)
+    services.mark_found(clerk, loan.copy.barcode)  # COPY_FOUND
+    targets["COPY_FOUND"] = ("copy", loan.copy.pk)
+    refund = billing.refund(admin, LedgerEntry.objects.get(kind="FEE"), 2000)
+    targets["REFUND"] = ("ledger_entry", refund.pk)
+    unlinked = make_charge(member, EntryKind.FEE, 3000)
+    cancellation = billing.cancel_fee_manual(admin, unlinked, "Nüsha bulundu")
+    targets["CANCELLATION"] = ("ledger_entry", cancellation.pk)
+
+    # Copies (target copy).
+    damaged = _shelf_copy()
+    services.mark_shelf_copy(admin, damaged.barcode, "DAMAGED")
+    targets["COPY_DAMAGED"] = ("copy", damaged.pk)
+    services.repair(admin, damaged.barcode)
+    targets["COPY_REPAIRED"] = ("copy", damaged.pk)
+    gone = _shelf_copy()
+    services.mark_shelf_copy(admin, gone.barcode, "WITHDRAWN")
+    targets["COPY_WITHDRAWN"] = ("copy", gone.pk)
+
+    # Members, settings, closed days, staff.
+    inactive = make_member("Pasif", member_no=501, is_active=False)
+    reactivate_member(clerk, inactive)
+    targets["MEMBER_REACTIVATED"] = ("member", inactive.pk)
+    update_settings(admin, loan_period_days=21)
+    targets["SETTINGS_CHANGED"] = ("library_settings", 1)
+    closed = add_closed_date(admin, date(2026, 12, 31), "Yılbaşı")
+    targets["CLOSED_DAY_CHANGED"] = ("closed_date", closed.pk)
+    other = make_staff("veli")
+    set_role(admin, other, Role.ADMIN)
+    targets["STAFF_CHANGED"] = ("staff_user", other.pk)
+
+    finished = timezone.now()
+    events = list(AuditEvent.objects.all())
+    assert sorted(e.action for e in events) == sorted(targets)
+    assert len(targets) == 14
+    actors = {"PAYMENT": clerk, "COPY_FOUND": clerk, "MEMBER_REACTIVATED": clerk}
+    for event in events:
+        assert (event.target_type, event.target_id) == targets[event.action], event.action
+        assert event.actor == actors.get(event.action, admin), event.action
+        assert started <= event.occurred_at <= finished
+        keys = set(event.details)
+        assert not ({"member", "member_no", "member_id"} & keys and {"loan", "loan_id"} & keys)

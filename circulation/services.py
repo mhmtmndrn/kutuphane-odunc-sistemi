@@ -9,13 +9,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from typing import Literal
 
+from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 
 from accounts.models import Role
 from accounts.permissions import require_role
 from administration import clock
+from administration.audit import AuditAction, record_audit
 from administration.errors import RuleViolation
 from administration.money import format_tl
 from administration.services import closed_dates, closed_day_predicate, get_settings
@@ -297,3 +300,147 @@ def overdue_loans(today: date) -> list[OverdueRow]:
             )
         )
     return rows
+
+
+# --- Copy status operations (G12: FR-15, FR-16, FR-39; architecture §5.1) --------
+
+
+def _transition(actor, copy: Copy, sources: tuple[str, ...], target: str) -> str:
+    """Check that this operation handles the copy's status and that the
+    transition is allowed for the actor; returns the old status."""
+    old = copy.status
+    if old not in sources:
+        raise domain.transition_error(old, target)
+    role = domain.check_transition(old, target)
+    if role == "ADMIN" and actor.role != Role.ADMIN:
+        raise PermissionDenied
+    return old
+
+
+def _copy_event(actor, action: AuditAction, copy: Copy, old: str, note: str, **extra) -> None:
+    """KL-15: target ``copy``; details ``{"from", "note", "fee_kurus"?}``."""
+    record_audit(actor, action, "copy", copy.pk, {"from": old, "note": note, **extra})
+
+
+def _mark_loaned_copy(
+    actor, barcode: str, fee_kurus: int, note: str, target: str, reason: str, action: AuditAction
+) -> Loan:
+    today = clock.today()
+    copy = find_copy(barcode.strip())
+    old = _transition(actor, copy, (CopyStatus.ON_LOAN,), target)
+    if fee_kurus < 0:
+        raise RuleViolation("Bedel negatif olamaz")
+    loan = _open_loan_of(copy)
+    if loan is None:  # ON_LOAN without an open loan breaks data-design §3
+        raise RuleViolation("Bu nüshanın açık ödüncü yok")
+    # FINE first, then FEE, so FIFO pays the fine first (KL-44).
+    _close(actor, loan, reason, today)
+    if fee_kurus > 0:  # KL-7: a zero fee writes no FEE
+        billing.post_charge(actor, loan.member, loan, "FEE", fee_kurus)
+    _set_status(copy, target)
+    _copy_event(actor, action, copy, old, note, fee_kurus=fee_kurus)
+    return loan
+
+
+@require_role(Role.ADMIN)
+@transaction.atomic
+def mark_lost(actor, barcode: str, fee_kurus: int, note: str = "") -> Loan:
+    return _mark_loaned_copy(
+        actor, barcode, fee_kurus, note, CopyStatus.LOST, CloseReason.LOST, AuditAction.COPY_LOST
+    )
+
+
+@require_role(Role.ADMIN)
+@transaction.atomic
+def mark_damaged(actor, barcode: str, fee_kurus: int, note: str = "") -> Loan:
+    return _mark_loaned_copy(
+        actor,
+        barcode,
+        fee_kurus,
+        note,
+        CopyStatus.DAMAGED,
+        CloseReason.DAMAGED,
+        AuditAction.COPY_DAMAGED,
+    )
+
+
+_SHELF_ACTIONS = {
+    CopyStatus.LOST: AuditAction.COPY_LOST,
+    CopyStatus.DAMAGED: AuditAction.COPY_DAMAGED,
+    CopyStatus.WITHDRAWN: AuditAction.COPY_WITHDRAWN,
+}
+
+
+@require_role(Role.ADMIN)
+@transaction.atomic
+def mark_shelf_copy(
+    actor, barcode: str, new_status: Literal["LOST", "DAMAGED", "WITHDRAWN"], note: str = ""
+) -> Copy:
+    """ADR-0026: a copy on the shelf; no loan and no ledger entry."""
+    if new_status not in _SHELF_ACTIONS:
+        raise ValueError(f"not a shelf marking: {new_status!r}")
+    copy = find_copy(barcode.strip())
+    old = _transition(actor, copy, (CopyStatus.ON_SHELF,), new_status)
+    _set_status(copy, new_status)
+    _copy_event(actor, _SHELF_ACTIONS[new_status], copy, old, note)
+    return copy
+
+
+@dataclass(frozen=True)
+class FoundResult:
+    copy: Copy
+    cancelled_kurus: int
+    refundable_kurus: int
+
+
+@require_role(Role.CLERK)
+@transaction.atomic
+def mark_found(actor, barcode: str) -> FoundResult:
+    """LOST → ON_SHELF. When the copy's latest loan closed as LOST and was not
+    found yet, write ``copy_found_on`` and cancel its fee's unpaid part
+    (ADR-0037). A copy lost from the shelf, or a fee whose link retention cut
+    (ADR-0041), skips both."""
+    today = clock.today()
+    copy = find_copy(barcode.strip())
+    old = _transition(actor, copy, (CopyStatus.LOST,), CopyStatus.ON_SHELF)
+    cancelled = refundable = 0
+    latest = copy.loans.order_by("-id").first()
+    if latest is not None and latest.close_reason == CloseReason.LOST and latest.copy_found_on is None:
+        latest.copy_found_on = today
+        latest.save(update_fields=["copy_found_on"])
+        fee = billing.loan_fee(latest)
+        if fee is not None:
+            cancellation = billing.cancel_unpaid(actor, fee)
+            cancelled = cancellation.amount_kurus if cancellation else 0
+            refundable = billing.refundable(fee)
+    _set_status(copy, CopyStatus.ON_SHELF)
+    _copy_event(actor, AuditAction.COPY_FOUND, copy, old, "")
+    return FoundResult(copy=copy, cancelled_kurus=cancelled, refundable_kurus=refundable)
+
+
+@require_role(Role.ADMIN)
+@transaction.atomic
+def repair(actor, barcode: str, note: str = "") -> Copy:
+    """DAMAGED → ON_SHELF; a fee stays (TC-157)."""
+    copy = find_copy(barcode.strip())
+    old = _transition(actor, copy, (CopyStatus.DAMAGED,), CopyStatus.ON_SHELF)
+    _set_status(copy, CopyStatus.ON_SHELF)
+    _copy_event(actor, AuditAction.COPY_REPAIRED, copy, old, note)
+    return copy
+
+
+@require_role(Role.ADMIN)
+@transaction.atomic
+def withdraw(actor, barcode: str, note: str = "") -> Copy:
+    """DAMAGED or LOST → WITHDRAWN (LOST from FR-39); a fee stays."""
+    copy = find_copy(barcode.strip())
+    old = _transition(actor, copy, (CopyStatus.DAMAGED, CopyStatus.LOST), CopyStatus.WITHDRAWN)
+    _set_status(copy, CopyStatus.WITHDRAWN)
+    _copy_event(actor, AuditAction.COPY_WITHDRAWN, copy, old, note)
+    return copy
+
+
+@transaction.atomic
+def copy_loans(copy: Copy) -> list[Loan]:
+    """The copy's loan history, latest loan date first (copy screen)."""
+    return list(copy.loans.select_related("member").order_by("-loaned_on", "-id"))

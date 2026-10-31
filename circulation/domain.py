@@ -33,6 +33,7 @@ __all__ = [
     "late_days",
     "renew_blockers",
     "renewed_due_date",
+    "transition_error",
 ]
 
 # --- Due dates (FR-07, FR-10, FR-24, ADR-0028) -----------------------------------
@@ -206,11 +207,16 @@ class InvalidTransition(RuleViolation):
     """A copy status change outside architecture §5.1."""
 
 
+def transition_error(from_status: str, to_status: str) -> InvalidTransition:
+    """The refusal of ``from_status → to_status``, with Turkish labels."""
+    old = STATUS_LABELS.get(from_status, from_status)
+    new = STATUS_LABELS.get(to_status, to_status)
+    return InvalidTransition(f"Bu durum değişikliği yapılamaz: {old} → {new}")
+
+
 def check_transition(from_status: str, to_status: str) -> Role:
     """The role a transition needs; any other pair raises ``InvalidTransition``."""
     role = COPY_TRANSITIONS.get((from_status, to_status))
     if role is None:
-        old = STATUS_LABELS.get(from_status, from_status)
-        new = STATUS_LABELS.get(to_status, to_status)
-        raise InvalidTransition(f"Bu durum değişikliği yapılamaz: {old} → {new}")
+        raise transition_error(from_status, to_status)
     return role

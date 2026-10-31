@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Nüsha {{ copy.barcode }} · Kütüphane{% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'catalog:detail' copy.book.pk %}">{{ copy.book.title }}</a></p>
+  <h1>Nüsha {{ copy.barcode }}</h1>
+  {% for error in errors %}<p class="error">{{ error }}</p>{% endfor %}
+  <table>
+    <tbody>
+      <tr><th>Başlık</th><td>{{ copy.book.title }}</td></tr>
+      <tr><th>Yazar</th><td>{{ copy.book.author }}</td></tr>
+      <tr><th>Durum</th><td>{{ copy.get_status_display }}</td></tr>
+      {% if open_loan %}
+        <tr><th>Ödünç</th><td>{% if open_loan.member %}<a href="{% url 'members:detail' open_loan.member.member_no %}">Üye {{ open_loan.member.member_no }}</a>{% endif %} · Son tarih {{ open_loan.due_on|date:"d.m.Y" }}</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  {% if actions %}
+    <h2>İşlemler</h2>
+    {% if "kayip" in actions %}
+      <form method="post" action="{% url 'circulation:copy-lost' copy.barcode %}">
+        {% csrf_token %}
+        <p>
+          {% if with_fee %}
+            <label for="lost-fee">Bedel (TL)</label>
+            <input type="text" name="fee" id="lost-fee" inputmode="decimal" maxlength="20">
+          {% endif %}
+          <label for="lost-note">Not</label>
+          <input type="text" name="note" id="lost-note" maxlength="500">
+          <button type="submit">Kayıp</button>
+        </p>
+      </form>
+    {% endif %}
+    {% if "hasarli" in actions %}
+      <form method="post" action="{% url 'circulation:copy-damaged' copy.barcode %}">
+        {% csrf_token %}
+        <p>
+          {% if with_fee %}
+            <label for="damaged-fee">Bedel (TL)</label>
+            <input type="text" name="fee" id="damaged-fee" inputmode="decimal" maxlength="20">
+          {% endif %}
+          <label for="damaged-note">Not</label>
+          <input type="text" name="note" id="damaged-note" maxlength="500">
+          <button type="submit">Hasarlı</button>
+        </p>
+      </form>
+    {% endif %}
+    {% if "bulundu" in actions %}
+      <form method="post" action="{% url 'circulation:copy-found' copy.barcode %}">
+        {% csrf_token %}
+        <p><button type="submit">Bulundu</button></p>
+      </form>
+    {% endif %}
+    {% if "onarildi" in actions %}
+      <form method="post" action="{% url 'circulation:copy-repaired' copy.barcode %}">
+        {% csrf_token %}
+        <p>
+          <label for="repair-note">Not</label>
+          <input type="text" name="note" id="repair-note" maxlength="500">
+          <button type="submit">Onarıldı</button>
+        </p>
+      </form>
+    {% endif %}
+    {% if "kayittan-dus" in actions %}
+      <form method="post" action="{% url 'circulation:copy-withdraw' copy.barcode %}">
+        {% csrf_token %}
+        <p>
+          <label for="withdraw-note">Not</label>
+          <input type="text" name="note" id="withdraw-note" maxlength="500">
+          <button type="submit">Kayıttan düş</button>
+        </p>
+      </form>
+    {% endif %}
+  {% endif %}
+
+  <h2>Ödünç geçmişi</h2>
+  <table>
+    <thead><tr><th>Ödünç</th><th>Üye</th><th>Son tarih</th><th>Kapanış</th><th>Sonuç</th></tr></thead>
+    <tbody>
+      {% for loan in loans %}
+        <tr>
+          <td>{{ loan.loaned_on|date:"d.m.Y" }}</td>
+          <td>{% if loan.member %}<a href="{% url 'members:detail' loan.member.member_no %}">{{ loan.member.member_no }}</a>{% else %}—{% endif %}</td>
+          <td>{{ loan.due_on|date:"d.m.Y" }}</td>
+          <td>{{ loan.closed_on|date:"d.m.Y"|default:"—" }}</td>
+          <td>{% if loan.is_open %}Açık{% else %}{{ loan.get_close_reason_display }}{% if loan.copy_found_on %} · bulundu {{ loan.copy_found_on|date:"d.m.Y" }}{% endif %}{% endif %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">Ödünç yok.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

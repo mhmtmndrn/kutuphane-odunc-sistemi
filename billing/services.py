@@ -302,6 +302,17 @@ def statement(member) -> list[StatementRow]:
 
 
 @transaction.atomic
+def loan_fee(loan) -> LedgerEntry | None:
+    """The FEE written when the loan closed as lost or damaged, if any."""
+    return (
+        LedgerEntry.objects.select_related("member", "loan")
+        .filter(loan=loan, kind=EntryKind.FEE)
+        .order_by("id")
+        .first()
+    )
+
+
+@transaction.atomic
 def get_entry(member, entry_id: int | None) -> LedgerEntry:
     """The member's entry by id; a form's hidden id cannot reach another member."""
     entry = (

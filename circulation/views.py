@@ -7,19 +7,22 @@ from django.contrib import messages
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods, require_POST
 
-from accounts.permissions import staff_view
+from accounts.models import Role
+from accounts.permissions import require_role, staff_view
 from administration import clock
 from administration.errors import RuleViolation
 from administration.money import format_tl
 from catalog.models import CopyStatus
-from catalog.services import is_barcode
+from catalog.services import find_copy, is_barcode
 from members.services import search_members
 
 from . import services
 from .domain import classify_member_input
+from .forms import CopyMarkForm, NoteForm
 
 COPY_BARCODE_WARNING = "Bu bir nüsha barkodu. Üye kartını okutun."
 # SQLite integers are 64-bit; a longer digit string is no member number.
@@ -166,3 +169,146 @@ def checkin(request: HttpRequest) -> HttpResponse:
     else:
         messages.success(request, "İade alındı")
     return _see_other(reverse("circulation:checkin"))
+
+
+# --- Copy screen and status operations (G12: FR-15, FR-16, FR-39) ----------------
+
+# Operations shown for each status, and who sees them (architecture §5.1).
+_ADMIN_ACTIONS = {
+    CopyStatus.ON_SHELF: ("kayip", "hasarli", "kayittan-dus"),
+    CopyStatus.ON_LOAN: ("kayip", "hasarli"),
+    CopyStatus.LOST: ("bulundu", "kayittan-dus"),
+    CopyStatus.DAMAGED: ("onarildi", "kayittan-dus"),
+    CopyStatus.WITHDRAWN: (),
+}
+_CLERK_ACTIONS = {CopyStatus.LOST: ("bulundu",)}
+
+
+def _get_copy(barcode: str):
+    try:
+        return find_copy(barcode)
+    except RuleViolation as exc:
+        raise Http404(exc.message) from None
+
+
+def _copy_page(request: HttpRequest, copy, error: str | None = None) -> HttpResponse:
+    copy.refresh_from_db()
+    loans = services.copy_loans(copy)
+    is_admin = request.user.role == Role.ADMIN
+    actions = (_ADMIN_ACTIONS if is_admin else _CLERK_ACTIONS).get(copy.status, ())
+    context = {
+        "copy": copy,
+        "loans": loans,
+        "open_loan": next((loan for loan in loans if loan.is_open), None),
+        "actions": set(actions),
+        "with_fee": copy.status == CopyStatus.ON_LOAN,
+        "errors": [error] if error else [],
+    }
+    return render(request, "circulation/copy_detail.html", context)
+
+
+def _after_copy_post(request: HttpRequest, copy, operation) -> HttpResponse:
+    try:
+        message = operation()
+    except RuleViolation as exc:
+        return _copy_page(request, copy, exc.message)
+    messages.success(request, message)
+    return _see_other(reverse("circulation:copy", args=[copy.barcode]))
+
+
+@staff_view
+@require_http_methods(["GET"])
+def copy_detail(request: HttpRequest, barcode: str) -> HttpResponse:
+    return _copy_page(request, _get_copy(barcode))
+
+
+def _mark(request: HttpRequest, barcode: str, target: str) -> HttpResponse:
+    copy = _get_copy(barcode)
+    form = CopyMarkForm(request.POST)
+    if not form.is_valid():
+        return _copy_page(request, copy, "; ".join(e for errs in form.errors.values() for e in errs))
+    fee, note = form.cleaned_data["fee"], form.cleaned_data["note"]
+    label = "kayıp" if target == CopyStatus.LOST else "hasarlı"
+
+    def operation() -> str:
+        if copy.status == CopyStatus.ON_LOAN:
+            if fee is None:
+                raise RuleViolation("Bedel girin (bedel yoksa 0)")
+            mark = services.mark_lost if target == CopyStatus.LOST else services.mark_damaged
+            mark(request.user, copy.barcode, fee, note)
+        else:
+            services.mark_shelf_copy(request.user, copy.barcode, target, note)
+        return f"Nüsha {label} olarak işaretlendi"
+
+    return _after_copy_post(request, copy, operation)
+
+
+@require_role(Role.ADMIN)
+@require_POST
+def copy_lost(request: HttpRequest, barcode: str) -> HttpResponse:
+    return _mark(request, barcode, CopyStatus.LOST)
+
+
+@require_role(Role.ADMIN)
+@require_POST
+def copy_damaged(request: HttpRequest, barcode: str) -> HttpResponse:
+    return _mark(request, barcode, CopyStatus.DAMAGED)
+
+
+@staff_view
+@require_POST
+def copy_found(request: HttpRequest, barcode: str) -> HttpResponse:
+    copy = _get_copy(barcode)
+    try:
+        result = services.mark_found(request.user, copy.barcode)
+    except RuleViolation as exc:
+        return _copy_page(request, copy, exc.message)
+    text = "Nüsha bulundu olarak işaretlendi"
+    if result.cancelled_kurus:
+        text += f"; {format_tl(result.cancelled_kurus)} ödenmemiş bedel iptal edildi"
+    messages.success(request, text)
+    if result.refundable_kurus:
+        # The refundable fee belongs to the copy's latest loan (ADR-0037).
+        member = services.get_loan(max(loan.pk for loan in services.copy_loans(copy))).member
+        messages.info(
+            request,
+            format_html(
+                'Ödenmiş {} para iadesi için üyenin borç sayfasında: <a href="{}">Borç dökümü</a>',
+                format_tl(result.refundable_kurus),
+                reverse("billing:statement", args=[member.member_no]),
+            ),
+        )
+    return _see_other(reverse("circulation:copy", args=[copy.barcode]))
+
+
+def _note(request: HttpRequest) -> str:
+    form = NoteForm(request.POST)
+    return form.cleaned_data["note"] if form.is_valid() else ""
+
+
+@require_role(Role.ADMIN)
+@require_POST
+def copy_repaired(request: HttpRequest, barcode: str) -> HttpResponse:
+    copy = _get_copy(barcode)
+
+    def operation() -> str:
+        services.repair(request.user, copy.barcode, _note(request))
+        return "Nüsha onarıldı olarak işaretlendi"
+
+    return _after_copy_post(request, copy, operation)
+
+
+@require_role(Role.ADMIN)
+@require_POST
+def copy_withdraw(request: HttpRequest, barcode: str) -> HttpResponse:
+    copy = _get_copy(barcode)
+
+    def operation() -> str:
+        note = _note(request)
+        if copy.status == CopyStatus.ON_SHELF:
+            services.mark_shelf_copy(request.user, copy.barcode, CopyStatus.WITHDRAWN, note)
+        else:
+            services.withdraw(request.user, copy.barcode, note)
+        return "Nüsha kayıttan düşüldü"
+
+    return _after_copy_post(request, copy, operation)

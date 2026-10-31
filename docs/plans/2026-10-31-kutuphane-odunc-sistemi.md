@@ -663,7 +663,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Bütün yollarda nüsha `barcode` ile bulunur. Bulunamazsa 404 döner.
 - **Testler:** TC-150…TC-170, TC-289…TC-293 (26 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest circulation billing -q` → hepsi geçer.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-11-01, bulut oturumu, Linux, Python 3.11.18): `python -m pytest circulation billing -q` → 260 passed; `python -m pytest -q` → 784 passed; `makemigrations --check --dry-run` → "No changes detected"; tam koşuda dal kapsamı `*/domain.py` %100, `billing/services.py` %100, `circulation/services.py` %98, `members/services.py` %100, `accounts/permissions.py` ve `accounts/middleware.py` %100; `circulation` + `billing` + `members` toplam %99. Ödünç, iade, nüsha, döküm ve üye ekranları geliştirme sunucusunda Playwright ile açılıp göz kontrolünden geçti (odak "Onayla" düğmesinde; nüsha ekranında yalnız geçerli işlemler).
 
 ### Görev G13: Geciken listesi ve hatırlatmalar
 
@@ -1204,6 +1205,15 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - G11'in dosya listesi dışında değişenler: `members/views.py`, `members/urls.py` ve `members/templates/members/detail.html` (plan Davranış'ta), `library_site/urls.py` (`circulation.urls`, `catalog.urls`'ten sonra), `templates/base.html` ve `administration/home.html` ("Ödünç" ve "İade" bağlantıları; G03 §11 kuralı), `tests/support/urls.py`.
   - `tests/support/urls.py`'deki G02 yer tutucusu (`/odunc/`) kaldırıldı: gerçek ödünç ekranı yolu artık karşılıyor; modül ürünün URL listesini aynen verir, G02 testleri `@pytest.mark.urls` işaretleriyle değişmeden geçer.
   - `make_loan` G09'da eklendi (yukarıda).
+- **2026-11-01, G12 — uygulama ayrıntıları (bulut oturumu):**
+  - Her servis önce kendi ele aldığı kaynak durumu denetler (kayıp/hasar: Ödünçte; `mark_shelf_copy`: Rafta; `mark_found`: Kayıp; `repair`: Hasarlı; `withdraw`: Hasarlı ya da Kayıp), sonra `check_transition` ile geçişi ve rolü doğrular. Kaynak durum servise uymuyorsa da aynı `InvalidTransition` mesajı verilir; bunun için `circulation.domain.transition_error(eski, yeni)` eklendi (TC-164: Ödünçteki nüshada `mark_shelf_copy`, tabloda geçerli bir geçiş olsa da reddedilir). `check_transition`'ın döndürdüğü rol yönetici ise ve aktör yönetici değilse `PermissionDenied` verilir; yönetici servisleri ayrıca `require_role(Role.ADMIN)` taşır.
+  - Kayıp ve hasarda negatif bedel "Bedel negatif olamaz" ile reddedilir. Ödünçteki nüsha için bedel alanı formda zorunludur: boş bırakılırsa "Bedel girin (bedel yoksa 0)" verilir (0 bilerek girilir; KL-7). COPY_LOST ve COPY_DAMAGED ayrıntısı ödünçteki nüshada `fee_kurus`'u (0 dahil) taşır; raftaki nüshada taşımaz (KL-15'teki "?"). `mark_found`'un ayrıntısında `note` boştur (servisin not parametresi yok).
+  - `mark_found` bedeli `billing.services.loan_fee(loan)` ile bulur (plandaki arayüze ek; ödüncün ilk FEE kalemi). Otomatik iptal yalnız `COPY_FOUND` ile izlenir (G09 maddesi).
+  - Plandaki arayüzlere ek: `copy_loans(copy)` (nüsha ekranındaki ödünç geçmişi; ödünç tarihine göre en yeniden başlar).
+  - **Nüsha ekranı:** Durum ve role göre gösterilen işlemler: Rafta → yönetici Kayıp, Hasarlı, Kayıttan düş; Ödünçte → yönetici bedel alanlı Kayıp ve Hasarlı; Kayıp → herkes Bulundu, yönetici Kayıttan düş; Hasarlı → yönetici Onarıldı ve Kayıttan düş; Kayıttan düşmüş → işlem yok. `/kayip/` ve `/hasarli/` nüsha Ödünçteyse `mark_lost`/`mark_damaged`, değilse `mark_shelf_copy`'yi; `/kayittan-dus/` Raftaysa `mark_shelf_copy(WITHDRAWN)`, değilse `withdraw`'u çağırır. Başarı 303 ile nüsha ekranına döner ve mesaj gösterir; kural ihlali ekranı 200 ve mesajla yeniden çizer; bilinmeyen barkod GET ve POST'ta 404 verir. Ekranda açık ödünç (üye bağlantısı, son tarih) ve ödünç geçmişi (kapanış nedeni ve varsa bulunma tarihi) bulunur.
+  - Bulundu mesajı: iptal edilen tutar varsa "Nüsha bulundu olarak işaretlendi; <tutar> ödenmemiş bedel iptal edildi"; iade edilebilir tutar varsa ikinci mesaj "Ödenmiş <tutar> para iadesi için üyenin borç sayfasında: Borç dökümü" ve `/borclar/<no>/` bağlantısı (plandaki metne bağlantı metni eklendi; mesaj `format_html` ile güvenli HTML'dir). Üye, nüshanın en son ödüncünden okunur.
+  - G12'nin dosya listesi dışında değişenler: `circulation/forms.py` (`CopyMarkForm`, `NoteForm`), `billing/services.py` (`loan_fee`), `catalog/templates/catalog/detail.html` (her barkod nüsha ekranına bağlantı; G12 ekranına katalogdan ulaşılsın diye).
+  - `library_site/urls.py`'de `catalog.urls` `circulation.urls`'ten önce durur; `/nushalar/etiket/` hâlâ etiket ekranına gider (test: `test_label_route_still_wins_over_the_barcode_route`).
 - **2026-10-31, G05–G08 uygulayıcının seçtiği kullanıcıya görünen metinler:** Plan, SRS, KL ya da ADR'nin vermediği ve uygulayıcının seçtiği kullanıcıya görünen metinler (2026-11-01 kullanıcı kararı; PR'da onaylanır). Kullanıcı 2026-11-01'de PR #2 incelemesinde hepsini onayladı; metin değiştirilmedi. G02–G04 listesinde zaten onaylı olup aynen yeniden kullanılanlar "(G02–G04'te onaylı)" ile işaretlidir.
   - G06:
     - "Üyeler": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `members/search.html` sayfa başlığı; `members/form.html` ve `members/detail.html` geri bağlantısı.
@@ -1322,3 +1332,17 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
     - "Üye pasifleştirildi": `members/views.py` `member_deactivate`, başarı mesajı.
     - "Anonimleştirilmiş üye pasifleştirilemez" ve "Üye zaten pasif": `circulation/services.py` `deactivate_member`, `RuleViolation` (davranış ve metin 2026-11-01 kullanıcı kararıyla verildi; listede bilgi için).
     - Planın verdiği metinler listede yoktur: "Uzat", "Onayla", "İade al", "Son tarih 16.11.2026", "İade alındı", "İade alındı; 15,00 TL ceza yazıldı", "Bu bir nüsha barkodu. Üye kartını okutun.", KL-6 mesajları.
+  - G12:
+    - "Nüsha NNNNNNNN": `circulation/copy_detail.html`, sayfa başlığı ve `<title>`; kitap başlığı geri bağlantısı.
+    - "Başlık", "Yazar", "Durum" (onaylı): `circulation/copy_detail.html`, satır başlıkları.
+    - "Ödünç": `circulation/copy_detail.html`, açık ödünç satırı ("Üye N · Son tarih GG.AA.YYYY") ve ödünç geçmişi sütun başlığı.
+    - "İşlemler": `circulation/copy_detail.html`, bölüm başlığı.
+    - "Bedel (TL)" ve "Not" (onaylı): `circulation/forms.py` ve `circulation/copy_detail.html`, alan etiketleri.
+    - "Kayıp", "Hasarlı", "Bulundu", "Onarıldı", "Kayıttan düş": `circulation/copy_detail.html`, düğmeler (durum adları `CopyStatus` etiketleriyle aynı).
+    - "Ödünç geçmişi": `circulation/copy_detail.html`, bölüm başlığı; sütunlar "Ödünç", "Üye", "Son tarih", "Kapanış", "Sonuç"; açık ödünçte "Açık", bulunan kayıpta " · bulundu GG.AA.YYYY"; boş listede "Ödünç yok.".
+    - "İade edildi", "Kayıp", "Hasarlı": `circulation/models.py` `CloseReason` etiketleri (G10).
+    - "Nüsha kayıp olarak işaretlendi", "Nüsha hasarlı olarak işaretlendi", "Nüsha onarıldı olarak işaretlendi", "Nüsha kayıttan düşüldü", "Nüsha bulundu olarak işaretlendi" ve "; <tutar> ödenmemiş bedel iptal edildi": `circulation/views.py`, başarı mesajları.
+    - "Ödenmiş <tutar> para iadesi için üyenin borç sayfasında" planın metnidir; ardındaki ": Borç dökümü" bağlantı metni uygulayıcı seçimidir (`circulation/views.py` `copy_found`).
+    - "Bedel girin (bedel yoksa 0)": `circulation/views.py` `_mark`, ödünçteki nüshada boş bedel.
+    - "Bedel negatif olamaz": `circulation/services.py` `_mark_loaned_copy`, `RuleViolation`.
+    - "Bu durum değişikliği yapılamaz: <eski> → <yeni>" plandandır; durumlar Türkçe etiketleriyle yazılır (G10 maddesi).

@@ -296,3 +296,186 @@ def test_scan_js_is_served_as_a_static_file() -> None:
     assert path is not None
     source = open(path, encoding="utf-8").read()
     assert "data-next-focus" in source and "autofocus" in source
+
+
+# ================================================================================
+# G12: copy screen and status operations (FR-15, FR-16, FR-39)
+# ================================================================================
+
+
+@pytest.fixture
+def admin():
+    return make_staff("ayse.y", role=Role.ADMIN)
+
+
+@pytest.fixture
+def admin_client(client: Client, admin) -> Client:
+    client.force_login(admin)
+    return client
+
+
+def _actions(body: str) -> set[str]:
+    """The copy operations whose forms appear on the page."""
+    return set(re.findall(r'action="/nushalar/\d{8}/([a-z-]+)/"', body))
+
+
+def test_tc159_admin_marks_a_shelf_copy_lost(today, admin_client, admin, member) -> None:
+    from administration.models import AuditEvent
+    from billing.services import member_balance
+
+    copy = make_copy(pk=42)
+    response = admin_client.post("/nushalar/00000042/kayip/", {"note": "Rafta yok"})
+    assert response.status_code == 303
+    assert response["Location"] == "/nushalar/00000042/"
+    copy.refresh_from_db()
+    assert copy.status == CopyStatus.LOST
+    assert not Loan.objects.exists() and not LedgerEntry.objects.exists()
+    assert member_balance(member) == 0
+    event = AuditEvent.objects.get(action="COPY_LOST")
+    assert (event.actor, event.target_type, event.target_id) == (admin, "copy", copy.pk)
+    assert event.details == {"from": "ON_SHELF", "note": "Rafta yok"}
+    assert event.occurred_at is not None
+
+
+def test_tc161_clerk_cannot_withdraw(today, clerk_client) -> None:
+    copy = make_copy(pk=42)
+    assert clerk_client.post("/nushalar/00000042/kayittan-dus/").status_code == 403
+    copy.refresh_from_db()
+    assert copy.status == CopyStatus.ON_SHELF
+
+
+def test_tc162_clerk_found_accepted_repair_forbidden(today, clerk_client) -> None:
+    make_copy(pk=42, status=CopyStatus.LOST)
+    make_copy(pk=43, status=CopyStatus.DAMAGED)
+    assert clerk_client.post("/nushalar/00000042/bulundu/").status_code == 303
+    assert clerk_client.post("/nushalar/00000043/onarildi/").status_code == 403
+
+
+def test_tc292_found_with_a_paid_fee_points_to_the_statement(today, clerk_client, clerk, member) -> None:
+    from billing.services import record_payment
+
+    copy = make_copy(pk=42)
+    loan = make_loan(member, copy, closed_on=date(2026, 11, 1), close_reason="LOST")
+    make_charge(member, EntryKind.FEE, 12000, loan=loan)
+    record_payment(clerk, member, 12000)
+    response = clerk_client.post("/nushalar/00000042/bulundu/")
+    assert response.status_code == 303
+    body = _body(clerk_client.get(response["Location"]))
+    assert "Ödenmiş 120,00 TL para iadesi için üyenin borç sayfasında" in body
+    assert 'href="/borclar/1042/"' in body
+
+
+def test_found_reports_the_cancelled_fee(today, clerk_client, member) -> None:
+    copy = make_copy(pk=42)
+    loan = make_loan(member, copy, closed_on=date(2026, 11, 1), close_reason="LOST")
+    make_charge(member, EntryKind.FEE, 12000, loan=loan)
+    clerk_client.post("/nushalar/00000042/bulundu/")
+    body = _body(clerk_client.get("/nushalar/00000042/"))
+    assert "Nüsha bulundu olarak işaretlendi; 120,00 TL ödenmemiş bedel iptal edildi" in body
+    assert "para iadesi" not in body
+
+
+def test_tc293_unknown_copy_and_forms_by_status_and_role(today, client, clerk, admin, member) -> None:
+    client.force_login(clerk)
+    assert client.get("/nushalar/99999998/").status_code == 404
+    assert client.post("/nushalar/99999998/bulundu/").status_code == 404
+    loan = make_loan(member, make_copy(pk=42))
+    make_copy(pk=43)
+
+    clerk_body = _body(client.get("/nushalar/00000042/"))
+    assert _actions(clerk_body) == set()
+    assert f"Üye {member.member_no}" in clerk_body and loan.due_on.strftime("%d.%m.%Y") in clerk_body
+
+    client.force_login(admin)
+    loaned = _body(client.get("/nushalar/00000042/"))
+    assert _actions(loaned) == {"kayip", "hasarli"}
+    assert loaned.count('name="fee"') == 2
+    shelf = _body(client.get("/nushalar/00000043/"))
+    assert _actions(shelf) == {"kayip", "hasarli", "kayittan-dus"}
+    assert 'name="fee"' not in shelf
+
+
+@pytest.mark.parametrize(
+    ("status", "clerk_actions", "admin_actions"),
+    [
+        (CopyStatus.ON_SHELF, set(), {"kayip", "hasarli", "kayittan-dus"}),
+        (CopyStatus.LOST, {"bulundu"}, {"bulundu", "kayittan-dus"}),
+        (CopyStatus.DAMAGED, set(), {"onarildi", "kayittan-dus"}),
+        (CopyStatus.WITHDRAWN, set(), set()),
+    ],
+)
+def test_copy_screen_shows_only_valid_actions(
+    today, client, clerk, admin, status, clerk_actions, admin_actions
+) -> None:
+    make_copy(pk=42, status=status)
+    client.force_login(clerk)
+    assert _actions(_body(client.get("/nushalar/00000042/"))) == clerk_actions
+    client.force_login(admin)
+    assert _actions(_body(client.get("/nushalar/00000042/"))) == admin_actions
+
+
+def test_lost_loaned_copy_with_fee(today, admin_client, member) -> None:
+    loan = make_loan(member, make_copy(pk=42), due_on=date(2026, 11, 16))
+    today(date(2026, 11, 26))
+    response = admin_client.post("/nushalar/00000042/kayip/", {"fee": "120,00", "note": ""})
+    assert response.status_code == 303
+    loan.refresh_from_db()
+    assert loan.close_reason == "LOST"
+    assert sorted(LedgerEntry.objects.values_list("kind", "amount_kurus")) == [
+        ("FEE", 12000),
+        ("FINE", 5000),
+    ]
+
+
+def test_loaned_copy_needs_a_fee(today, admin_client, member) -> None:
+    make_loan(member, make_copy(pk=42))
+    response = admin_client.post("/nushalar/00000042/hasarli/", {"fee": ""})
+    assert response.status_code == 200
+    assert "Bedel girin (bedel yoksa 0)" in _body(response)
+    response = admin_client.post("/nushalar/00000042/hasarli/", {"fee": "abc"})
+    assert response.status_code == 200
+    assert "Geçerli bir tutar girin (ör. 5,00)" in _body(response)
+    assert Loan.objects.get().is_open
+    response = admin_client.post("/nushalar/00000042/hasarli/", {"fee": "0"})
+    assert response.status_code == 303 and not LedgerEntry.objects.exists()
+
+
+def test_invalid_transition_reshows_the_copy_screen(today, admin_client) -> None:
+    make_copy(pk=42, status=CopyStatus.WITHDRAWN)
+    response = admin_client.post("/nushalar/00000042/onarildi/")
+    assert response.status_code == 200
+    assert "Bu durum değişikliği yapılamaz: Kayıttan düşmüş → Rafta" in _body(response)
+
+
+def test_repair_and_withdraw_routes(today, admin_client) -> None:
+    damaged = make_copy(pk=42, status=CopyStatus.DAMAGED)
+    lost = make_copy(pk=43, status=CopyStatus.LOST)
+    assert admin_client.post("/nushalar/00000042/onarildi/", {"note": "Cilt"}).status_code == 303
+    assert admin_client.post("/nushalar/00000043/kayittan-dus/").status_code == 303
+    damaged.refresh_from_db()
+    lost.refresh_from_db()
+    assert (damaged.status, lost.status) == (CopyStatus.ON_SHELF, CopyStatus.WITHDRAWN)
+
+
+def test_copy_screen_lists_the_loan_history(today, clerk_client, member) -> None:
+    copy = make_copy(make_book("Tutunamayanlar"), pk=42)
+    make_loan(member, copy, loaned_on=date(2026, 9, 1), closed_on=date(2026, 9, 10), close_reason="RETURNED")
+    old = make_loan(member, copy, loaned_on=date(2026, 8, 1), closed_on=date(2026, 8, 5), close_reason="RETURNED")
+    Loan.objects.filter(pk=old.pk).update(member=None)  # retention (ADR-0018)
+    body = _body(clerk_client.get("/nushalar/00000042/"))
+    assert "Tutunamayanlar" in body and "Rafta" in body
+    assert "01.09.2026" in body and "10.09.2026" in body and "İade edildi" in body
+    assert body.index("01.09.2026") < body.index("01.08.2026")
+
+
+def test_label_route_still_wins_over_the_barcode_route(clerk_client) -> None:
+    """Plan §11 (G08): ``nushalar/etiket/`` is not read as a barcode."""
+    response = clerk_client.get("/nushalar/etiket/")
+    assert response.status_code == 200
+    assert response.resolver_match.view_name == "catalog:labels"
+
+
+def test_book_detail_links_each_copy_to_its_screen(clerk_client) -> None:
+    copy = make_copy(make_book("Tutunamayanlar"), pk=42)
+    body = _body(clerk_client.get(f"/kitaplar/{copy.book.pk}/"))
+    assert 'href="/nushalar/00000042/"' in body

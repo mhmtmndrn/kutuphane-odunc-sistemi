@@ -369,3 +369,14 @@ def test_check_transition_message_uses_turkish_labels() -> None:
 
 def test_status_labels_match_copy_status() -> None:
     assert STATUS_LABELS == dict(CopyStatus.choices)
+
+
+def test_transition_error_builds_the_same_message() -> None:
+    """G12: a service refusing a source status it does not handle (e.g.
+    ``mark_shelf_copy`` on an ON_LOAN copy, TC-164) uses the same message."""
+    from circulation.domain import transition_error
+
+    error = transition_error("ON_LOAN", "LOST")
+    assert isinstance(error, InvalidTransition)
+    assert error.message == "Bu durum değişikliği yapılamaz: Ödünçte → Kayıp"
+    assert transition_error("X", "Y").message == "Bu durum değişikliği yapılamaz: X → Y"
