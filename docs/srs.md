@@ -1,15 +1,15 @@
 # Yazılım Gereksinim Belirtimi (SRS-lite): Kütüphane Ödünç Sistemi
 
 - **Güncelleme:** 2026-10-31
-- **Durum:** Onaylandı (2026-10-31)
+- **Durum:** Onaylandı (2026-10-31). Faz 2 değişiklikleri (FR-30 Won't, AC-29) kullanıcı onayıyla işlendi (2026-10-31). Faz 3 değişiklikleri (FR-04 ISBN kuralı, FR-37, FR-38, AC-25 notu, açık soru 3 ve 4) kullanıcı onayıyla işlendi (2026-10-31).
 - **İlgili dokümanlar:** [Görev planı](plans/2026-10-31-kutuphane-odunc-sistemi.md)
 
 ## 1. Amaç ve kapsam
 
 Küçük bir kütüphanenin personeli için web tabanlı ödünç sistemi. Üyeleri, kitapları ve nüshaları, ödünç verme, iade ve uzatmayı, gecikme cezasını, ödemeleri ve kayıp nüshaları tek yerde tutar. Sistem kütüphanenin yerel ağındaki bir sunucuda çalışır ve yalnızca personel kullanır.
 
-- **Kapsam içi:** Üye yönetimi ve e-posta rızası. Kitap ve nüsha kataloğu. Barkodla ödünç, iade ve uzatma. Kapalı günlere göre son tarih kaydırma. Gecikme cezası, kısmi ödeme, gerekçeli af. Kayıp ve hasarlı nüsha. Geciken ödünç listesi. E-posta hatırlatması. Barkod etiketi basımı. Yönetici ve görevli rolleri. Ayarlar. KVKK anonimleştirmesi. Denetim kaydı. Günlük yedek. Geliştirme ve demo için tohum veri.
-- **Kapsam dışı:** Rezervasyon ve bekleme kuyruğu. Üye girişi ve self-servis. Online ödeme. Birden çok üye tipi ve tipe göre kural. Üyelik geçerlilik süresi. Tahsilat, popüler kitap ve üye geçmişi raporları. Mevcut veriyi içe aktarma (kütüphanede veri yok). Mobil ve tablet arayüzü. Çok dilli arayüz. Buluta dağıtım.
+- **Kapsam içi:** Üye yönetimi ve e-posta rızası. Kitap ve nüsha kataloğu. Barkodla ödünç, iade ve uzatma. Kapalı günlere göre son tarih kaydırma. Gecikme cezası, kısmi ödeme, gerekçeli af. Kayıp ve hasarlı nüsha. Geciken ödünç listesi. E-posta hatırlatması. Barkod etiketi ve üye kartı basımı. Yönetici ve görevli rolleri. Ayarlar. KVKK anonimleştirmesi. Denetim kaydı. Günlük yedek ve haftalık şifreli bina dışı yedek. Geliştirme ve demo için tohum veri.
+- **Kapsam dışı:** Rezervasyon ve bekleme kuyruğu. Üye girişi ve self-servis. Online ödeme. Birden çok üye tipi ve tipe göre kural. Üyelik geçerlilik süresi. Tahsilat, popüler kitap ve üye geçmişi raporları. Mevcut veriyi içe aktarma (kütüphanede veri yok). ISBN ile dış kaynaktan otomatik meta veri doldurma (FR-30, faz 2'de düşürüldü). Mobil ve tablet arayüzü. Çok dilli arayüz. Buluta dağıtım.
 
 ## 2. Paydaşlar ve aktörler
 
@@ -35,7 +35,7 @@ Küçük bir kütüphanenin personeli için web tabanlı ödünç sistemi. Üyel
 | FR-01 | Sistem personelin üye oluşturmasını, güncellemesini ve üyeyi üye no, ad soyad ya da telefonla aramasını sağlamalı; üye için yalnız üye no, ad soyad, telefon ve isteğe bağlı e-posta tutulmalı. | Must | AGENTS.md; faz 1 cevabı (asgari veri) | AC-01 |
 | FR-02 | Sistem üyenin pasifleştirilmesini sağlamalı; pasif üye ödünç alamamalı. Açık ödüncü olan üye pasifleştirilememeli; borcu olan üye için önce uyarı gösterilmeli. | Must | Faz 1 cevabı (süresiz üyelik, elle pasifleştirme) | AC-02 |
 | FR-03 | Sistem üyenin e-posta rızasını, verildiği tarihi ve geri alındığı tarihi kaydetmeli. | Must | Faz 1 cevabı (rıza alanı) | AC-03 |
-| FR-04 | Sistem kitap kaydı (başlık, yazar, isteğe bağlı ISBN, yayınevi, yıl) oluşturmayı, güncellemeyi ve kitabı başlık, yazar, ISBN ya da nüsha barkoduyla aramayı sağlamalı. | Must | AGENTS.md | AC-04 |
+| FR-04 | Sistem kitap kaydı (başlık, yazar, isteğe bağlı ISBN, yayınevi, yıl) oluşturmayı, güncellemeyi ve kitabı başlık, yazar, ISBN ya da nüsha barkoduyla aramayı sağlamalı. ISBN tiresiz ISBN-13 olarak saklanmalı; geçerli ISBN-10 ISBN-13'e çevrilmeli. Kontrol hanesi tutmayan 10 haneli girişte "978" önekli değer geçerli bir ISBN-13 ise sistem bu düzeltmeyi önermeli ve personel onaylamadan kaydetmemeli. | Must | AGENTS.md; faz 3 (ADR-0008) | AC-04 |
 | FR-05 | Sistem bir kitaba nüsha eklendiğinde nüshaya benzersiz bir barkod üretmeli ve nüshanın durumunu (Rafta, Ödünçte, Kayıp, Hasarlı, Kayıttan düşmüş) tutmalı. Barkod Code 128, 8 haneli sıralı koddur. | Must | AGENTS.md (copies); plan, fırsat taraması | AC-05 |
 | FR-06 | Sistem seçilen nüshaların barkod etiketlerini toplu basılacak bir PDF olarak üretmeli (A4, sayfa başına 3×8 = 24 etiket). | Should | Plan, fırsat taraması (barkod masası) | AC-06 |
 | FR-07 | Sistem ödünç verirken son tarihi "bugün + ödünç süresi" olarak belirlemeli; bu tarih kapalı bir güne denk gelirse ilk açık güne kaydırmalı. | Must | Faz 1 cevapları (ayarlanabilir süre; takvim günü + kaydırma) | AC-07 |
@@ -61,7 +61,9 @@ Küçük bir kütüphanenin personeli için web tabanlı ödünç sistemi. Üyel
 | FR-27 | Sistem personel girişini kişisel hesap ve parolayla yapmalı; 30 dakika işlem yapılmazsa oturumu kapatmalı; 5 ardışık hatalı denemede hesabı geçici olarak kilitlemeli. | Must | Faz 1 cevabı (giriş) | AC-27 |
 | FR-28 | Sistem veritabanını her gün otomatik olarak harici diske yedeklemeli, son 30 günün yedeklerini tutmalı ve geri yükleme adımını belgelemeli. | Must | Faz 1 cevabı (yedekleme) | AC-28 |
 | FR-29 | Sistem geliştirme ve demo için tohum veri yükleyen bir komut sunmalı; üye verisi her durumda sentetik olmalı, kitap verisi lisansı uygun açık bir veri setinden ya da sentetik olmalı. | Should | Faz 1 cevabı (veri yok; veri seti ya da sentetik) | AC-29 |
-| FR-30 | Sistem ISBN girilen kitabın meta verisini dış bir kaynaktan otomatik doldurmalı. | Could | Plan, fırsat taraması (fizibilite) | Faz 2 sonrası |
+| FR-37 | Sistem haftada bir, son günlük yedekten parolayla şifrelenmiş bir dışa aktarma dosyası üretmeli ve şifreli dosyadan geri yüklemeyi sağlamalı. Son dışa aktarmanın tarihi yönetici arayüzünde görünmeli; 7 günden eskiyse uyarı gösterilmeli. | Should | Faz 3 (ADR-0006, ADR-0011; R-04) | AC-30 |
+| FR-38 | Sistem seçilen üyeler için üye no'yu Code 128 barkodla içeren, toplu basılacak bir üye kartı PDF'i üretmeli. | Should | Faz 3 (ADR-0025; AC-11'deki kart okutma) | AC-31 |
+| FR-30 | ISBN girilen kitabın meta verisini dış bir kaynaktan otomatik doldurma. (Düşürüldü 2026-10-31: Could → Won't) | Won't | Faz 2 ölçümü: en iyi ücretsiz kaynakta (Open Library) başlık+yazar isabeti %52 < %60 eşiği ([rapor](research/2026-10-31-isbn-meta-veri-apileri.md)); kullanıcı kararı. KYGM Z39.50 erişimi doğrulanırsa yeniden ele alınabilir (açık soru 8). | – |
 | FR-31 | Rezervasyon ve bekleme kuyruğu. | Won't | Faz 1 cevabı | – |
 | FR-32 | Tahsilat, popüler kitap ve üye ödünç geçmişi raporları. | Won't | Faz 1 cevabı (yalnız geciken ödünçler) | – |
 | FR-33 | Üye girişi ve self-servis. | Won't | AGENTS.md (yalnız personel) | – |
@@ -129,6 +131,12 @@ Senaryo: Kitabı barkodla bulma
   Diyelim ki "Tutunamayanlar" kitabının barkodu "00000042" olan bir nüshası var
   Eğer ki görevli "00000042" ile arama yaparsa
   O zaman sonuçta "Tutunamayanlar" ve nüshanın durumu görünür
+
+Senaryo: "978" öneki atılmış ISBN
+  Diyelim ki görevli kitap kaydı formunda
+  Eğer ki kontrol hanesi tutmayan "6053609322" ISBN'ini girerse ve "9786053609322" geçerli bir ISBN-13 ise
+  O zaman kayıt yapılmaz ve "9786053609322" düzeltmesi önerilir
+  Ve görevli öneriyi onaylarsa kitap ISBN'i "9786053609322" olarak kaydedilir
 ```
 
 ### AC-05 (FR-05)
@@ -381,6 +389,12 @@ Senaryo: Pasif üyenin anonimleştirilmesi
   Eğer ki anonimleştirme görevi 2028-11-02'de çalışırsa
   O zaman üyenin adı, telefonu ve e-postası silinir
   Ve üyenin ödünç sayısı ve borç tutarları raporlarda kalır
+
+Senaryo: Eski ödüncün üye bağının kaldırılması
+  Diyelim ki saklama süresi 2 yıl ve bir ödünç 2026-11-01'de iade edilmiş
+  Eğer ki anonimleştirme görevi 2028-11-02'de çalışırsa
+  O zaman ödüncün ve ona bağlı borç hareketlerinin üye bağı kaldırılır
+  Ve üyenin toplam ödünç sayısı değişmez (arşivlenmiş ödünç sayacına eklenir, ADR-0018)
 ```
 
 ### AC-26 (FR-26)
@@ -426,8 +440,38 @@ Senaryo: Yedekten geri yükleme
 Senaryo: Tohum veri
   Diyelim ki veritabanı boş
   Eğer ki geliştirici tohum veri komutunu çalıştırırsa
-  O zaman sentetik üyeler, kitaplar ve nüshalar yüklenir
+  O zaman üyeler, kitaplar ve nüshalar yüklenir
+  Ve üyeler sentetiktir
+  Ve kitaplar lisansı uygun açık veri setinden (Open Library, CC0) ya da sentetik olarak yüklenir
+  Ve açık veri setinden gelen her kitap kaydında kaynak kimliği (OL kimliği) tutulur
   Ve hiçbir üye kaydı gerçek bir kişiye ait değildir
+```
+
+### AC-30 (FR-37)
+
+```gherkin
+# language: tr
+Senaryo: Şifreli dışa aktarma ve geri yükleme
+  Diyelim ki günlük yedek alınmış
+  Eğer ki haftalık dışa aktarma çalışırsa
+  O zaman parolayla şifrelenmiş bir dosya üretilir ve parola olmadan açılamaz
+  Ve doğru parolayla test ortamına geri yüklendiğinde üye, nüsha ve ödünç sayıları aynen gelir
+
+Senaryo: Eski dışa aktarma uyarısı
+  Diyelim ki son dışa aktarma 8 gün önce yapılmış
+  Eğer ki yönetici ana sayfayı açarsa
+  O zaman "Bina dışı yedek 7 günden eski" uyarısı görünür
+```
+
+### AC-31 (FR-38)
+
+```gherkin
+# language: tr
+Senaryo: Üye kartı PDF'i
+  Diyelim ki 3 üye seçilmiş
+  Eğer ki personel kart basımı isterse
+  O zaman 3 kart içeren bir PDF üretilir
+  Ve her karttaki barkod okutulduğunda ilgili üyenin üye no'su okunur
 ```
 
 ## 7. Kısıtlar
@@ -436,7 +480,7 @@ Senaryo: Tohum veri
 - Yalnız personel kullanır, yalnız Türkçe arayüz ve masaüstü tarayıcı.
 - KVKK: asgari veri, e-posta için açık rıza kaydı, ayarlı süreyle anonimleştirme.
 - Geliştirme TDD ile yapılır (AGENTS.md).
-- Dil, framework, veritabanı ve e-posta servisi faz 3'te seçilecek. Sunucu donanımı ve işletim sistemi belli olmadığından çözüm Windows ve Linux'ta çalışmalı.
+- Dil, framework, veritabanı ve e-posta yolu faz 3'te seçildi: Python + Django 5.2 LTS, SQLite, kurum SMTP hesabı (ADR-0001, ADR-0002, ADR-0004, ADR-0013). Sunucu donanımı ve işletim sistemi belli olmadığından çözüm Windows ve Linux'ta çalışmalı.
 - Saat dilimi Europe/Istanbul; gün sınırı yerel gece yarısıdır.
 
 ## 8. Sözlük
@@ -462,10 +506,11 @@ Senaryo: Tohum veri
 
 | # | Soru | Neyi etkiliyor | Durum |
 |---|---|---|---|
-| 1 | Ücretsiz ISBN meta veri API'leri Türkçe kitapları ne oranda kapsıyor? | FR-30'un önceliği ve yapılıp yapılmayacağı | Faz 2'ye ertelendi |
-| 2 | Demo kitap verisi için lisansı uygun, Türkçe kitap içeren açık bir veri seti var mı? | FR-29'un veri kaynağı | Faz 2'ye ertelendi |
-| 3 | E-posta hangi yolla gönderilecek (kurum SMTP hesabı ya da e-posta servisi)? | FR-18, FR-19; R-02 | Faz 3'e ertelendi (ADR) |
-| 4 | LAN içinde HTTPS kullanılacak mı (kendinden imzalı sertifika ya da düz HTTP)? | NFR-08, parola güvenliği | Faz 3'e ertelendi (ADR) |
+| 1 | Ücretsiz ISBN meta veri API'leri Türkçe kitapları ne oranda kapsıyor? | FR-30'un önceliği ve yapılıp yapılmayacağı | Yanıtlandı (2026-10-31): Open Library %52, LC SRU %8, Wikidata %0 (n = 25); FR-30 Won't ([rapor](research/2026-10-31-isbn-meta-veri-apileri.md)) |
+| 2 | Demo kitap verisi için lisansı uygun, Türkçe kitap içeren açık bir veri seti var mı? | FR-29'un veri kaynağı | Yanıtlandı (2026-10-31): Open Library (CC0, orta güven; yalnız bibliyografik alanlar, kaynak notuyla); AC-29 güncellendi ([rapor](research/2026-10-31-demo-kitap-veri-seti.md)) |
+| 3 | E-posta hangi yolla gönderilecek (kurum SMTP hesabı ya da e-posta servisi)? | FR-18, FR-19; R-02 | Yanıtlandı (2026-10-31): kurum SMTP hesabı ([ADR-0004](decisions/0004-email-institutional-smtp.md)) |
+| 4 | LAN içinde HTTPS kullanılacak mı (kendinden imzalı sertifika ya da düz HTTP)? | NFR-08, parola güvenliği | Yanıtlandı (2026-10-31): Caddy ve yerel CA ile HTTPS ([ADR-0005](decisions/0005-https-caddy-local-ca.md)) |
 | 5 | Sunucunun donanımı ve işletim sistemi ne? | Faz 3 stack seçimi, FR-28 | Belli değil; çapraz platform kısıtı olarak bölüm 7'ye yazıldı |
 | 6 | Varsayılan 2 yıllık saklama süresi kurumun KVKK politikasına uyuyor mu? | FR-25 | Açık (kurum teyidi) |
 | 7 | Küçük kararlar listesi (varsayılan tutarlar, hesap kuralları, kodlar) | FR-05…FR-27 | Onaylandı (2026-10-31); görev planı bölüm 3 |
+| 8 | KYGM Koha sabit IP'ye Z39.50 erişimi açıyor mu, şartları ne? | FR-30'un yeniden ele alınması | Açık; doğrulanmadı (güven düşük). Kullanıcı isterse koha@ktb.gov.tr'ye kendisi sorar |
