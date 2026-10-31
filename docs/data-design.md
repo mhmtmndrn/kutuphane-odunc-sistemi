@@ -21,7 +21,7 @@ erDiagram
   LOAN |o--o{ LEDGER_ENTRY : "ceza/bedel kaynağı"
   LEDGER_ENTRY ||--o{ ALLOCATION : "alacak olarak dağıtılır"
   LEDGER_ENTRY ||--o{ ALLOCATION : "borç kalemi olarak kapanır"
-  LEDGER_ENTRY |o--o{ LEDGER_ENTRY : "hedef kalem (af, iptal, iade)"
+  LEDGER_ENTRY |o--o{ LEDGER_ENTRY : "hedef kalem (af, iptal, para iadesi)"
   LOAN ||--o{ REMINDER_LOG : "hatırlatma"
   MEMBER {
     int id PK
@@ -48,6 +48,7 @@ erDiagram
     int member_id FK "NULL olabilir"
     date due_on
     date closed_on "NULL = açık"
+    date copy_found_on "NULL = bulunmadı"
   }
   LEDGER_ENTRY {
     int id PK
@@ -81,6 +82,7 @@ Ortak kurallar:
 | staff_user | username | varchar(150) | UNIQUE, NOT NULL | `AbstractUser` alanları (parola Argon2) |
 | | role | varchar(10) | NOT NULL, CHECK IN ('ADMIN','CLERK') | Küçük karar 1 |
 | | is_active | bool | NOT NULL | FR-21'deki pasifleştirme |
+| | must_change_password | bool | NOT NULL, varsayılan False | `create_staff` ve `reset_password` True yapar; personel parolasını değiştirince False olur ([ADR-0043](decisions/0043-staff-password-change.md)) |
 | library_settings | id | int | PK, CHECK id = 1 | Tek satır |
 | | loan_period_days | smallint | NOT NULL, CHECK > 0 | Varsayılan değer faz 4 küçük kararı (AC-23 örneği: 14) |
 | | max_open_loans | smallint | NOT NULL, CHECK > 0 | Varsayılan değer faz 4 küçük kararı (AC-08 örneği: 3) |
@@ -114,6 +116,8 @@ Ortak kurallar:
 | | effective_on | date | NOT NULL | AC-03'teki tarih |
 | | recorded_at, recorded_by_id | timestamp, FK staff_user | NOT NULL | |
 
+Rıza kuralları ([ADR-0047](decisions/0047-consent-event-ordering.md)): geçerli durum `(effective_on, recorded_at, id)` en büyük olaydır; gelecek tarihli olay ve geçerli durumu tekrarlayan olay reddedilir; `has_email_consent` her eklemeden sonra geçerli durumdan yeniden hesaplanır; e-posta silinince aynı işlemde WITHDRAWN yazılır.
+
 ### 2.3 Katalog
 
 | Tablo | Sütun | Tür | Kısıt | Açıklama |
@@ -144,6 +148,7 @@ Ortak kurallar:
 | | close_reason | varchar(10) | NULL, CHECK IN ('RETURNED','LOST','DAMAGED'); CHECK (closed_on IS NULL) = (close_reason IS NULL) | |
 | | created_by_id, closed_by_id | FK staff_user | closed_by NULL olabilir | |
 | | member_unlinked_at | timestamp | NULL | |
+| | copy_found_on | date | NULL; CHECK (copy_found_on IS NULL OR (close_reason = 'LOST' AND copy_found_on >= closed_on)) | Kayıp kapanışlı ödüncün nüshası bulunduğunda `mark_found` yazar; para iadesinin ön koşulu ([ADR-0037](decisions/0037-refund-precondition-found-lost-copy.md)) |
 
 **Kısıt:** `UNIQUE(copy_id) WHERE closed_on IS NULL`. Bir nüshanın en fazla bir açık ödüncü olabilir.
 
@@ -156,7 +161,7 @@ Ortak kurallar:
 | | kind | varchar(12) | CHECK IN ('FINE','FEE','PAYMENT','WAIVER','CANCELLATION','REFUND') | |
 | | amount_kurus | int | NOT NULL, CHECK > 0 | Yönü türden gelir |
 | | target_entry_id | FK ledger_entry | NULL; WAIVER, CANCELLATION ve REFUND'da NOT NULL (CHECK) | Hedef borç kalemi |
-| | reason | varchar(500) | NULL; WAIVER'da NOT NULL ve boş olamaz (CHECK) | FR-14 |
+| | reason | varchar(500) | NULL; WAIVER'da NOT NULL ve boş olamaz (CHECK) | FR-14. Elle iptalde (CANCELLATION) gerekçeyi servis zorunlu kılar; `mark_found`'un otomatik iptalinde boştur ([ADR-0041](decisions/0041-manual-cancellation-unlinked-fee.md)) |
 | | created_at, created_by_id | timestamp, FK staff_user | NOT NULL | Zamanlanmış görev yazmaz |
 | allocation | credit_entry_id | FK ledger_entry | NOT NULL | PAYMENT, WAIVER ya da CANCELLATION |
 | | charge_entry_id | FK ledger_entry | NOT NULL | FINE ya da FEE |
@@ -171,8 +176,8 @@ Hareket türlerinin anlamı:
 | FEE (bedel) | Borç | + | Dağıtımları kendine çeker |
 | PAYMENT (ödeme) | Alacak | − | FIFO: en eski açık kalemden başlar ([ADR-0017](decisions/0017-payment-fifo-allocation.md)) |
 | WAIVER (af) | Alacak | − | Tek hedef kalem ([ADR-0021](decisions/0021-waiver-targeted.md)) |
-| CANCELLATION (iptal) | Alacak | − | Tek hedef bedel kalemi (FR-16) |
-| REFUND (iade) | Nötr | 0 | Dağıtım yok; hedef bedelin ödenmiş kısmını iade edilmiş sayar ([ADR-0020](decisions/0020-refund-ledger-entry.md)) |
+| CANCELLATION (iptal) | Alacak | − | Tek hedef bedel kalemi: bulunan nüshada otomatik (FR-16) ya da bağı koparılmış bedelde yöneticinin gerekçeli iptali (ADR-0041) |
+| REFUND (para iadesi) | Nötr | 0 | Dağıtım yok; hedef bedelin ödenmiş kısmının bir bölümünü geri verilmiş sayar ([ADR-0020](decisions/0020-refund-ledger-entry.md)) |
 
 **Değişmezler.** Servis katmanı bunları işlem içinde korur; her biri için bir test bulunur.
 
@@ -180,8 +185,8 @@ Hareket türlerinin anlamı:
 - I2: Her alacak hareketi için `Σ allocation.amount = credit.amount`. Alacak tümüyle dağıtılır.
 - I3: Her kalem için `paid_or_settled(c) = Σ allocation.amount (charge = c) ≤ c.amount`.
 - I4: `unpaid(c) = c.amount − paid_or_settled(c)`.
-- I5: Bir bedel kalemi için iade toplamı, o kaleme yapılmış ödeme dağıtımlarının toplamını aşamaz. REFUND yalnız `CANCELLATION` almış bir bedel için girilebilir.
-- I6: Hareketler ve dağıtımlar güncellenmez ve silinmez. Düzeltme yeni bir hareketle yapılır.
+- I5: Bir bedel kalemi için para iadesi toplamı, o kaleme yapılmış ödeme (PAYMENT) dağıtımlarının toplamını aşamaz. REFUND yalnız şu bedel için girilebilir: `loan_id` dolu, ödüncü `close_reason = 'LOST'` ile kapanmış ve `loan.copy_found_on` dolu ([ADR-0037](decisions/0037-refund-precondition-found-lost-copy.md)). Bağı koparılmış bedele para iadesi yapılamaz.
+- I6: Hareketler ve dağıtımlar güncellenmez ve silinmez. Düzeltme yeni bir hareketle yapılır. Tek istisna, saklama görevinin `ledger_entry.loan_id` bağını NULL yapmasıdır ([ADR-0018](decisions/0018-retention-archived-loan-counter.md)); tutar, tür ve `member_id` değişmez.
 
 ### 2.6 Bildirim, denetim ve görevler
 
@@ -193,10 +198,11 @@ Hareket türlerinin anlamı:
 | | error | varchar(500) | NULL | |
 | | sent_at | timestamp | NOT NULL | Deneme zamanı |
 | | triggered_by_id | FK staff_user | NULL | MANUAL'da dolu (FR-19) |
-| | | | `UNIQUE(loan_id, kind) WHERE status = 'SENT' AND kind <> 'MANUAL'` | FR-18'deki tekrar engeli (küçük karar 7) |
+| | due_on | date | NOT NULL | Deneme anındaki `loan.due_on`; MANUAL'da da dolu ([ADR-0039](decisions/0039-reminder-per-due-date.md)) |
+| | | | `UNIQUE(loan_id, kind, due_on) WHERE status = 'SENT' AND kind <> 'MANUAL'` | FR-18'deki tekrar engeli, son tarih başına (küçük karar 7, ADR-0039) |
 | audit_event | occurred_at | timestamp | NOT NULL | |
 | | actor_id | FK staff_user | NULL | NULL ise zamanlanmış görevdir |
-| | action | varchar(30) | NOT NULL | Ör. `PAYMENT`, `WAIVER`, `FEE`, `REFUND`, `COPY_LOST`, `COPY_DAMAGED`, `COPY_FOUND`, `SETTINGS_CHANGED`, `CLOSED_DAY_CHANGED`, `STAFF_CHANGED` |
+| | action | varchar(30) | NOT NULL | `PAYMENT`, `WAIVER`, `FEE`, `REFUND`, `COPY_LOST`, `COPY_DAMAGED`, `COPY_FOUND`, `COPY_REPAIRED`, `COPY_WITHDRAWN`, `SETTINGS_CHANGED`, `CLOSED_DAY_CHANGED`, `STAFF_CHANGED` (faz 4 küçük karar 8); `CANCELLATION` ([ADR-0041](decisions/0041-manual-cancellation-unlinked-fee.md)), `MEMBER_REACTIVATED` ([ADR-0042](decisions/0042-member-reactivation.md)). Raftaki nüsha geçişleri aynı kodları kullanır, ayrıntıda `from` bulunur |
 | | target_type, target_id | varchar(30), int | NOT NULL | Tek hedef |
 | | details | JSON (TEXT) | NOT NULL | Tutar, gerekçe, eski ve yeni değerler. Üye ile ödünç aynı anda yazılmaz (küçük karar 10) |
 | job_run | job | varchar(20) | CHECK IN ('BACKUP','ANONYMIZE','REMINDERS','EXPORT') | |
@@ -234,10 +240,10 @@ Bütün tablolar en az 3NF'tir. Anahtar dışındaki her öznitelik yalnız anah
 | kısmi | loan(due_on) WHERE closed_on IS NULL | Geciken listesi (FR-20), hatırlatma adayları (FR-18) | Yalnız açık ödünçler |
 | | loan(closed_on) | Saklama görevi (FR-25) | ~2 MB |
 | | ledger_entry(member_id) | Bakiye ve döküm (FR-08, FR-17) | Yazma başına bir indeks güncellemesi |
-| | ledger_entry(target_entry_id) | Kalemin af, iptal ve iadeleri | İhmal edilir |
+| | ledger_entry(target_entry_id) | Kalemin af, iptal ve para iadeleri | İhmal edilir |
 | | ledger_entry(loan_id) | Ödüncün ceza ve bedeli (FR-16), bağın koparılması | İhmal edilir |
 | | allocation(charge_entry_id) | Kalemin ödenmemiş kısmı (I4) | İhmal edilir |
-| UNIQUE, kısmi | reminder_log(loan_id, kind) WHERE status = 'SENT' AND kind <> 'MANUAL' | Tekrar engeli | İhmal edilir |
+| UNIQUE, kısmi | reminder_log(loan_id, kind, due_on) WHERE status = 'SENT' AND kind <> 'MANUAL' | Tekrar engeli (ADR-0039) | İhmal edilir |
 | | audit_event(occurred_at) | Denetim kaydı listesi | Yılda ~10 bin satır |
 | | job_run(job, run_on) | Son başarılı çalışma (NFR-05) | İhmal edilir |
 
@@ -257,8 +263,10 @@ Arama sütunlarında (`search_key`) indeks yoktur. `LIKE '%…%'` indeks kullana
 | Ödeme (FR-13) | Bakiye hesaplanır, tutar ≤ bakiye kontrol edilir, PAYMENT ve FIFO dağıtımları ile denetim kaydı yazılır | Borçtan fazla ödeme (I1), yarım dağıtım (I2) |
 | Af (FR-14) | Hedef kalemin ödenmemiş kısmı kontrol edilir, WAIVER, dağıtım ve denetim kaydı yazılır | Ödenmemiş kısmı aşan af |
 | Kayıp/hasar (FR-15) | Ödünç kapatılır, nüsha LOST ya da DAMAGED yapılır, FINE (birikmiş ceza) ve FEE ile denetim kaydı yazılır | Yarım kalan işaretleme |
-| Bulundu (FR-16) | Nüsha `ON_SHELF` yapılır, bedelin ödenmemiş kısmı için CANCELLATION ve denetim kaydı yazılır | Ödenmiş kısmın iptali |
-| Anonimleştirme (FR-25) | Kayıt başına bir işlem: üye alanları NULL yapılır, rıza olayları silinir; ödüncün bağı kopar, sayaç artar, defterin ödünç bağı boşalır | Sayaç ile bağ arasında tutarsızlık |
+| Bulundu (FR-16) | Nüsha `ON_SHELF` yapılır. Nüshanın son ödüncü LOST ile kapanmışsa `copy_found_on` yazılır ve bedelin ödenmemiş kısmı için CANCELLATION eklenir. Denetim kaydı yazılır | Ödenmiş kısmın iptali; aynı ödünç için ikinci "bulundu" izi |
+| Para iadesi (FR-16) | I5 ön koşulu (`copy_found_on`) ve iade edilebilir tutar kontrol edilir, REFUND ve denetim kaydı yazılır | Bulunmamış nüsha için ya da ödenenden fazla iade |
+| Elle iptal (FR-16, ADR-0041) | Bedelin bağsız olduğu ve ödenmemiş kısmı kontrol edilir, CANCELLATION (gerekçeli), dağıtım ve denetim kaydı yazılır | Ödüncüne bağlı bedelin elle iptali |
+| Anonimleştirme (FR-25) | Kayıt başına bir işlem: üyenin bakiyesi işlem içinde hesaplanır; 0'dan büyükse üye atlanır (ADR-0045). Değilse üye alanları NULL yapılır, rıza olayları silinir. Ödüncün bağı kopar, sayaç artar, defterin ödünç bağı boşalır | Sayaç ile bağ arasında tutarsızlık; borçlu üyenin anonimleştirilmesi |
 | Hatırlatma (FR-18) | Önce e-posta gönderilir, ardından reminder_log kendi işleminde yazılır. Benzersiz kısıt ihlali, gönderilmiş sayılır | SMTP çağrısı sırasında veritabanı kilidi tutulmaz. Gönderimden sonra çökme olursa nadiren tek bir tekrar olabilir; kabul edilen risk, mimari bölüm 10 |
 
 ## 6. Kritik sorgular
@@ -272,9 +280,9 @@ n_l = 100.000 ödünç, n_c = 20.000 nüsha, n_m = 5.000 üye, e_m = bir üyenin
 | S3 | Bakiye | `SELECT SUM(CASE WHEN kind IN ('FINE','FEE') THEN amount_kurus WHEN kind IN ('PAYMENT','WAIVER','CANCELLATION') THEN -amount_kurus ELSE 0 END) FROM ledger_entry WHERE member_id = ?` | ledger_entry(member_id) | O(log N + e_m) |
 | S4 | Kalemlerin ödenmemiş kısmı (FIFO için) | `SELECT c.id, c.amount_kurus - COALESCE(SUM(a.amount_kurus),0) FROM ledger_entry c LEFT JOIN allocation a ON a.charge_entry_id = c.id WHERE c.member_id = ? AND c.kind IN ('FINE','FEE') GROUP BY c.id HAVING … > 0 ORDER BY c.created_at, c.id` | member_id ve charge_entry_id indeksleri | O(e_m log e_m) |
 | S5 | Geciken listesi (FR-20) | `SELECT … FROM loan JOIN copy JOIN book LEFT JOIN member WHERE closed_on IS NULL AND due_on < :today ORDER BY due_on` | Kısmi due_on indeksi; birleştirmeler PK ile | O(o log n), o = gecikmiş sayısı |
-| S6 | Hatırlatma adayları (FR-18) | Açık ödünçler, `due_on BETWEEN :today AND :today+2` (DUE_SOON) ya da `due_on BETWEEN :today-7 AND :today-1` (OVERDUE_1). Üye aktif, rızalı ve e-postalı olmalı; `NOT EXISTS reminder_log (SENT)` | Kısmi due_on aralık taraması | O(log n_l + a) |
+| S6 | Hatırlatma adayları (FR-18) | Açık ödünçler, `due_on BETWEEN :today AND :today+2` (DUE_SOON) ya da `due_on BETWEEN :today-7 AND :today-1` (OVERDUE_1). Üye aktif, rızalı ve e-postalı olmalı; `NOT EXISTS reminder_log (SENT, aynı kind, due_on = loan.due_on)` | Kısmi due_on aralık taraması | O(log n_l + a) |
 | S7 | Arama (FR-01, FR-04) | `… WHERE search_key LIKE '%' \|\| :q \|\| '%' LIMIT 50` | Tam tarama | O(n·L); 20 bin kitapta birkaç ms |
-| S8 | Saklama görevi (FR-25) | `loan WHERE closed_on < :cutoff AND member_id IS NOT NULL`; `member WHERE deactivated_on < :cutoff AND anonymized_at IS NULL` | loan(closed_on); member tam tarama (5 bin satır) | O(log n_l + r) |
+| S8 | Saklama görevi (FR-25) | `loan WHERE closed_on < :cutoff AND member_id IS NOT NULL`; `member WHERE deactivated_on < :cutoff AND anonymized_at IS NULL` | loan(closed_on); member tam tarama (5 bin satır); aday üye başına S3 (ADR-0045) | O(log n_l + r + r_m·(log N + e_m)), r_m = süresi dolan üye sayısı |
 
 Ödünç verme isteği S1, S2, S3 ve iki yazma işleminden oluşur. Tasarım ölçeğinde veritabanı süresi 10 ms'nin altında beklenir. NFR-01'deki p95 < 500 ms hedefi faz 6'da tasarım ölçeğinde tohum veriyle ölçülecek. Gerçek planlar o zaman `EXPLAIN QUERY PLAN` ile doğrulanacak.
 

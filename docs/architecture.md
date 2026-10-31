@@ -78,6 +78,7 @@ flowchart TD
   operations[operations]
   administration --> accounts
   members --> administration
+  members --> catalog
   catalog --> administration
   billing --> members
   billing --> administration
@@ -90,27 +91,32 @@ flowchart TD
   operations --> circulation
   operations --> members
   operations --> administration
+  operations --> billing
+  notifications --> administration
 ```
 
-Oklar "kullanır" anlamına gelir; döngü yoktur. `billing.LedgerEntry → circulation.Loan` yabancı anahtarı tembel bir string referansıdır (`"circulation.Loan"`) ve import oluşturmaz. Bütün app'ler yetki için `accounts`'u kullanır; diyagramda yalnız bir ok çizildi.
+Oklar "kullanır" anlamına gelir; döngü yoktur. `billing.LedgerEntry → circulation.Loan` yabancı anahtarı tembel bir string referansıdır (`"circulation.Loan"`) ve import oluşturmaz. Bütün app'ler yetki için `accounts`'u kullanır; diyagramda yalnız bir ok çizildi. `accounts.services` denetim kaydı için yalnız `administration.audit` modülünü import eder; `administration` ise `accounts`'tan yalnız `permissions` modülünü kullanır ve kullanıcı modeline `AUTH_USER_MODEL` string referansıyla bağlanır. Bu yüzden modül düzeyinde import döngüsü oluşmaz. Etiket ve kart PDF'leri app olmayan `pdf/` paketini kullanır (faz 4 küçük karar 5). `members → catalog` oku yalnız `catalog.domain.normalize_tr` içindir (KL-2).
+
+**View'lar yapraktır (KL-22):** Oklar `domain`, `services` ve `models` modülleri içindir. `views` modülleri herhangi bir app'in servisini import edebilir, ama hiçbir modül bir `views` modülünü import etmez. Bu yüzden üye ayrıntısı gibi birden çok app'e dokunan ekranlar döngü oluşturmaz.
 
 | Bileşen | Sorumluluk | Sunduğu arayüz (servis / domain) | Kullandığı arayüzler |
 |---|---|---|---|
-| accounts | Personel hesapları, roller, giriş ve çıkış, oturum süresi, hesap kilidi ([ADR-0009](decisions/0009-lockout-django-axes.md)) | `require_role(Role)`; `create_staff`, `set_role`, `deactivate_staff`, `reset_password` (yönetici) | django-axes, administration.audit |
-| administration | Ayarlar, kapalı günler, denetim kaydı, yönetici ana sayfası (dışa aktarma uyarısı) | `get_settings()`, `update_settings(actor, …)`; `closed_day_predicate() -> Callable[[date], bool]`; `record_audit(actor, action, target, details)` | accounts |
-| members | Üye kaydı, arama, pasifleştirme, rıza, üye kartı PDF'i | `create_member`, `update_member`, `deactivate_member(actor, m, confirm_debt)`, `set_consent(actor, m, given, on)`, `search_members(q)`, `member_card_pdf(ids)` | administration, PDF yardımcısı |
+| accounts | Personel hesapları, roller, giriş ve çıkış, oturum süresi, hesap kilidi ([ADR-0009](decisions/0009-lockout-django-axes.md)) | `require_role(Role)`; `create_staff`, `set_role`, `deactivate_staff`, `reset_password` (yönetici); kendi parolasını değiştirme ekranı ve `ForcePasswordChangeMiddleware` ([ADR-0043](decisions/0043-staff-password-change.md)) | django-axes, administration.audit |
+| administration | Ayarlar, kapalı günler, denetim kaydı, görev kaydı (`job_run`, KL-1), yönetici ana sayfası (dışa aktarma ve yedek uyarısı) | `get_settings()`, `update_settings(actor, …)`; `closed_day_predicate() -> Callable[[date], bool]`; `closed_dates() -> frozenset[date]` ([ADR-0040](decisions/0040-late-days-skip-closed-dates.md)); `record_audit(actor, action, target, details)`; domain: `backup_warning(...)` ([ADR-0044](decisions/0044-backup-warning-home.md)); `jobs.run_job(job, run_on, fn)`, `last_success(job)`, `last_finished(job)`, `last_success_at(job)` (KL-1, KL-33) | accounts |
+| members | Üye kaydı, arama, pasifleştirme, yeniden aktifleştirme, rıza, üye kartı PDF'i | `create_member`, `update_member`, `set_inactive` (pasifleştirme kuralı `circulation.services.deactivate_member`'da, KL-22), `reactivate_member(actor, m)` ([ADR-0042](decisions/0042-member-reactivation.md)), `set_consent(actor, m, given, on)` ([ADR-0047](decisions/0047-consent-event-ordering.md)), `search_members(q)`, `member_card_pdf(member_nos)` ([ADR-0036](decisions/0036-label-card-selection-range-checkbox.md)) | administration, catalog.domain (KL-2), PDF yardımcısı |
 | catalog | Kitap ve nüsha kaydı, ISBN doğrulama, arama, etiket PDF'i | domain: `parse_isbn(raw) -> IsbnOk \| IsbnSuggest \| IsbnInvalid` ([ADR-0008](decisions/0008-isbn-correction-suggestion.md)), `normalize_tr(s)` ([ADR-0019](decisions/0019-search-normalization.md)); servis: `create_book`, `add_copies(book, n)`, `find_copy(barcode)`, `search_books(q)`, `label_pdf(copy_ids)` | administration |
-| billing | Borç defteri, ödeme, af, iptal, iade, döküm | domain: `allocate_fifo(open_charges, amount)`, `balance(entries)`; servis: `post_charge`, `record_payment`, `waive`, `cancel_unpaid`, `refund`, `member_balance`, `statement` ([ADR-0017](decisions/0017-payment-fifo-allocation.md), [ADR-0020](decisions/0020-refund-ledger-entry.md), [ADR-0021](decisions/0021-waiver-targeted.md)) | members, administration |
-| circulation | Ödünç, iade, uzatma, kayıp, hasar, bulundu, onarıldı, kayıttan düşme, geciken listesi | domain: `due_date(loaned_on, period, is_closed)`, `late_days(due_on, on)`, `fine(late_days, rate, cap)` ([ADR-0023](decisions/0023-fine-rate-snapshot.md)), `checkout_blockers(state)`, `renew_blockers(state)`; servis: `check_out`, `check_in`, `renew`, `mark_lost`, `mark_damaged`, `mark_found`, `repair`, `withdraw`, `overdue_loans(today)` | catalog, members, billing, administration |
-| notifications | Otomatik ve elle hatırlatma, şablonlar | domain: `due_reminder_kind(due_on, today) -> DUE_SOON \| OVERDUE_1 \| None`; servis: `send_due_reminders(today)`, `send_manual_reminders(actor, loan_ids)` | circulation, members, Django e-posta |
-| operations | Yedek, şifreli dışa aktarma ve geri yükleme, anonimleştirme, zamanlayıcı, tohum veri | `backup_db(today)`, `export_backup(passphrase)`, `restore_backup(path, passphrase)`, `anonymize_expired(today)`, `start_scheduler()`, `catch_up(today)` ([ADR-0018](decisions/0018-retention-archived-loan-counter.md)) | circulation, members, administration, cryptography |
+| billing | Borç defteri, ödeme, af, iptal, para iadesi, döküm | domain: `allocate_fifo(open_charges, amount)`, `balance(entries)`; servis: `post_charge`, `record_payment`, `waive`, `cancel_unpaid`, `cancel_fee_manual` ([ADR-0041](decisions/0041-manual-cancellation-unlinked-fee.md)), `refund` ([ADR-0037](decisions/0037-refund-precondition-found-lost-copy.md)), `member_balance`, `statement` ([ADR-0017](decisions/0017-payment-fifo-allocation.md), [ADR-0020](decisions/0020-refund-ledger-entry.md), [ADR-0021](decisions/0021-waiver-targeted.md)) | members, administration |
+| circulation | Ödünç, iade, uzatma, kayıp, hasar, bulundu, onarıldı, kayıttan düşme, geciken listesi | domain: `due_date(start, period_days, is_closed)` ([ADR-0028](decisions/0028-open-weekday-rule-shift-bound.md)), `late_days(due_on, on, closed_dates)` ([ADR-0040](decisions/0040-late-days-skip-closed-dates.md)), `fine(late_days, daily_kurus, cap_kurus)` ([ADR-0023](decisions/0023-fine-rate-snapshot.md)), `classify_member_input(raw)` ([ADR-0046](decisions/0046-checkout-member-input-classification.md)), `checkout_blockers(state)`, `renew_blockers(state)`, `check_transition(from, to)`; servis: `check_out`, `check_in`, `renew`, `deactivate_member`, `mark_lost`, `mark_damaged`, `mark_shelf_copy` ([ADR-0026](decisions/0026-shelf-copy-status-marking.md)), `mark_found`, `repair`, `withdraw`, `overdue_loans(today)`. Tam imzalar plan §4'te (G10–G12) | catalog, members, billing, administration |
+| notifications | Otomatik ve elle hatırlatma, şablonlar, geciken listesi ekranı | domain: `due_reminder_kind(due_on, today) -> DUE_SOON \| OVERDUE_1 \| None`; servis: `send_due_reminders(today)`, `send_manual_reminders(actor, loan_ids)` | circulation, members, administration, Django e-posta |
+| operations | Yedek, şifreli dışa aktarma ve geri yükleme, anonimleştirme, zamanlayıcı, tohum veri | `backup_db(today)`, `export_backup(passphrase)`, `restore_backup(path, passphrase)`, `anonymize_expired(today)` (borçlu üye ertelenir, [ADR-0045](decisions/0045-anonymization-deferred-for-debt.md)), `start_scheduler()`, `catch_up(today)` ([ADR-0018](decisions/0018-retention-archived-loan-counter.md)) | circulation, members, administration, cryptography |
 
 **Domain fonksiyonlarının karmaşıklığı:**
 
 | Fonksiyon | Zaman | Alan | Not |
 |---|---|---|---|
-| `due_date` | O(k) | O(1) | k = aday tarihten sonraki ardışık kapalı gün sayısı. Kapalı tarihler küme olarak verildiği için her kontrol O(1). Ayarlar en az bir haftalık açık günü zorunlu kılar, bu yüzden k ≤ 7 + (ardışık tek tarihli kapalı gün sayısı) ile sınırlıdır ve döngü sonlanır. |
-| `fine`, `late_days` | O(1) | O(1) | |
+| `due_date` | O(k), en kötü O(366) | O(1) | k = aday tarihten sonraki ardışık kapalı gün sayısı. Kapalı tarihler küme olarak verildiği için her kontrol O(1). Ayarlar en az bir haftalık açık günü zorunlu kılar (FR-24), bu yüzden tipik olarak k ≤ 7 + (ardışık tek tarihli kapalı gün sayısı). Her durumda en fazla 366 gün ileri bakılır; açık gün yoksa `NoOpenDayError` ([ADR-0028](decisions/0028-open-weekday-rule-shift-bound.md)). |
+| `fine` | O(1) | O(1) | |
+| `late_days` | O(c) | O(1) | c = kapalı tarih sayısı (yılda onlarca); aralıktaki tek tek kapalı tarihler sayılıp takvim günü farkından düşülür ([ADR-0040](decisions/0040-late-days-skip-closed-dates.md)) |
 | `checkout_blockers` | O(1) | O(1) | Sayımlar ve bakiye girdi olarak gelir |
 | `allocate_fifo` | O(k) | O(k) | k = açık kalem sayısı; girdi zaten sıralı gelir (S4) |
 | `parse_isbn` | O(1) | O(1) | En fazla 13 hane |
@@ -211,7 +217,7 @@ stateDiagram-v2
   ON_SHELF --> DAMAGED: hasarlı, bedelsiz (yönetici, FR-39)
   ON_SHELF --> WITHDRAWN: kayıttan düş (yönetici, FR-39)
   LOST --> WITHDRAWN: kayıttan düş (yönetici, FR-39)
-  LOST --> ON_SHELF: bulundu (personel), varsa ödenmemiş bedel iptal
+  LOST --> ON_SHELF: bulundu (personel), varsa copy_found_on ve ödenmemiş bedel iptali
   DAMAGED --> ON_SHELF: onarıldı (yönetici)
   DAMAGED --> WITHDRAWN: kayıttan düş (yönetici)
   WITHDRAWN --> [*]
@@ -232,18 +238,18 @@ Bu diyagram dışındaki her geçiş servis katmanında `InvalidTransition` hata
 - Durum değiştiren her istek POST'tur ve CSRF jetonu taşır.
 - Yönetici işlemleri görevli oturumuyla 403 döndürür. NFR-07 testi, yönetici URL'lerinin listesini URL çözücüden alır ve her biri için 403 bekler.
 - Üretimde `/admin/` 404 döndürür ([ADR-0024](decisions/0024-no-django-admin-in-production.md)).
-- URL'ler Türkçe kısa yollar kullanır; tam liste faz 4 planında.
+- URL'ler Türkçe kısa yollar kullanır; tam liste plan §4.1'de.
 
 ### 6.2 Management command'lar (küçük karar 11)
 
 | Komut | Girdi | Çıktı | Çıkış kodu |
 |---|---|---|---|
 | `send_reminders [--date YYYY-MM-DD]` | Varsayılan tarih bugün | Gönderilen, başarısız ve atlanan sayıları | 0 başarı; 1 en az bir FAILED varsa |
-| `anonymize_expired [--date …]` | | Anonimleştirilen üye ve bağı koparılan ödünç sayıları | 0 / 1 |
+| `anonymize_expired [--date …]` | | Anonimleştirilen üye, bağı koparılan ödünç ve borç nedeniyle ertelenen üye sayıları ([ADR-0045](decisions/0045-anonymization-deferred-for-debt.md)) | 0 / 1 |
 | `backup_db [--date …]` | `LIBRARY_BACKUP_DIR` | `library-YYYYMMDD.sqlite3`; 30 günden eski dosyalar silinir | 0 / 1 |
 | `export_backup [--passphrase-file PATH]` | Son günlük yedek; varsayılan parola dosyası `LIBRARY_EXPORT_PASSPHRASE_FILE` | `LIBRARY_EXPORT_DIR/library-export-YYYYMMDD.libx` | 0 / 1 |
 | `restore_backup PATH [--passphrase-file PATH] --yes` | `.sqlite3` ya da `.libx` dosyası | Veritabanını değiştirir. Uygulama durdurulmuş olmalıdır; kilit varsa reddeder | 0 / 1; 2 kullanım hatası |
-| `load_seed_data [--books N] [--members N]` | Boş veritabanı | Tohum veri (FR-29) | 0 / 1 |
+| `load_seed_data --profile demo\|load --actor <kullanıcı adı> [--seed 42]` | Boş veritabanı ve aktif bir personel hesabı ([ADR-0038](decisions/0038-seed-data-actor-argument.md)) | Tohum veri (FR-29; profiller faz 4 küçük karar 12) | 0 / 1; 2 kullanım hatası |
 
 Komutlar idempotenttir. Aynı gün ikinci kez çalıştırılan `send_reminders` yeni e-posta göndermez (AC-18).
 
@@ -332,12 +338,14 @@ flowchart TB
 | [0017](decisions/0017-payment-fifo-allocation.md) | Ödeme FIFO dağıtımı |
 | [0018](decisions/0018-retention-archived-loan-counter.md) | Bağ koparma ve arşiv sayacı |
 | [0019](decisions/0019-search-normalization.md) | Türkçe harf düşürme ve diakritik katlama |
-| [0020](decisions/0020-refund-ledger-entry.md) | Bakiye-nötr iade hareketi |
+| [0020](decisions/0020-refund-ledger-entry.md) | Bakiye-nötr para iadesi hareketi |
 | [0021](decisions/0021-waiver-targeted.md) | Kaleme yönelik af |
 | [0022](decisions/0022-consent-event-history.md) | Rıza olay geçmişi |
 | [0023](decisions/0023-fine-rate-snapshot.md) | Ödünç anındaki ceza oranı |
 | [0024](decisions/0024-no-django-admin-in-production.md) | Üretimde admin paneli yok |
 | [0025](decisions/0025-member-card-pdf.md) | Üye kartı PDF'i (FR-38) |
+| [0026](decisions/0026-shelf-copy-status-marking.md)–[0047](decisions/0047-consent-event-ordering.md) | Faz 4 kararları; özet plan §3'te |
+| [0048](decisions/0048-cloud-sessions-implementation.md) | Uygulama aşaması bulut oturumlarıyla, özel GitHub reposundan (süreç kararı) |
 
 ## 10. Riskler ve teknik borç
 
@@ -346,7 +354,4 @@ flowchart TB
 - **Sunucu saati:** Bütün tarih kuralları sunucu saatine bağlı. NTP eşitlemesi kurulum adımıdır.
 - **SQLite dosyasının yeri:** Ağ paylaşımında tutulursa WAL bozulabilir. Kurulum belgesi yerel diski şart koşar.
 - **İnsan adımları:** USB rotasyonu (R-04) ve yeni personel bilgisayarına CA yüklenmesi personele bağlı. Uyarı ve belgeyle azaltılır.
-- **Açık sorular (faz 4'te kullanıcıya):**
-  - Raftaki bir nüshanın hasarlı, kayıp ya da kayıttan düşmüş işaretlenmesi SRS'te yok (bölüm 5.1).
-  - FR-26'nın işlem listesine "iade" (REFUND) eklenmesi gerekiyor (ADR-0020).
-  - Demo veri boyutu ve temizlik ölçütü (R-06).
+- **Faz 3'ten devreden açık sorular:** Faz 4'te kapandı. Raftaki nüsha [ADR-0026](decisions/0026-shelf-copy-status-marking.md) ile, para iadesinin denetim kaydı [ADR-0027](decisions/0027-refund-audit-term.md) ile, demo verisi [ADR-0033](decisions/0033-demo-books-one-time-fetch.md) ile karara bağlandı.
