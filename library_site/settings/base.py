@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "axes",
     "accounts",
     "administration",
+    "catalog",
 ]
 
 AUTH_USER_MODEL = "accounts.StaffUser"

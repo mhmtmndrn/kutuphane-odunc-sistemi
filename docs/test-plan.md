@@ -120,16 +120,16 @@ Sütunlar: Görev, TC'nin yazıldığı görev (plan §4); Seviye, §2'deki sat�
 | TC-31 | NFR-07, FR-22 | G04 | view | Denklik sınıfı | URL çözücüden alınan, yönetici işaretli her view'a görevli oturumuyla GET ve POST | Her istek 403 alır; veri değişmez | Geçti |
 | TC-32 | NFR-07 | G04 | view | Hata tahmini | TC-31'in bulduğu yönetici URL desenleri, testte sabit yazılmış beklenen kümeyle karşılaştırılır. Kümede plan §4.1'deki 19 yönetici yolunun hepsi var, sonraki görevlerin ekleyecekleri de: personel (6), ayarlar, kapalı günler (3), denetim, saklama listesi, kayıp, hasarlı, onarıldı, kayıttan düşme, af, para iadesi, elle iptal | `Role.ADMIN` ile korunan yollar = beklenen küme ∩ var olan yollar (sonradan ADMIN korumasız eklenen yönetici yolu testi düşürür); bulundu, aktifleştir ve `/parola/` kümede yok ve var olduklarında görevli rolüyle korunur | Geçti |
 | TC-33 | NFR-07 | G04 | view | Denklik sınıfı | TC-31'deki view'lara yönetici oturumuyla GET | Hiçbiri 403 dönmez | Geçti |
-| TC-34 | NFR-10 (ADR-0019) | G05 | birim | Denklik sınıfı | `normalize_tr`: "istanbul", "İstanbul", "İSTANBUL", "ISTANBUL" | Dördü de "istanbul" | Planlandı |
-| TC-35 | FR-01, FR-04 (ADR-0019) | G05 | birim | Denklik sınıfı | "Şefiller", "IŞIK ÇĞÖÜ", "Hâlâ", "Ayşe   Yılmaz", "" | "sefiller", "isik cgou", "hala", "ayse yilmaz", "" | Planlandı |
-| TC-36 | NFR-10 | G05 | birim | Metamorfik ilişki | Türkçe örnek metin kümesindeki her s | `normalize_tr(normalize_tr(s)) == normalize_tr(s)`; `normalize_tr(s.upper()) == normalize_tr(s.lower()) == normalize_tr(s)` | Planlandı |
-| TC-37 | FR-04 (ADR-0008) | G05 | birim | Denklik sınıfı | `parse_isbn`: "9786053609322", "978-605-360-932-2", "978 605 360 932 2" | Üçü de `IsbnOk("9786053609322")` | Planlandı |
-| TC-38 | FR-04 | G05 | birim | Denklik sınıfı | Geçerli ISBN-10: "0306406152", "080442957X" | `IsbnOk("9780306406157")`, `IsbnOk("9780804429573")` | Planlandı |
-| TC-39 | FR-04, AC-04 | G05 | birim | Denklik sınıfı | "6053609322" (ISBN-10 kontrol hanesi tutmuyor; "978" önekli hali geçerli) | `IsbnSuggest("9786053609322")` | Planlandı |
-| TC-40 | FR-04 | G05 | birim | Denklik sınıfı | "6053609321" (ISBN-10 olarak da "978" önekiyle de geçersiz) | `IsbnInvalid`; öneri yok | Planlandı |
-| TC-41 | FR-04 | G05 | birim | Denklik sınıfı | "9786053609321" (13 hane, kontrol hanesi yanlış) | `IsbnInvalid` | Planlandı |
-| TC-42 | FR-04 | G05 | birim | Sınır değer | 9, 11, 12 ve 14 haneli girişler | Hepsi `IsbnInvalid` | Planlandı |
-| TC-43 | FR-04 | G05 | birim | Hata tahmini | "978605360932X", "97860536O9322" (O harfi), "X053609322" | Hepsi `IsbnInvalid` | Planlandı |
+| TC-34 | NFR-10 (ADR-0019) | G05 | birim | Denklik sınıfı | `normalize_tr`: "istanbul", "İstanbul", "İSTANBUL", "ISTANBUL" | Dördü de "istanbul" | Geçti |
+| TC-35 | FR-01, FR-04 (ADR-0019) | G05 | birim | Denklik sınıfı | "Şefiller", "IŞIK ÇĞÖÜ", "Hâlâ", "Ayşe   Yılmaz", "" | "sefiller", "isik cgou", "hala", "ayse yilmaz", "" | Geçti |
+| TC-36 | NFR-10 | G05 | birim | Metamorfik ilişki | Türkçe örnek metin kümesindeki her s | `normalize_tr(normalize_tr(s)) == normalize_tr(s)`; `normalize_tr(s.upper()) == normalize_tr(s.lower()) == normalize_tr(s)` | Geçti |
+| TC-37 | FR-04 (ADR-0008) | G05 | birim | Denklik sınıfı | `parse_isbn`: "9786053609322", "978-605-360-932-2", "978 605 360 932 2" | Üçü de `IsbnOk("9786053609322")` | Geçti |
+| TC-38 | FR-04 | G05 | birim | Denklik sınıfı | Geçerli ISBN-10: "0306406152", "080442957X" | `IsbnOk("9780306406157")`, `IsbnOk("9780804429573")` | Geçti |
+| TC-39 | FR-04, AC-04 | G05 | birim | Denklik sınıfı | "6053609322" (ISBN-10 kontrol hanesi tutmuyor; "978" önekli hali geçerli) | `IsbnSuggest("9786053609322")` | Geçti |
+| TC-40 | FR-04 | G05 | birim | Denklik sınıfı | "6053609321" (ISBN-10 olarak da "978" önekiyle de geçersiz) | `IsbnInvalid`; öneri yok | Geçti |
+| TC-41 | FR-04 | G05 | birim | Denklik sınıfı | "9786053609321" (13 hane, kontrol hanesi yanlış) | `IsbnInvalid` | Geçti |
+| TC-42 | FR-04 | G05 | birim | Sınır değer | 9, 11, 12 ve 14 haneli girişler | Hepsi `IsbnInvalid` | Geçti |
+| TC-43 | FR-04 | G05 | birim | Hata tahmini | "978605360932X", "97860536O9322" (O harfi), "X053609322" | Hepsi `IsbnInvalid` | Geçti |
 | TC-44 | FR-01, AC-01 | G06 | servis | Denklik sınıfı | "Ayşe Yılmaz", "0555 111 22 33", e-posta yok | Benzersiz `member_no`; `phone_digits` "05551112233"; `search_key` "ayse yilmaz" | Planlandı |
 | TC-45 | FR-01 (küçük karar 2) | G06 | servis | Sınır değer | Art arda iki üye kaydı | İkinci üyenin `member_no`'su birincininkinden 1 fazla | Planlandı |
 | TC-46 | FR-01 | G06 | servis | Denklik sınıfı | Ad soyad boş; telefon boş (ayrı testler) | Her biri reddedilir; üye oluşmaz | Planlandı |
@@ -339,7 +339,7 @@ Sütunlar: Görev, TC'nin yazıldığı görev (plan §4); Seviye, §2'deki sat�
 | TC-250 | FR-41 (ADR-0043) | G04 | servis | Denklik sınıfı | `create_staff`, `reset_password`, `createsuperuser` ile hesaplar; bayrağı True oturumla `/parola/`, POST `/cikis/`, `STATIC_URL` altındaki bir yol | `must_change_password` sırasıyla True, True, False; muaf üç yol yönlendirilmez | Geçti |
 | TC-251 | FR-41 (KL-9, KL-32) | G04 | view | Sınır değer (iki değerli) | Bayrağı True görevli `/parola/`'da 9 ve 10 karakterli yeni parola girer | 9: hata, bayrak True kalır; 10: kabul, bayrak False | Geçti |
 | TC-252 | FR-21 (KL-8) | G04 | servis | Karar tablosu | Tek aktif yönetici kendini görevliye çevirir; iki aktif yöneticiden A, B'yi görevliye çevirir; yönetici kendini pasifleştirir | İlki "En az bir aktif yönetici kalmalı"; ikincisi kabul; üçüncüsü "Kendi hesabınızı pasifleştiremezsiniz"; reddedilenlerde değişiklik ve denetim kaydı yok | Geçti |
-| TC-253 | FR-04 (KL-40) | G05 | birim | Denklik sınıfı | `parse_isbn("080442957x")` | `IsbnOk("9780804429573")` | Planlandı |
+| TC-253 | FR-04 (KL-40) | G05 | birim | Denklik sınıfı | `parse_isbn("080442957x")` | `IsbnOk("9780804429573")` | Geçti |
 | TC-254 | FR-03, AC-03 (ADR-0047) | G06 | servis | Senaryo | Rızalı ve e-postalı üye; bugün 2026-11-10; görevli `update_member(email=None)` | Aynı işlemde `effective_on` 2026-11-10, `recorded_by` görevli olan WITHDRAWN olayı; `has_email_consent` False | Planlandı |
 | TC-255 | FR-03, AC-03 (ADR-0047, KL-12) | G06 | servis | Sınır değer (iki değerli) | Bugün 2026-11-01; rıza `on` = 2026-11-05, 2026-11-02 ve 2026-11-01 | 11-05 ve 11-02 "Rıza tarihi gelecekte olamaz" ile reddedilir, olay yazılmaz; 11-01 kabul edilir | Planlandı |
 | TC-256 | FR-03 (ADR-0047, KL-36) | G06 | servis | Durum geçişi | Rızalı üyeye GIVEN; olayı olmayan üyeye WITHDRAWN | "Üyenin rızası zaten var"; "Üyenin rızası zaten yok"; olay ve denetim kaydı yazılmaz | Planlandı |

@@ -478,7 +478,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - `isbn10_to_13(isbn10: str) -> str`
 - **Testler:** TC-34…TC-43, TC-253 (11 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest catalog/tests/test_domain.py -q` → hepsi geçer.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, bulut oturumu, Linux, Python 3.11.18): `python -m pytest catalog/tests/test_domain.py -q` → 48 passed; `python -m pytest -q` → 267 passed; `coverage report --include="*/domain.py" --fail-under=90` → %100 (dal; `catalog/domain.py` %100); `makemigrations --check --dry-run` → "No changes detected".
 
 ### Görev G06: Üyeler
 
@@ -1122,3 +1123,9 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
 - **2026-11-01, kullanıcı kararı — grup başına bir bulut oturumu:** Her görev grubu kendi bulut oturumunda yapılır; grup bitince oturum PR açar ve durur. Sonraki grup yeni bir oturumda ve yeni bir açılış istemiyle başlar (KL-38'deki "grup başına bir oturum" kuralının açık hali).
 - **2026-11-01, kullanıcı kararı — bulut oturumunda kritik soru:** Bulut oturumunda kritik bir açık nokta çıkarsa oturum durup raporlamak yerine soruyu oturumun içinde kullanıcıya sorar ve cevabı bekler; cevap ADR ya da §11 maddesi olarak kaydedilir (ADR-0048'deki "soru soramaz" varsayımının yerine).
 - **2026-11-01, kullanıcı kararı — planın vermediği kullanıcıya görünen metinler:** Plan, SRS, KL ya da ADR'nin vermediği etiket, başlık, düğme ve mesaj metinlerini uygulayıcı mevcut şablonların üslubuyla seçer, §11'de metin ve dosyasıyla listeler; metinler G02–G04'teki D2 gibi PR'da onaylanır. Uygulayıcı bu metinler için durmaz.
+- **2026-10-31, G05 — uygulama ayrıntıları (bulut oturumu):**
+  - `catalog` app'i G05'te `INSTALLED_APPS`'e eklendi (`library_site/settings/base.py`). G05'in dosya listesinde `base.py` yok, ama `catalog/apps.py` bu görevde oluşuyor; model G07'de gelir ve app'in o zaman ayrıca eklenmesi gerekmez.
+  - `normalize_tr`'nin 4. adımı (`" ".join(text.split())`) boşlukları teke indirirken baştaki ve sondaki boşluğu da atar. Gerekçe: " ayşe" gibi bir arama terimi `search_key LIKE %…%` ile baştaki boşluk yüzünden eşleşmeyi kaçırmasın.
+  - `parse_isbn` tireleri ve bütün boşluk karakterlerini (sekme dahil) atar, sonra büyük harfe çevirir (KL-40'taki küçük "x" böyle kabul edilir). Yalnız ASCII rakamlar kabul edilir; Python'un `isdigit()`'inin kabul ettiği başka rakamlar (ör. Arapça-Hint rakamları) reddedilir.
+  - `IsbnInvalid.reason` seçimi: biçim hataları (10 ya da 13 karakter değil, ISBN-10'un son hanesi dışında harf, ISBN-13'te "X", boş giriş) "ISBN 10 ya da 13 haneli olmalı"; kontrol hanesi tutmayan 10 ya da 13 haneli giriş "ISBN kontrol hanesi hatalı" verir (TC-40…TC-43). Son hanesi "X" olan ve kontrol hanesi tutmayan ISBN-10'a öneri verilmez, çünkü "978" + "…X" bir ISBN-13 değildir.
+  - `isbn10_to_13` ISBN-10 kontrol hanesini doğrulamaz (ilk dokuz haneyi alır ve ISBN-13 kontrol hanesini yeniden hesaplar); biçimi bozuk girişte `ValueError` fırlatır. Doğrulama `parse_isbn`'in işidir.
