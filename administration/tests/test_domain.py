@@ -14,7 +14,12 @@ from django.utils import timezone
 
 from administration import clock
 from administration.audit import AuditAction
-from administration.domain import backup_warning, export_age_warning, validate_weekly_closed
+from administration.domain import (
+    backup_warning,
+    export_age_warning,
+    validate_settings,
+    validate_weekly_closed,
+)
 from administration.errors import RuleViolation
 from administration.money import format_tl, parse_tl
 
@@ -172,6 +177,13 @@ def test_validate_weekly_closed_rejects_all_seven_days() -> None:
 def test_validate_weekly_closed_rejects_out_of_range(days: set[int]) -> None:
     with pytest.raises(ValueError):
         validate_weekly_closed(days)
+
+
+@pytest.mark.parametrize("name", ["", " ", "   \t "])
+def test_validate_settings_rejects_empty_or_blank_library_name(name: str) -> None:
+    with pytest.raises(RuleViolation) as excinfo:
+        validate_settings({"library_name": name})
+    assert excinfo.value.message == "Kütüphane adı 1 ile 80 karakter arasında olmalı"
 
 
 def test_rule_violation_carries_message() -> None:

@@ -34,7 +34,12 @@ def validate_settings(values: Mapping[str, object]) -> None:
         raise TypeError(f"Unknown settings: {sorted(unknown)}")
     for name, value in values.items():
         if name == "library_name":
-            if not isinstance(value, str) or not 1 <= len(value) <= LIBRARY_NAME_MAX:
+            # A whitespace-only name counts as empty.
+            if (
+                not isinstance(value, str)
+                or not value.strip()
+                or len(value) > LIBRARY_NAME_MAX
+            ):
                 raise RuleViolation(LIBRARY_NAME_MESSAGE)
             continue
         low, high, message = SETTING_BOUNDS[name]
