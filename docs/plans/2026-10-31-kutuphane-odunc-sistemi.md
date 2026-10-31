@@ -379,7 +379,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - `pyproject.toml`: `[tool.pytest.ini_options]` altında `DJANGO_SETTINGS_MODULE = "library_site.settings.test"`, `markers = ["slow: PDF ve barkod çözme testleri"]`. `[tool.coverage.run]` altında `branch = true`, `omit = ["*/migrations/*", "*/tests/*"]`.
 - **Testler:** TC-01…TC-03, TC-224, TC-235…TC-236 (6 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest tests/test_prod_settings.py -q` → hepsi geçer. `python manage.py check --deploy --settings=library_site.settings.prod` (gerekli ortam değişkenleri geçici değerlerle verilir) → "System check identified no issues (2 silenced)."
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, yerel Windows 11, Python 3.11.9): `python -m pytest tests/test_prod_settings.py -q` → 19 passed; `python manage.py check --deploy --settings=library_site.settings.prod` (geçici ortam değişkenleriyle) → "System check identified no issues (2 silenced)."; `python -m pytest -q` → 19 passed; TC-224: `coverage report --include="*/domain.py" --fail-under=90` → "No data to report." (henüz `domain.py` yok; G03'ten itibaren ölçülür).
 
 ### Görev G02: Personel modeli, giriş, oturum, kilit ve rol denetimi
 
@@ -962,3 +963,8 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
 ## 11. Sapmalar
 
 - **2026-10-31, commit bölümü:** Faz 2 commit'i yalnız iki araştırma raporunu içeriyor; mesajındaki "and SRS updates" kısmı çıkarıldı. Sebebi, SRS, plan ve STATUS'taki faz 2 ve faz 3 değişikliklerinin aynı satırlarda iç içe olması. Bunları ayırmak, hiç var olmamış bir ara sürümü geçmişe yazmak demekti. Bu yüzden üç dosya faz 3 commit'ine alındı.
+- **2026-10-31, G01 — `AUTH_USER_MODEL` G02'de:** G01 `base.py`'de `AUTH_USER_MODEL = "accounts.StaffUser"` istiyor, ama `accounts` app'i G02'de oluşuyor; kurulu olmayan modele işaret eden ayarla Django açılmıyor. Ayar G02'de, modelle aynı commit'te eklendi. G01'deki TC-03 `get_user_model()` ile yazıldı; G02'den sonra `StaffUser` üzerinde de geçer. Son durum plandakiyle aynı.
+- **2026-10-31, G01 — ortam değişkenlerinin yeri:** `base.py`, bütün ortamların ihtiyaç duyduğu değişkenleri `env()` ile okur: `LIBRARY_SECRET_KEY`, `LIBRARY_DB_PATH`, `LIBRARY_BACKUP_DIR`, `LIBRARY_EXPORT_DIR`, `LIBRARY_EXPORT_PASSPHRASE_FILE`, `LIBRARY_SCHEDULER_ENABLED` (varsayılan "0"). `prod.py` geri kalanları okur (`LIBRARY_ALLOWED_HOSTS`, `LIBRARY_STATIC_ROOT`, `LIBRARY_EMAIL_*`). `dev.py` ve `test.py`, `base`'i import etmeden önce bu değişkenlere `os.environ.setdefault` ile varsayılan verir ("varsayılan değerlerle env"); geliştirme verisi depoda yok sayılan `var/` klasörüne yazılır. `LIBRARY_ALLOWED_HOSTS` virgülle ayrılmış listedir. `LIBRARY_EMAIL_PORT` tam sayı değilse "Geçersiz ortam değişkeni: …" ile `ImproperlyConfigured` verilir.
+- **2026-10-31, G01 — `.gitignore`:** Plandaki `*.sqlite3` ve `staticfiles/` satırlarına ek olarak `*.sqlite3-wal`, `*.sqlite3-shm` (WAL dosyaları), `var/`, `__pycache__/`, `.pytest_cache/` ve `.coverage` eklendi; derleme ve test artıkları depoya girmesin diye.
+- **2026-10-31, G01 — varsayılan ayar modülleri:** `manage.py` varsayılan olarak `library_site.settings.dev`, `wsgi.py` ise `library_site.settings.prod` kullanır (waitress yalnız üretimde çalışır); ikisi de `DJANGO_SETTINGS_MODULE` verilmişse ona uyar.
+- **2026-10-31, G01–G04 — çalışma ortamı:** Görevler bulutta değil, kullanıcının yerel Windows 11 makinesinde Python 3.11.9 sanal ortamıyla uygulandı. Windows'a özgü TC-235 (tzdata) doğrudan Windows'ta koştu. pytest'in varsayılan geçici klasörüne erişim kum havuzunda engellendiği için testler `PYTEST_DEBUG_TEMPROOT` yalnız kabukta ayarlanarak koşturuldu; depoya bir şey eklenmedi.

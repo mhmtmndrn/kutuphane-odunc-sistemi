@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "library_site.settings.test"
+markers = ["slow: PDF ve barkod çözme testleri"]
+
+[tool.coverage.run]
+branch = true
+omit = ["*/migrations/*", "*/tests/*"]
