@@ -8,6 +8,8 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("", include("administration.urls")),
     path("", include("members.urls")),
     path("", include("catalog.urls")),
+    # After catalog: "nushalar/etiket/" must win over "nushalar/<str:barcode>/".
+    path("", include("circulation.urls")),
     path("", include("billing.urls")),
 ]
 

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static money %}
+
+{% block title %}Ödünç · Kütüphane{% endblock %}
+
+{% block content %}
+  <h1>Ödünç</h1>
+  {% for error in errors %}<p class="error">{{ error }}</p>{% endfor %}
+  {% if warning %}<p class="warning">{{ warning }}</p>{% endif %}
+
+  <form method="get" action="{% url 'circulation:checkout' %}">
+    <p>
+      <label for="id_uye">Üye kartı, üye no, telefon ya da ad</label>
+      <input type="text" name="uye" id="id_uye" value="{{ uye }}" autocomplete="off"{% if status %} data-next-focus="id_nusha"{% else %} autofocus{% endif %}>
+    </p>
+    {% if status %}
+      <p>
+        <label for="id_nusha">Nüsha barkodu ya da kitap</label>
+        <input type="text" name="nusha" id="id_nusha" value="{{ nusha }}" autocomplete="off"{% if not preview %} autofocus{% endif %}>
+      </p>
+    {% endif %}
+    <p><button type="submit">Getir</button></p>
+  </form>
+
+  {% if member_results %}
+    <h2>Üyeler</h2>
+    <ul>
+      {% for m in member_results %}
+        <li><a href="{% url 'circulation:checkout' %}?uye={{ m.member_no }}">Üye {{ m.member_no }}</a> · {% if m.is_anonymized %}Anonimleştirilmiş üye{% else %}{{ m.full_name }} · {{ m.phone }}{% endif %}{% if not m.is_active %} · Pasif{% endif %}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if status %}
+    <section class="member-panel">
+      <h2>Üye {{ status.member.member_no }}</h2>
+      <p>{% if status.member.is_anonymized %}Anonimleştirilmiş üye{% else %}{{ status.member.full_name }}{% endif %} · Borç: {{ status.balance_kurus|tl }}</p>
+      {% if status.blockers %}
+        <ul class="blockers">
+          {% for blocker in status.blockers %}<li>{{ blocker.value }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+      <h3>Açık ödünçler</h3>
+      {% include "circulation/_loans.html" with loans=status.open_loans next=next %}
+    </section>
+  {% endif %}
+
+  {% if copy_results %}
+    <h2>Raftaki nüshalar</h2>
+    <ul>
+      {% for copy in copy_results %}
+        <li><a href="{% url 'circulation:checkout' %}?uye={{ status.member.member_no }}&amp;nusha={{ copy.barcode }}">{{ copy.barcode }}</a> · {{ copy.book.title }} · {{ copy.book.author }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if preview %}
+    <section class="preview">
+      <h2>{{ preview.copy.book.title }}</h2>
+      <p>Nüsha {{ preview.copy.barcode }} · {{ preview.copy.get_status_display }}</p>
+      <p>Son tarih {{ preview.due_on|date:"d.m.Y" }}</p>
+      {% if preview.blockers %}
+        <ul class="blockers">
+          {% for blocker in preview.blockers %}<li>{{ blocker.value }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+      {% if can_confirm %}
+        <form method="post" action="{% url 'circulation:checkout' %}">
+          {% csrf_token %}
+          <input type="hidden" name="uye" value="{{ status.member.member_no }}">
+          <input type="hidden" name="nusha" value="{{ preview.copy.barcode }}">
+          <button type="submit" autofocus>Onayla</button>
+        </form>
+      {% endif %}
+    </section>
+  {% endif %}
+  <script src="{% static 'js/scan.js' %}"></script>
+{% endblock %}

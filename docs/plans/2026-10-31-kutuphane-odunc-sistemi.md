@@ -636,7 +636,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Üye ayrıntısına (`members/views.py`) açık ödünçler, bakiye, `/borclar/<no>/` bağlantısı ve pasifleştirme formu eklenir. Pasifleştirme formu `circulation.services.deactivate_member` çağırır (KL-22).
 - **Testler:** TC-53…TC-56, TC-124…TC-149, TC-278, TC-281…TC-288 (39 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest circulation -q` → hepsi geçer. `coverage run --branch -m pytest circulation && coverage report --include="circulation/domain.py" --fail-under=90` → çıkış 0.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-11-01, bulut oturumu, Linux, Python 3.11.18): `python -m pytest circulation -q` → 140 passed (TC-145…TC-148 dosya tabanlı SQLite ve iki iş parçacığıyla); `coverage run --branch -m pytest circulation` → 140 passed; `coverage report --include="circulation/domain.py" --fail-under=90` → %100 (dal), çıkış 0; tam koşuda `circulation/services.py` %99 (dal; tek eksik `IntegrityError` dalı, IMMEDIATE işlemler yüzünden ulaşılamaz), `members/views.py` %99; `python -m pytest -q` → 733 passed; `makemigrations --check --dry-run` → "No changes detected". Pasifleştirme korumasının testleri (kullanıcı kararı 2026-11-01): `test_tc53_guard_anonymized_member_is_refused`, `test_tc53_guard_inactive_member_keeps_its_deactivation_date` (servis), `test_tc53_deactivation_form_only_for_active_members`, `test_tc53_guard_view_refuses_inactive_and_anonymized` (view).
 
 ### Görev G12: Nüsha durum işlemleri
 
@@ -1189,6 +1190,20 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - Döküm ekranı: ödeme formu yalnız bakiye > 0 iken görünür (herkese); af formu yalnız yöneticiye ve ödenmemiş kalem varken, açılır listede ödenmemiş kalemlerle; para iadesi ve elle iptal formları bedel satırı başına birer küçük formdur (KL-26, ADR-0041). Seçilen kimliği servis denetler. Başarı 302 ile döküme döner ve mesaj gösterir; kural ihlali dökümü 200 ile yeniden çizer (ödeme ve af formunda form hatası olarak, satır formlarında sayfa mesajı olarak; G04 D4).
   - **Test yardımcıları:** `make_charge(member, kind, amount_kurus, *, loan, created_by, created_at)` (yalnız FINE ve FEE). `make_loan` G11 yerine G09'da eklendi, çünkü TC-92…TC-96 ödüncü LOST ile kapanmış bedel istiyor; nüsha durumunu ödüncün durumuna uydurur (açık → ON_LOAN, LOST/DAMAGED kapanış → LOST/DAMAGED). Factory'lerin varsayılan personeli `kayit.test` kullanıcı adıyla oluşturulur; testlerin kendi `ali`/`ayse.y` hesaplarıyla çakışmaz.
   - **Eşzamanlılık testleri:** `tests/support/concurrency.py`: `file_db` fixture'ı `default` bağlantısını bir test boyunca migrate edilmiş geçici bir dosya veritabanına (üretimdeki WAL, IMMEDIATE, `busy_timeout` ayarlarıyla) yönlendirir, sonra bellekteki test veritabanını geri koyar; `run_parallel` çağrıları `threading.Barrier` ile aynı anda, kendi bağlantılarıyla çalıştırır (test planı §5). Bellekteki paylaşımlı önbellekli veritabanında SQLite tablo kilitleri beklemeden hata verdiği için IMMEDIATE işlemler orada sınanamaz.
+- **2026-11-01, G11 — uygulama ayrıntıları (bulut oturumu):**
+  - `MemberStatus(member, open_loans, balance_kurus, blockers)`: `blockers` üyenin kendi engelleridir (nüsha engeli dışındaki hepsi; durum `copy_status="ON_SHELF"` ile hesaplanır). `CheckoutPreview(copy, due_on, blockers)`; son tarih bulunamazsa önizleme de `NoOpenDayError` verir. `open_loans` son tarihe, sonra id'ye göre sıralıdır.
+  - Plandaki arayüzlere ek servisler: `copies_matching(q, status)` (`search_books` sonuçlarının verilen durumdaki nüshaları; ödünçte Rafta, iadede Ödünçte; FR-11 elle seçim) ve `get_loan(loan_id)` (uzatma view'ı için).
+  - `check_out` engelleri işlem içinde veritabanından yeniden okur (S2, S3). Kısmi benzersiz indeksin `IntegrityError`'ı "Nüsha rafta değil" olarak `RuleViolation`'a çevrilir (data-design §5'teki ikinci güvence); IMMEDIATE işlemlerde bu dala ulaşılmaz, TC-145 ikinci isteğin engelden döndüğünü gösterir.
+  - `renew` mesajları (plan vermiyordu): bilinmeyen ödünç "Ödünç bulunamadı", kapanmış ödünç "Ödünç kapanmış" (TC-144). Uzatma engelleri de "; " ile birleştirilir.
+  - Ödünç, iade, uzatma ve pasifleştirme denetim kaydı yazmaz (faz 4 küçük karar 8'deki listede yoklar); gecikme cezası `billing.post_charge` ile ödünce ve üyeye bağlı FINE olarak yazılır.
+  - **Ödünç ekranı:** Tek bir GET formu `uye` ve (üye açıksa) `nusha` alanlarını taşır; "Getir" düğmesi JS'siz kullanım içindir. Üye açık değilken `uye`, açıkken `nusha`, önizlemede "Onayla" düğmesi `autofocus` alır; üye açıkken `uye` alanında `data-next-focus="id_nusha"` vardır. Onay formu POST'tur ve `uye`, `nusha` gizli alanlarını taşır; üyenin ya da nüshanın engeli varsa görünmez. 18 haneden uzun ya da rakam olmayan üye no "Üye bulunamadı" verir (SQLite tam sayı sınırı; G06 ile aynı). Anonimleştirilmiş üye "Anonimleştirilmiş üye" adıyla ve "Üye pasif" engeliyle açılır. Başarılı POST 303 döner (`HttpResponseRedirect`, durum 303).
+  - **Uzatma yolu:** POST `/odunc/<id>/uzat/` gizli `next` alanını taşır (üye ayrıntısı ya da ödünç ekranı); güvenli yerel adres değilse ödünç ekranına (`/odunc/?uye=<no>`) döner. Kural ihlalinde ödünç ekranı o üyeyle 200 ve mesajla gösterilir: view'lar başka bir app'in view modülünü import edemez (KL-22) ve ödünç ekranı da açık ödünçleri "Uzat" düğmeleriyle listeler. Açık ödünç listesi `circulation/templates/circulation/_loans.html` parçasıdır; ödünç ekranı ve üye ayrıntısı bunu kullanır. Uzatılmış ödünçte düğme yerine "Uzatıldı (GG.AA.YYYY)" yazar.
+  - **İade ekranı:** Form POST'tur; boş POST boş formu gösterir. 8 haneli olmayan girişte `copies_matching(q, ON_LOAN)` sonuçları satır başına bir "İade al" POST formuyla listelenir; sonuç yoksa "Nüsha bulunamadı".
+  - **`scan.js`:** Sayfa yüklenince (ve tarayıcı önbellekten geri dönünce) `autofocus` öğesine odaklanır ve metnini seçer; `data-next-focus` alanında Enter, hedef aynı formda ve boşsa formu göndermek yerine odağı hedefe taşır. Formlar JS'siz çalışır.
+  - **Üye ayrıntısı:** "Ödünç ve borç" bölümü bakiyeyi, `/borclar/<no>/` bağlantısını ve açık ödünç listesini gösterir. Pasifleştirme formu yalnız aktif ve anonimleştirilmemiş üyede görünür (kullanıcı kararı 2026-11-01). Onay kutusu (`confirm_debt`) plandaki gibi yalnız borç nedeniyle yapılan retten sonra, formla birlikte yeniden gösterilir; bütün retler ayrıntıyı 200 ve mesajla yeniden çizer (G04 D4).
+  - G11'in dosya listesi dışında değişenler: `members/views.py`, `members/urls.py` ve `members/templates/members/detail.html` (plan Davranış'ta), `library_site/urls.py` (`circulation.urls`, `catalog.urls`'ten sonra), `templates/base.html` ve `administration/home.html` ("Ödünç" ve "İade" bağlantıları; G03 §11 kuralı), `tests/support/urls.py`.
+  - `tests/support/urls.py`'deki G02 yer tutucusu (`/odunc/`) kaldırıldı: gerçek ödünç ekranı yolu artık karşılıyor; modül ürünün URL listesini aynen verir, G02 testleri `@pytest.mark.urls` işaretleriyle değişmeden geçer.
+  - `make_loan` G09'da eklendi (yukarıda).
 - **2026-10-31, G05–G08 uygulayıcının seçtiği kullanıcıya görünen metinler:** Plan, SRS, KL ya da ADR'nin vermediği ve uygulayıcının seçtiği kullanıcıya görünen metinler (2026-11-01 kullanıcı kararı; PR'da onaylanır). Kullanıcı 2026-11-01'de PR #2 incelemesinde hepsini onayladı; metin değiştirilmedi. G02–G04 listesinde zaten onaylı olup aynen yeniden kullanılanlar "(G02–G04'te onaylı)" ile işaretlidir.
   - G06:
     - "Üyeler": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `members/search.html` sayfa başlığı; `members/form.html` ve `members/detail.html` geri bağlantısı.
@@ -1283,3 +1298,27 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
     - "Kalem bulunamadı": `billing/services.py` `get_entry`, `RuleViolation`.
     - "Üye bulunamadı" (onaylı): `billing/views.py`, bilinmeyen üye no'da 404 nedeni.
     - "5,00 TL" biçimi: `administration/templatetags/audit.py` `details_text`, denetim listesinde `amount_kurus` ve `fee_kurus` değerleri (kullanıcı kararı, yukarıda).
+  - G11:
+    - "Ödünç": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `circulation/checkout.html` sayfa başlığı.
+    - "İade": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `circulation/checkin.html` sayfa başlığı.
+    - "Üye kartı, üye no, telefon ya da ad": `circulation/checkout.html`, üye alanı etiketi.
+    - "Nüsha barkodu ya da kitap": `circulation/checkout.html` ve `circulation/checkin.html`, nüsha alanı etiketi.
+    - "Getir": `circulation/checkout.html`, GET formunun düğmesi.
+    - "Üyeler" (onaylı): `circulation/checkout.html`, üye arama sonuçları başlığı; satır "Üye N · <ad soyad> · <telefon>" ve pasifse " · Pasif"; anonimde "Anonimleştirilmiş üye" (onaylı).
+    - "Üye N" (onaylı) ve "<ad soyad> · Borç: <tutar>": `circulation/checkout.html`, üye paneli.
+    - "Açık ödünçler": `circulation/checkout.html` ve `members/detail.html`, bölüm başlığı.
+    - "Barkod", "Başlık" (onaylı), "Son tarih": `circulation/_loans.html`, sütun başlıkları.
+    - "Uzatıldı (GG.AA.YYYY)": `circulation/_loans.html`, uzatılmış ödünç.
+    - "Açık ödünç yok.": `circulation/_loans.html`, boş liste.
+    - "Raftaki nüshalar": `circulation/checkout.html`, nüsha arama sonuçları başlığı; satır "<barkod> · <başlık> · <yazar>".
+    - "Nüsha NNNNNNNN · <durum>": `circulation/checkout.html`, önizleme.
+    - "Ödünçteki nüshalar": `circulation/checkin.html`, arama sonuçları başlığı; "Yazar" (onaylı) sütun başlığı.
+    - "Uzatıldı; yeni son tarih GG.AA.YYYY": `circulation/views.py` `renew`, başarı mesajı.
+    - "Ödünç bulunamadı": `circulation/services.py` `renew`, `RuleViolation`; `circulation/views.py` `renew`, 404 nedeni.
+    - "Ödünç kapanmış": `circulation/services.py` `renew`, `RuleViolation`.
+    - "Ödünç ve borç": `members/detail.html`, bölüm başlığı. "Borç: <tutar>": bakiye satırı. "Borç dökümü": `/borclar/<no>/` bağlantısı.
+    - "Borç olduğunu biliyorum; üyeyi yine de pasifleştir": `members/detail.html`, `confirm_debt` onay kutusu etiketi.
+    - "Pasifleştir" (onaylı): `members/detail.html`, düğme.
+    - "Üye pasifleştirildi": `members/views.py` `member_deactivate`, başarı mesajı.
+    - "Anonimleştirilmiş üye pasifleştirilemez" ve "Üye zaten pasif": `circulation/services.py` `deactivate_member`, `RuleViolation` (davranış ve metin 2026-11-01 kullanıcı kararıyla verildi; listede bilgi için).
+    - Planın verdiği metinler listede yoktur: "Uzat", "Onayla", "İade al", "Son tarih 16.11.2026", "İade alındı", "İade alındı; 15,00 TL ceza yazıldı", "Bu bir nüsha barkodu. Üye kartını okutun.", KL-6 mesajları.
