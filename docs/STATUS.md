@@ -1,7 +1,7 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-11-01 (faz 5, PR #2 onaylandı)
-- **Aşama:** eng-process **faz 5**. Grup `feature/foundation` (G01–G04) PR #1 ile birleşti (`main` = `1a93f2d`). Grup `feature/catalog-members` (G05–G08) **tamam**; PR #2 kullanıcı tarafından onaylandı (metinler dahil, 2026-11-01) ve merge commit'iyle `main`'e birleştirilir.
+- **Güncelleme:** 2026-11-01 (faz 5, `feature/circulation` başladı)
+- **Aşama:** eng-process **faz 5**. Grup `feature/foundation` (G01–G04) PR #1 ile birleşti. Grup `feature/catalog-members` (G05–G08) **kapandı**: PR #2 birleşti (`main` = `b6bd69d`). Şu anki iş: `feature/circulation` (G10 → G09 → G11 → G12; KL-39), bulut oturumunda.
   - **G05:** `9c0d20a`: `catalog/domain.py` (`normalize_tr`, `parse_isbn`, `isbn10_to_13`).
   - **G06:** `ffc2a16`: `members` app'i: üye modeli, arama, rıza olayları, aktifleştirme, ekranlar.
   - **G07:** `e7f8d03`: kitap ve nüsha modelleri, ISBN öneri akışı, nüsha ekleme, katalog araması.
@@ -10,7 +10,7 @@
   - Yerel Windows (R-15, Python 3.11.9, 2026-11-01): `python -m pytest -q` → 515 passed (`-m slow` → 4 passed, barkod çözme Windows'ta da çalışıyor); `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı proje toplamı %99, `*/domain.py`, `catalog/services.py`, `members/services.py`, `pdf/sheets.py`, `accounts/permissions.py`, `accounts/middleware.py` %100.
   - Test planında 101 TC "Geçti" (46 + G05–G08'in 55'i).
   - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G05–G08 kutuları kanıtıyla işaretli; uygulama ayrıntıları ve onaylı metinler §11'de.
-- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`1a93f2d`), `feature/foundation` (kapandı), `feature/catalog-members` (PR #2 onaylandı, birleştiriliyor).
+- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`b6bd69d`), `feature/foundation` (kapandı), `feature/catalog-members` (kapandı, PR #2 birleşti), `feature/circulation` (çalışılıyor).
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
 - **Bulut oturumu:** Her grup için kullanıcı yeni bir bulut oturumu açar, Claude açılış istemini hazırlar (KL-38). Oturum kritik soruyu oturumun içinde sorar; planın vermediği metinleri seçip §11'de listeler ve PR'da onaya sunar (plan §11, 2026-11-01 kararları).
   - **Tarayıcı (önerilen):** claude.ai/code; repo `mhmtmndrn/kutuphane-odunc-sistemi`, ortam **Default** (Trusted ağ; pip için PyPI gerekir).
