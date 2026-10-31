@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}{% if book %}{{ book.title }}{% else %}Yeni kitap{% endif %} · Kütüphane{% endblock %}
+
+{% block content %}
+  {% if book %}
+    <p><a href="{% url 'catalog:detail' book.pk %}">{{ book.title }}</a></p>
+    <h1>Kitabı düzenle</h1>
+  {% else %}
+    <p><a href="{% url 'catalog:search' %}">Kitaplar</a></p>
+    <h1>Yeni kitap</h1>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <p>
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+      </p>
+    {% endfor %}
+    <p>
+      <button type="submit">Kaydet</button>
+      {% if form.suggestion %}
+        <button type="submit" name="isbn_accept" value="{{ form.suggestion }}">Öneriyi kabul et ve kaydet</button>
+      {% endif %}
+    </p>
+  </form>
+{% endblock %}

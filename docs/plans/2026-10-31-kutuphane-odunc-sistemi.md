@@ -523,7 +523,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Kitap ayrıntısında nüshalar barkod ve durumuyla listelenir.
 - **Testler:** TC-60…TC-68, TC-262…TC-264 (12 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest catalog -q` → hepsi geçer.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-10-31, bulut oturumu, Linux, Python 3.11.18): `python -m pytest catalog -q` → 117 passed; `python -m pytest -q` → 448 passed (TC-31…TC-33 dahil); `coverage report --include="*/domain.py" --fail-under=90` → %100 (dal); `catalog/services.py` %100 (dal); `makemigrations --check --dry-run` → "No changes detected".
 
 ### Görev G08: PDF sayfa yardımcısı, nüsha etiketi ve üye kartı
 
@@ -1143,6 +1144,17 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - Rıza formu tek formdur: gizli `given` alanı ("1" ver, "0" geri al) geçerli duruma uyan düğmeyle gelir; tarih varsayılanı bugündür (`clock.today()`), `YYYY-AA-GG` ve `GG.AA.YYYY` biçimleri kabul edilir. E-postası ve rızası olmayan üyede form yerine "Rıza için e-posta adresi gerekli." notu görünür. Rıza ve aktifleştirme hataları ayrıntı ekranını 200 ile yeniden gösterir (§4.0, G04 D4).
   - `tests/support/factories.py: make_member(full_name, phone, email, *, member_no, is_active, deactivated_on, anonymized)` üyeyi ORM ile doğrudan kurar (aktör ve denetim yok); pasif üyede `deactivated_on` verilmezse 2026-10-01 olur.
   - TC-52 (model alan listesi) veritabanı istemediği için `members/tests/test_domain.py`'dedir.
+- **2026-10-31, G07 — uygulama ayrıntıları (bulut oturumu):**
+  - G07'nin dosya listesi dışında değişenler: `library_site/urls.py` (`catalog.urls`), `templates/base.html` (üst menüde "Kitaplar") ve `administration/home.html` (modül bağlantısı).
+  - `Book.save()` `search_key`'i (`normalize_tr(title + " " + author)`), `Copy.save()` `status_changed_at`'i yazar: eklemede ve durum her değiştiğinde (`update_fields` verilse de alan kayda eklenir). Alanın veritabanı varsayılanı yoktur; zaman `save()` içinde `timezone.now()` ile alınır, böylece testlerdeki `FrozenClock` geçerli olur.
+  - Geçici barkod (§8.1'de uygulayıcıya bırakılan ayrıntı): `add_copies` her nüshayı `"PENDING-"` barkoduyla ekler, id'yi alır ve aynı işlemde `f"{id:08d}"` yazar. Bir sonraki ekleme bundan sonra yapıldığı için benzersiz sütunda aynı anda tek geçici değer olur; değer hiçbir zaman commit edilmez. id'ler Django'nun SQLite'taki `AUTOINCREMENT` sütunundan gelir, silinen id yeniden kullanılmaz. KL-42 denetimi her eklemeden sonra yapılır; 99.999.999'u aşan ilk id bütün grubu geri alır. TC-65 ve TC-263 sırayı `sqlite_sequence` tablosuyla ayarlar.
+  - `create_book` ve `update_book` ISBN'i ham haliyle alır ve `parse_isbn` ile normalize eder; boş ISBN NULL olur. `IsbnSuggest` sonucunu servis de reddeder (mesaj formdakiyle aynı öneri metnidir); öneriyi kabul etmek formun işidir. Alan kuralları ve mesajları servistedir: başlık ve yazar zorunlu, başlık ve yazar en fazla 300, yayınevi en fazla 200 karakter (data-design §2.3), yıl 1–9999. Değerler kırpılır; boş yayınevi NULL olur.
+  - Plandaki arayüzlere ek servisler: `get_book(pk) -> Book | None`, `book_copies(book)` (barkod sırasıyla), `shelf_counts(books)` (tek sorguda kitap başına raftaki ve toplam nüsha), `is_barcode(q)` ve `suggestion_message(suggestion)`. Bilinmeyen kitap 404 verir ("Kitap bulunamadı").
+  - `search_books` sıralaması: ISBN ya da barkod tam eşleşmeleri önce, sonra `search_key` ve id. Boş sorgu boş sonuç verir. Arama ekranı her kitapta "Rafta / Toplam" sayısını gösterir; 8 haneli sorgu bir nüshaya denk gelirse listenin üstünde "Nüsha 00000042: Tutunamayanlar · Rafta" satırı çıkar (TC-66, AC-04).
+  - `BookForm`: ham ISBN alanı en fazla 40 karakterdir. `isbn_accept` düğmesinin metni "Öneriyi kabul et ve kaydet"tir. `isbn_accept` ile gelen değer yalnız bir öneri üretiyorsa (elle değiştirilmiş istek) "ISBN kontrol hanesi hatalı" ile reddedilir.
+  - Nüsha ekleme formunun alanı `count`'tur. 1–50 aralığını servis denetler ve mesaj alan hatası olarak görünür; tarayıcıya `min`/`max` ipucu verilir. Kural ihlalinde kitap ayrıntısı 200 ile yeniden gösterilir.
+  - Kitap ve nüsha işlemleri denetim kaydı yazmaz (faz 4 küçük karar 8'deki listede yoklar).
+  - `tests/support/factories.py`: `make_book(title, author, *, isbn13, publisher, year)` ISBN'i olduğu gibi yazar; `make_copy(book, *, pk, status)` barkodu `f"{id:08d}"` yapar.
 - **2026-10-31, G05–G08 onay bekleyen metinler:** Plan, SRS, KL ya da ADR'nin vermediği ve uygulayıcının seçtiği kullanıcıya görünen metinler (2026-11-01 kullanıcı kararı; PR'da onaylanır). G02–G04 listesinde zaten onaylı olup aynen yeniden kullanılanlar "(G02–G04'te onaylı)" ile işaretlidir.
   - G06:
     - "Üyeler": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `members/search.html` sayfa başlığı; `members/form.html` ve `members/detail.html` geri bağlantısı.
@@ -1178,3 +1190,30 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
     - "Telefon 1 ile 20 rakam içermeli": `members/domain.py` `validate_member_fields`, `RuleViolation`.
     - "Geçerli bir e-posta adresi girin": `members/services.py` `_clean_email`, `RuleViolation`.
     - "Anonimleştirilmiş üye güncellenemez": `members/services.py` `update_member`, `RuleViolation` (davranış oturumda kullanıcı kararıyla; metin onay bekliyor).
+  - G07:
+    - "Kitaplar": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `catalog/search.html` sayfa başlığı; `catalog/form.html` ve `catalog/detail.html` geri bağlantısı.
+    - "Yeni kitap": `catalog/search.html` bağlantı; `catalog/form.html` sayfa başlığı.
+    - "Başlık, yazar, ISBN ya da barkod": `catalog/search.html`, arama alanı etiketi.
+    - "Ara", "Sonuç yok.", "Düzenle", "—" (G06'daki gibi): `catalog/search.html` ve `catalog/detail.html`.
+    - "Başlık": `catalog/forms.py` `BookForm` alan etiketi; `catalog/search.html` sütun başlığı.
+    - "Yazar", "ISBN", "Yıl": `catalog/forms.py` `BookForm` alan etiketleri; `catalog/search.html` sütun başlıkları; `catalog/detail.html` satır başlıkları.
+    - "Yayınevi": `catalog/forms.py` `BookForm` alan etiketi; `catalog/detail.html` satır başlığı.
+    - "Rafta / Toplam": `catalog/search.html`, sütun başlığı.
+    - "Nüsha NNNNNNNN: <başlık> · <durum>": `catalog/search.html`, barkod eşleşmesi satırı.
+    - "Kitabı düzenle": `catalog/form.html`, düzenleme ekranı başlığı (`<title>` kitabın başlığıdır).
+    - "Kaydet" (G02–G04'te onaylı): `catalog/form.html`, düğme.
+    - "Öneriyi kabul et ve kaydet": `catalog/form.html`, `isbn_accept` düğmesi.
+    - "Nüshalar": `catalog/detail.html`, bölüm başlığı.
+    - "Barkod", "Durum": `catalog/detail.html`, nüsha tablosu sütun başlıkları.
+    - "Nüsha yok.": `catalog/detail.html`, boş nüsha listesi.
+    - "Nüsha ekle": `catalog/detail.html`, bölüm başlığı.
+    - "Nüsha sayısı": `catalog/forms.py` `AddCopiesForm` alan etiketi.
+    - "Ekle" (G02–G04'te onaylı): `catalog/detail.html`, düğme.
+    - "Kitap kaydedildi": `catalog/views.py` `book_create`, başarı mesajı.
+    - "Kitap bilgileri kaydedildi": `catalog/views.py` `book_edit`, başarı mesajı.
+    - "N nüsha eklendi": `catalog/views.py` `book_add_copies`, başarı mesajı.
+    - "Kitap bulunamadı": `catalog/views.py` `_get_book`, 404 nedeni (yalnız `DEBUG` açıkken görünür).
+    - "Başlık boş olamaz", "Yazar boş olamaz": `catalog/services.py` `_clean_book`, `RuleViolation` (TC-61).
+    - "Başlık en fazla 300 karakter olabilir", "Yazar en fazla 300 karakter olabilir", "Yayınevi en fazla 200 karakter olabilir": `catalog/services.py` `_clean_book`, `RuleViolation`.
+    - "Yıl 1 ile 9999 arasında olmalı": `catalog/services.py` `_clean_book`, `RuleViolation`.
+    - "Nüsha sayısı 1 ile 50 arasında olmalı": `catalog/services.py` `add_copies`, `RuleViolation` (TC-262).

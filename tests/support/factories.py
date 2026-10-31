@@ -7,6 +7,7 @@ from datetime import date, datetime, timezone as dt_timezone
 from django.db.models import Max
 
 from accounts.models import Role, StaffUser
+from catalog.models import Book, Copy, CopyStatus
 from members.models import Member
 
 # Ten characters or more and not a common password (KL-9).
@@ -68,3 +69,31 @@ def make_member(
         deactivated_on=deactivated_on,
         anonymized_at=anonymized_at,
     )
+
+
+def make_book(
+    title: str = "Tutunamayanlar",
+    author: str = "Oğuz Atay",
+    *,
+    isbn13: str | None = None,
+    publisher: str | None = None,
+    year: int | None = None,
+) -> Book:
+    """Create a book directly; ``isbn13`` is stored as given (no parsing)."""
+    return Book.objects.create(
+        title=title, author=author, isbn13=isbn13, publisher=publisher, year=year
+    )
+
+
+def make_copy(
+    book: Book | None = None,
+    *,
+    pk: int | None = None,
+    status: CopyStatus = CopyStatus.ON_SHELF,
+) -> Copy:
+    """Create a copy whose barcode is ``f"{id:08d}"``; ``pk`` fixes the id."""
+    book = book or make_book()
+    copy = Copy.objects.create(pk=pk, book=book, barcode="PENDING-", status=status)
+    copy.barcode = f"{copy.pk:08d}"
+    copy.save(update_fields=["barcode"])
+    return copy

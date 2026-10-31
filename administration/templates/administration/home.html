@@ -18,6 +18,7 @@
     <h2>Modüller</h2>
     <ul>
       <li><a href="{% url 'members:search' %}">Üyeler</a></li>
+      <li><a href="{% url 'catalog:search' %}">Kitaplar</a></li>
       {% if user.role == "ADMIN" %}
         <li><a href="{% url 'administration:settings' %}">Ayarlar</a></li>
         <li><a href="{% url 'administration:closed-days' %}">Kapalı günler</a></li>
