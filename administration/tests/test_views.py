@@ -302,3 +302,13 @@ def test_audit_list_newest_first_50_per_page(admin_client: Client, admin) -> Non
 def test_audit_list_shows_system_actor(admin_client: Client) -> None:
     record_audit(None, AuditAction.FEE, "ledger_entry", 1, {"amount_kurus": 100})
     assert "Sistem" in _body(admin_client.get("/denetim/"))
+
+
+def test_audit_details_show_amounts_in_tl() -> None:
+    """Plan §11 (G09, user decision): ``amount_kurus`` and ``fee_kurus`` read
+    as TL on the audit list; other keys are unchanged (TC-91)."""
+    from administration.templatetags.audit import details_text
+
+    text = details_text({"amount_kurus": 500, "fee_kurus": 12000, "member_no": 1042, "x": 1})
+    assert text == '{"amount_kurus": "5,00 TL", "fee_kurus": "120,00 TL", "member_no": 1042, "x": 1}'
+    assert details_text({"op": "set", "new": [6]}) == '{"new": [6], "op": "set"}'

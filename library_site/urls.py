@@ -8,6 +8,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("", include("administration.urls")),
     path("", include("members.urls")),
     path("", include("catalog.urls")),
+    path("", include("billing.urls")),
 ]
 
 # The admin panel exists only where the app is installed: dev settings

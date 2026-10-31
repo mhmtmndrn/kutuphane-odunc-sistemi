@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load money %}
+
+{% block title %}Borç dökümü · Üye {{ member.member_no }} · Kütüphane{% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'members:detail' member.member_no %}">Üye {{ member.member_no }}</a></p>
+  <h1>Borç dökümü</h1>
+  <p>{% if member.is_anonymized %}Anonimleştirilmiş üye{% else %}{{ member.full_name }}{% endif %}</p>
+  <p class="balance">Güncel borç: {{ balance|tl }}</p>
+
+  <table>
+    <thead>
+      <tr><th>Tarih</th><th>Tür</th><th>Tutar</th><th>Ödenmemiş</th><th>Personel</th><th>Gerekçe</th></tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        <tr>
+          <td>{{ row.created_at|date:"d.m.Y" }}</td>
+          <td>{{ row.kind_label }}</td>
+          <td>{{ row.amount_kurus|tl }}</td>
+          <td>{% if row.unpaid_kurus is not None %}{{ row.unpaid_kurus|tl }}{% else %}—{% endif %}</td>
+          <td>{{ row.staff_name }}</td>
+          <td>{{ row.reason|default:"—" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6">Hareket yok.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if balance > 0 or payment_form.errors %}
+    <h2>Ödeme al</h2>
+    <form method="post" action="{% url 'billing:payment' member.member_no %}">
+      {% csrf_token %}
+      {{ payment_form.non_field_errors }}
+      <p>
+        <label for="{{ payment_form.amount.id_for_label }}">{{ payment_form.amount.label }}</label>
+        {{ payment_form.amount }}
+        {{ payment_form.amount.errors }}
+        <button type="submit">Ödemeyi kaydet</button>
+      </p>
+    </form>
+  {% endif %}
+
+  {% if is_admin %}
+    {% if has_open_charges or waiver_form.errors %}
+      <h2>Af</h2>
+      <form method="post" action="{% url 'billing:waiver' member.member_no %}">
+        {% csrf_token %}
+        {{ waiver_form.non_field_errors }}
+        <p>
+          <label for="{{ waiver_form.charge_id.id_for_label }}">{{ waiver_form.charge_id.label }}</label>
+          {{ waiver_form.charge_id }}
+          {{ waiver_form.charge_id.errors }}
+        </p>
+        <p>
+          <label for="{{ waiver_form.amount.id_for_label }}">{{ waiver_form.amount.label }}</label>
+          {{ waiver_form.amount }}
+          {{ waiver_form.amount.errors }}
+        </p>
+        <p>
+          <label for="{{ waiver_form.reason.id_for_label }}">{{ waiver_form.reason.label }}</label>
+          {{ waiver_form.reason }}
+          {{ waiver_form.reason.errors }}
+        </p>
+        <p><button type="submit">Affet</button></p>
+      </form>
+    {% endif %}
+
+    {% if refundable_rows %}
+      <h2>Para iadesi</h2>
+      {% for row in refundable_rows %}
+        <form method="post" action="{% url 'billing:refund' member.member_no %}">
+          {% csrf_token %}
+          <input type="hidden" name="fee_id" value="{{ row.entry_id }}">
+          <p>
+            Bedel ({{ row.created_at|date:"d.m.Y" }}, {{ row.amount_kurus|tl }}): iade edilebilir {{ row.refundable_kurus|tl }}
+            <label for="refund-{{ row.entry_id }}">Tutar (TL)</label>
+            <input type="text" name="amount" id="refund-{{ row.entry_id }}" inputmode="decimal" maxlength="20">
+            <button type="submit">Para iadesi yap</button>
+          </p>
+        </form>
+      {% endfor %}
+    {% endif %}
+
+    {% if cancellable_rows %}
+      <h2>Bedel iptali</h2>
+      <p class="note">Ödüncüyle bağı koparılmış bedeller; ödenmemiş kısmın tamamı iptal edilir.</p>
+      {% for row in cancellable_rows %}
+        <form method="post" action="{% url 'billing:cancel' member.member_no %}">
+          {% csrf_token %}
+          <input type="hidden" name="fee_id" value="{{ row.entry_id }}">
+          <p>
+            Bedel ({{ row.created_at|date:"d.m.Y" }}, {{ row.amount_kurus|tl }}): ödenmemiş {{ row.unpaid_kurus|tl }}
+            <label for="cancel-{{ row.entry_id }}">Gerekçe</label>
+            <input type="text" name="reason" id="cancel-{{ row.entry_id }}" maxlength="500">
+            <button type="submit">İptal et</button>
+          </p>
+        </form>
+      {% endfor %}
+    {% endif %}
+  {% endif %}
+{% endblock %}

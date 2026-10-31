@@ -576,7 +576,8 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - Türler Türkçe gösterilir: Ceza, Bedel, Ödeme, Af, İptal, Para iadesi.
 - **Testler:** TC-76…TC-103, TC-270…TC-275 (34 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest billing -q` → hepsi geçer. `coverage run --branch -m pytest billing && coverage report --include="billing/domain.py" --fail-under=90` → çıkış 0.
-- [ ] Tamamlandı
+- [x] Tamamlandı
+  - Kanıt (2026-11-01, bulut oturumu, Linux, Python 3.11.18): `python -m pytest billing -q` → 69 passed (TC-103 dosya tabanlı SQLite ve iki iş parçacığıyla); `coverage run --branch -m pytest billing` → 69 passed; `coverage report --include="billing/domain.py" --fail-under=90` → %100 (dal), çıkış 0; `billing/services.py` %100 (dal), `billing` toplam %99; `python -m pytest -q` → 658 passed (TC-31 ve TC-32 yeni üç yönetici yolunu da denetliyor); `makemigrations --check --dry-run` → "No changes detected".
 
 ### Görev G10: Ödünç domain'i
 
@@ -1178,6 +1179,16 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - `late_days`, takvim farkı 0 ya da negatifse kapalı tarihleri saymadan 0 döner; sonuç formülle aynıdır.
   - `Loan` modeli: `db_table = "loan"`; data-design §2.4'teki CHECK'ler (`due_on > loaned_on`, `close_reason` değerleri, `closed_on` ile `close_reason`'ın birlikte dolu ya da boş olması, `copy_found_on` için `closed_on IS NOT NULL AND close_reason = 'LOST' AND copy_found_on >= closed_on`) ve §4'teki indeksler (`loan_one_open_per_copy` kısmi benzersiz, `loan(member_id, closed_on)`, kısmi `loan(due_on) WHERE closed_on IS NULL`, `loan(closed_on)`) migration'dadır. `copy_found_on` CHECK'ine `closed_on IS NOT NULL` eklendi: SQL'de `close_reason` NULL iken karşılaştırma bilinmez sonuç verir ve CHECK geçerdi; açık ödünçte `copy_found_on` böylece reddedilir. `CloseReason` etiketleri: "İade edildi", "Kayıp", "Hasarlı".
   - Model kısıt testleri `circulation/tests/test_services.py`'nin başındadır (KL-11'deki üç dosya düzeni; `test_domain.py` veritabanına dokunmaz).
+- **2026-11-01, G09 — kullanıcı kararı: denetim listesinde tutarlar TL olarak:** TC-91 af kaydının `/denetim/`'de "5,00 TL" olarak görünmesini bekliyordu; G03'ün denetim listesi ayrıntıları ham JSON olarak (`"amount_kurus": 500`) gösteriyordu. Oturumda soruldu, önerilen seçenek seçildi: `administration/templatetags/audit.py` `details_text` filtresi `amount_kurus` ve `fee_kurus` anahtarlarının değerini `format_tl` ile ("5,00 TL") gösterir; saklanan JSON ve öteki anahtarlar (ayar değişikliklerindeki eski ve yeni değerler dahil) değişmez. G03 ekranında küçük bir gösterim değişikliğidir; ADR gerekmedi.
+- **2026-11-01, G09 — uygulama ayrıntıları (bulut oturumu):**
+  - `billing` app'i `INSTALLED_APPS`'e, `billing.urls` `library_site/urls.py`'ye (`catalog.urls`'ten sonra) eklendi.
+  - `LedgerEntry` ve `Allocation` yalnız eklenir (I6): model `save` güncellemeyi, `delete` silmeyi `ValueError` ile reddeder (G03'teki `AuditEvent` gibi). ADR-0018'deki tek istisna (G15, `loan_id` NULL) queryset `update` ile yapılır. `created_at` `save()` içinde `timezone.now()` ile yazılır (`FrozenClock` geçerli olsun diye; G07'deki `Copy.status_changed_at` gibi). CHECK kısıtları: tür listesi, `amount_kurus > 0`, WAIVER/CANCELLATION/REFUND'da `target_entry` dolu, WAIVER'da `reason` dolu ve boş değil (data-design §2.5). `allocation` için `amount_kurus > 0` ve `UNIQUE(credit_entry, charge_entry)`. data-design §4'teki `ledger_entry(member_id)`, `(target_entry_id)`, `(loan_id)` ve `allocation(charge_entry_id)` indeksleri Django'nun yabancı anahtar indeksleridir. `EntryKind` etiketleri plandaki Türkçe adlardır.
+  - `post_charge` ve `cancel_unpaid` iç servislerdir ve `require_role(Role.CLERK)` taşır (çağıranlar: görevlinin iadesi, yöneticinin kayıp/hasar işaretlemesi, görevlinin "bulundu" işareti). `post_charge` FINE ya da FEE dışındaki türü ve pozitif olmayan tutarı, `cancel_unpaid` FEE dışındaki kalemi programlama hatası sayıp `ValueError` ile reddeder. `cancel_unpaid` kendi denetim kaydını yazmaz: otomatik iptal `mark_found`'un `COPY_FOUND` kaydıyla izlenir; `CANCELLATION` eylemi yalnız elle iptalindir (ADR-0041, KL-30).
+  - Denetim sırası: `waive` gerekçe → tür → tutar > 0 → ödenmemiş kısım; `cancel_fee_manual` tür → gerekçe → ödünç bağı → ödenmemiş kısım; `refund` ön koşul (I5) → tutar > 0 → iade edilebilir tutar. Gerekçe kırpılarak kaydedilir.
+  - Plandaki arayüzlere ek: `get_entry(member, entry_id)` (formdaki gizli kimlik başka üyenin kalemine ulaşamasın diye; yoksa "Kalem bulunamadı") ve `StatementRow` alanları (`entry_id`, `created_at`, `kind`, `kind_label`, `amount_kurus`, `staff_name`, `reason`, `target_entry_id`, `unpaid_kurus`, `refundable_kurus`, `manually_cancellable`). `staff_name` personelin ad soyadıdır (`first_name`, G02 (c)); boşsa kullanıcı adı. Döküm `created_at, id` sırasıyla en eskiden başlar.
+  - Döküm ekranı: ödeme formu yalnız bakiye > 0 iken görünür (herkese); af formu yalnız yöneticiye ve ödenmemiş kalem varken, açılır listede ödenmemiş kalemlerle; para iadesi ve elle iptal formları bedel satırı başına birer küçük formdur (KL-26, ADR-0041). Seçilen kimliği servis denetler. Başarı 302 ile döküme döner ve mesaj gösterir; kural ihlali dökümü 200 ile yeniden çizer (ödeme ve af formunda form hatası olarak, satır formlarında sayfa mesajı olarak; G04 D4).
+  - **Test yardımcıları:** `make_charge(member, kind, amount_kurus, *, loan, created_by, created_at)` (yalnız FINE ve FEE). `make_loan` G11 yerine G09'da eklendi, çünkü TC-92…TC-96 ödüncü LOST ile kapanmış bedel istiyor; nüsha durumunu ödüncün durumuna uydurur (açık → ON_LOAN, LOST/DAMAGED kapanış → LOST/DAMAGED). Factory'lerin varsayılan personeli `kayit.test` kullanıcı adıyla oluşturulur; testlerin kendi `ali`/`ayse.y` hesaplarıyla çakışmaz.
+  - **Eşzamanlılık testleri:** `tests/support/concurrency.py`: `file_db` fixture'ı `default` bağlantısını bir test boyunca migrate edilmiş geçici bir dosya veritabanına (üretimdeki WAL, IMMEDIATE, `busy_timeout` ayarlarıyla) yönlendirir, sonra bellekteki test veritabanını geri koyar; `run_parallel` çağrıları `threading.Barrier` ile aynı anda, kendi bağlantılarıyla çalıştırır (test planı §5). Bellekteki paylaşımlı önbellekli veritabanında SQLite tablo kilitleri beklemeden hata verdiği için IMMEDIATE işlemler orada sınanamaz.
 - **2026-10-31, G05–G08 uygulayıcının seçtiği kullanıcıya görünen metinler:** Plan, SRS, KL ya da ADR'nin vermediği ve uygulayıcının seçtiği kullanıcıya görünen metinler (2026-11-01 kullanıcı kararı; PR'da onaylanır). Kullanıcı 2026-11-01'de PR #2 incelemesinde hepsini onayladı; metin değiştirilmedi. G02–G04 listesinde zaten onaylı olup aynen yeniden kullanılanlar "(G02–G04'te onaylı)" ile işaretlidir.
   - G06:
     - "Üyeler": `templates/base.html` üst menü bağlantısı; `administration/home.html` modül bağlantısı; `members/search.html` sayfa başlığı; `members/form.html` ve `members/detail.html` geri bağlantısı.
@@ -1251,3 +1262,24 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
     - "Başlangıç ve bitiş pozitif üye no olmalı": `members/services.py` `members_for_cards`, `RuleViolation`.
     - "Geçersiz seçim": `administration/forms.py` `IntListField`, alan hatası.
     - "Etiket bas" ve "Kart bas" ADR-0036'dan gelir; aralık formlarının düğmesinde de aynı metin kullanıldı.
+- **2026-11-01, G09–G12 onay bekleyen metinler:** Plan, SRS, KL ya da ADR'nin vermediği ve uygulayıcının seçtiği kullanıcıya görünen metinler (2026-11-01 kullanıcı kararı; PR'da onaylanır). Önceki listelerde onaylı olup aynen kullanılanlar "(onaylı)" ile işaretlidir.
+  - G09:
+    - "Borç dökümü": `billing/statement.html`, sayfa başlığı ve `<title>` ("Borç dökümü · Üye N · Kütüphane").
+    - "Üye N" (onaylı): `billing/statement.html`, üye ayrıntısına geri bağlantı.
+    - "Güncel borç: <tutar>": `billing/statement.html`, bakiye satırı.
+    - "Tarih", "Personel" (onaylı), "Tür", "Tutar", "Ödenmemiş", "Gerekçe": `billing/statement.html`, döküm tablosu sütun başlıkları; "—" (onaylı) boş hücrede.
+    - "Hareket yok.": `billing/statement.html`, boş döküm.
+    - "Ödeme al": `billing/statement.html`, bölüm başlığı. "Ödemeyi kaydet": düğme.
+    - "Tutar (TL)": `billing/forms.py` `PaymentForm`, `WaiverForm`, `RefundForm` alan etiketi; `billing/statement.html` para iadesi satırı.
+    - "Af" (onaylı, `AuditAction` etiketi): `billing/statement.html`, bölüm başlığı. "Kalem" ve "Gerekçe": `billing/forms.py` `WaiverForm` alan etiketleri. "Affet": düğme.
+    - "<Tür> · GG.AA.YYYY · <tutar> (ödenmemiş <tutar>)": `billing/views.py` `_charge_choices`, af formundaki kalem seçeneği.
+    - "Para iadesi" (onaylı, `AuditAction` etiketi): `billing/statement.html`, bölüm başlığı. "Bedel (GG.AA.YYYY, <tutar>): iade edilebilir <tutar>": satır metni. "Para iadesi yap": düğme.
+    - "Bedel iptali" (onaylı, `AuditAction` etiketi): `billing/statement.html`, bölüm başlığı. "Ödüncüyle bağı koparılmış bedeller; ödenmemiş kısmın tamamı iptal edilir.": not. "Bedel (GG.AA.YYYY, <tutar>): ödenmemiş <tutar>": satır metni. "Gerekçe": `CancelForm` alan etiketi. "İptal et": düğme.
+    - "Ödeme alındı: <tutar>", "Af kaydedildi: <tutar>", "Para iadesi kaydedildi: <tutar>", "Bedel iptal edildi: <tutar>": `billing/views.py`, başarı mesajları.
+    - "Ödeme tutarı 0,00 TL'den büyük olmalı": `billing/services.py` `record_payment`, `RuleViolation`.
+    - "Af tutarı 0,00 TL'den büyük olmalı" ve "Yalnız ceza ve bedel kalemleri affedilebilir": `billing/services.py` `waive`, `RuleViolation`.
+    - "Para iadesi tutarı 0,00 TL'den büyük olmalı": `billing/services.py` `refund`, `RuleViolation`.
+    - "Yalnız bedel kalemleri iptal edilebilir": `billing/services.py` `cancel_fee_manual`, `RuleViolation`.
+    - "Kalem bulunamadı": `billing/services.py` `get_entry`, `RuleViolation`.
+    - "Üye bulunamadı" (onaylı): `billing/views.py`, bilinmeyen üye no'da 404 nedeni.
+    - "5,00 TL" biçimi: `administration/templatetags/audit.py` `details_text`, denetim listesinde `amount_kurus` ve `fee_kurus` değerleri (kullanıcı kararı, yukarıda).

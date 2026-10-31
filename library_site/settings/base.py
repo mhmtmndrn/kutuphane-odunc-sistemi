@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "catalog",
     "members",
     "circulation",
+    "billing",
 ]
 
 AUTH_USER_MODEL = "accounts.StaffUser"
