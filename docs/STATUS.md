@@ -1,7 +1,7 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-11-01 (faz 5, PR #3 onaylandı)
-- **Aşama:** eng-process **faz 5**. `feature/foundation` (G01–G04, PR #1) ve `feature/catalog-members` (G05–G08, PR #2) birleşti (`main` = `b6bd69d`). Grup `feature/circulation` (G10 → G09 → G11 → G12; KL-39) **tamam**; PR #3 kullanıcı tarafından onaylandı (metinler dahil, 2026-11-01) ve merge commit'iyle `main`'e birleştirilir.
+- **Güncelleme:** 2026-11-01 (faz 5, `feature/notifications` başladı: G13)
+- **Aşama:** eng-process **faz 5**, grup `feature/notifications`: **G13** (geciken listesi ve hatırlatmalar) uygulanıyor. `feature/foundation` (G01–G04, PR #1), `feature/catalog-members` (G05–G08, PR #2) ve `feature/circulation` (G10 → G09 → G11 → G12, PR #3) birleşti; `main` = `d0c4555` (PR #3'ün merge commit'i). Aşağıdaki maddeler son birleşen grubun (`feature/circulation`) kanıtlarıdır.
   - **G10:** `d6ed61b`: `circulation/domain.py` (son tarih, gecikme günü, ceza, engeller, üye alanı yorumlama, nüsha durum makinesi) ve `Loan` modeli/migration'ı (kısmi benzersiz indeks, CHECK'ler, `copy_found_on`).
   - **G09:** `d1d16f4`: `billing` app'i: defter ve dağıtım tabloları, FIFO ödeme, af, otomatik ve elle iptal, para iadesi, döküm ekranı.
   - **G11:** `42ecf3a`: ödünç, iade, uzatma, pasifleştirme, geciken listesi servisi; ödünç ve iade ekranları, `scan.js`; üye ayrıntısına açık ödünçler, bakiye ve pasifleştirme formu.
@@ -10,7 +10,7 @@
   - Yerel Windows (R-15, Python 3.11.9, 2026-11-01): `python -m pytest -q` → 784 passed (eşzamanlılık testleri TC-103, TC-145…TC-148 dahil; geçici dosya sorunu yok); `-m slow` → 4 passed; `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı: `*/domain.py` %100, `accounts/permissions.py` ve `accounts/middleware.py` %100, `billing/services.py` %100, `circulation/services.py` %98, `members/services.py` %100, proje toplamı %99.
   - Test planında 224 TC "Geçti" (101 + bu grubun 123'ü).
   - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G09–G12 kutuları kanıtıyla işaretli; uygulama ayrıntıları ve onaylı metinler §11'de.
-- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`b6bd69d`), `feature/foundation` ve `feature/catalog-members` (kapandı), `feature/circulation` (PR #3 onaylandı, birleştiriliyor).
+- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`d0c4555`), `feature/foundation`, `feature/catalog-members` ve `feature/circulation` (kapandı), `feature/notifications` (G13, açık).
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
 - **Bulut oturumu:** Her grup için kullanıcı yeni bir bulut oturumu açar, Claude açılış istemini hazırlar (KL-38). Oturum kritik soruyu oturumun içinde sorar; planın vermediği metinleri seçip §11'de listeler ve PR'da onaya sunar (plan §11, 2026-11-01 kararları).
   - **Tarayıcı (önerilen):** claude.ai/code; repo `mhmtmndrn/kutuphane-odunc-sistemi`, ortam **Default** (Trusted ağ; pip için PyPI gerekir).
@@ -19,9 +19,8 @@
 
 ## Bu oturumda sorulan ve cevaplanan
 
-- **Açılıştan önce (2026-11-01):** Pasifleştirme koruması: anonimleştirilmiş üye "Anonimleştirilmiş üye pasifleştirilemez", pasif üye "Üye zaten pasif" ile reddedilir; `deactivated_on` (ADR-0045) üzerine yazılmaz; form yalnız aktif üyede görünür. §11'e yazıldı, G11'de testleriyle uygulandı.
-- **G09, TC-91:** Denetim listesi ayrıntıları ham JSON'du, TC "5,00 TL" bekliyordu. Kullanıcı önerilen seçeneği seçti: `details_text` filtresi `amount_kurus` ve `fee_kurus` değerlerini TL olarak gösterir; saklanan JSON değişmez. G03 ekranında küçük gösterim değişikliği; §11'e yazıldı, ADR gerekmedi.
-- Kritik karar (yeni bağımlılık, şema dışı değişiklik, plandan farklı arayüz, güvenlik ödünleşimi) çıkmadı; yeni ADR yok (sıradaki numara hâlâ 0052).
+- **G13 açılışından önce (2026-11-01, kullanıcı onayı):** Kritik karar [ADR-0052](decisions/0052-smtp-timeout.md): üretimde `EMAIL_TIMEOUT = 10` (`prod.py`); SMTP takılırsa waitress ya da zamanlayıcı iş parçacığı süresiz kilitlenmez, zaman aşımı FAILED olarak kaydedilip pencere içinde yeniden denenir. Yedi küçük karar (PRG ve ödünç başına mesaj, boş seçim, SMTP sırasında açık işlem yok, e-postada ödüncün ceza kopyaları, yalnız `SMTPException`/`OSError` FAILED, "Gecikenler" bağlantısı, geçersiz `--date`) plan §11'e yazıldı. Sıradaki ADR numarası 0053.
+- **Önceki grup (`feature/circulation`):** Pasifleştirme koruması (açılıştan önce) ve TC-91 için denetim listesinde TL gösterimi (oturumda) soruldu; ikisi de §11'de.
 
 ## G09–G12 sapmaları ve dikkat edilecekler (ayrıntı plan §11)
 
@@ -36,10 +35,10 @@
 
 ## Sıradaki adım
 
-1. **PR #3 tamam (2026-11-01):** Yerel Windows koşusu geçti, G09–G12 metinleri değişmeden onaylandı, birleştirme onaylandı. Sonraki dalın ilk commit'i `main`'in yeni hash'ini bu nota yazar.
-2. **Sonraki grup:** `feature/notifications`: **G13** (geciken listesi ekranı `/gecikenler/`, otomatik ve elle hatırlatmalar; `circulation.services.overdue_loans` hazır). G13'ün açık noktaları açılış isteminden önce kullanıcıya sorulur; istem yeni bir bulut oturumunda verilir.
+1. **PR #3 birleşti (2026-11-01):** `main` = `d0c4555`; `feature/circulation` kapandı.
+2. **Şu anki grup:** `feature/notifications`: **G13** (geciken listesi ekranı `/gecikenler/`, otomatik ve elle hatırlatmalar; `circulation.services.overdue_loans`, `administration.jobs.run_job` ve `Job.REMINDERS` hazır). Sıra: `docs:` (bu not, ADR-0052, kararlar) → `feat:` G13 (TDD, 20 TC) → `docs:` (test planı, plan kutusu, §11, STATUS) → PR (birleştirilmez).
    - Genel sıra: G01 → G12 (tamam), G13, G14…G16, G17…G18, G19.
-3. **Onay bekleyen küçük temizlik (önceki oturumdan):** Yerel `worktree-agent-a4c3b8e184eb5859a` dalı silinebilir; boş `.claude/worktrees/agent-a4c3b8e184eb5859a` klasörü elle silinir.
+3. **Küçük temizlik yapıldı (2026-11-01):** Yerel `worktree-agent-a4c3b8e184eb5859a` dalı ve `.claude/worktrees/agent-a4c3b8e184eb5859a` klasörü silindi.
 
 ## Açık sorular ve riskler
 
@@ -54,7 +53,7 @@
 
 - **SRS:** [docs/srs.md](srs.md), onaylı. 35 FR (24 Must, 11 Should), 7 Won't, 13 NFR, 35 AC.
 - **Tasarım:** [architecture.md](architecture.md) ve [data-design.md](data-design.md).
-- **ADR'ler:** [0001–0051](decisions/), hepsi kabul edildi; özet plan §3.
+- **ADR'ler:** [0001–0052](decisions/), hepsi kabul edildi; özet plan §3. Sıradaki numara 0053.
 - **Plan:** §3 kararlar ve KL-1…KL-46; §4 görevler G01–G19; §7 izlenebilirlik; §8 tutarlılık; §11 sapmalar ve metinler.
 - **Test planı:** [docs/test-plan.md](test-plan.md): 319 TC; 224'ü "Geçti". Elle TC'ler: TC-223, TC-225…TC-234, TC-319 (faz 6).
 - **Araştırma:** [ISBN meta veri](research/2026-10-31-isbn-meta-veri-apileri.md), [demo veri seti](research/2026-10-31-demo-kitap-veri-seti.md).

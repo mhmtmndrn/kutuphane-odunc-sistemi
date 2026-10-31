@@ -175,6 +175,9 @@ Kapsam içi FR sayısı 31 (23 Must, 8 Should), Won't sayısı 7.
 - [ADR-0049](../decisions/0049-lockout-response-429.md): Kilitli hesaba giriş denemesi 429, giriş şablonu ve kilit mesajıyla cevaplanır (faz 5, G02).
 - [ADR-0050](../decisions/0050-lockout-cooloff-not-reset.md): Kilitliyken yapılan denemeler kilit süresini uzatmaz (faz 5, G02).
 - [ADR-0051](../decisions/0051-axes-w006-silenced.md): django-axes `axes.W006` uyarısı gerekçe yorumuyla susturulur; kilit yalnız kullanıcı adına göre kalır (faz 5, PR #1 incelemesi).
+- [ADR-0052](../decisions/0052-smtp-timeout.md): Üretimde SMTP bağlantısına 10 saniyelik zaman aşımı (`EMAIL_TIMEOUT = 10`, `prod.py`); zaman aşımı FAILED kaydına düşer ve pencere içinde yeniden denenir (faz 5, G13 açılışı).
+
+Sıradaki ADR numarası: 0053.
 
 **Faz 4 küçük kararları (onaylandı 2026-10-31):**
 
@@ -669,7 +672,7 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
 ### Görev G13: Geciken listesi ve hatırlatmalar
 
 - **Gereksinimler:** FR-18, FR-19, FR-20, FR-03 (AC-03'ün 2. koşulu), NFR-05 (pencereler); AC-03, AC-18, AC-19, AC-20; ADR-0004, ADR-0007, ADR-0039; küçük kararlar 6 ve 7 (faz 3); KL-1, KL-11, KL-13, KL-23, KL-28.
-- **Dosyalar:** oluştur `notifications/{__init__,apps,models,domain,services,views,urls}.py`, migration (`reminder_log.due_on` ve data-design §2.6'daki `(loan_id, kind, due_on)` kısmi benzersiz indeksi dahil, ADR-0039), `notifications/templates/notifications/overdue.html`, `notifications/templates/notifications/email/{due_soon,overdue}_{subject,body}.txt`, `notifications/management/commands/send_reminders.py`, `notifications/tests/*`.
+- **Dosyalar:** oluştur `notifications/{__init__,apps,models,domain,services,views,urls}.py`, migration (`reminder_log.due_on` ve data-design §2.6'daki `(loan_id, kind, due_on)` kısmi benzersiz indeksi dahil, ADR-0039), `notifications/templates/notifications/overdue.html`, `notifications/templates/notifications/email/{due_soon,overdue}_{subject,body}.txt`, `notifications/management/commands/send_reminders.py`, `notifications/tests/*`; değiştir `library_site/settings/prod.py` (`EMAIL_TIMEOUT = 10`, ADR-0052).
 - **Arayüzler:**
   - domain `ReminderKind(TextChoices)`: `DUE_SOON`, `OVERDUE_1`, `MANUAL`.
   - domain `due_reminder_kind(due_on: date, today: date) -> ReminderKind | None`. `today ∈ [due−2, due]` ise DUE_SOON, `today ∈ [due+1, due+7]` ise OVERDUE_1 döner.
@@ -1346,3 +1349,14 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
     - "Bedel girin (bedel yoksa 0)": `circulation/views.py` `_mark`, ödünçteki nüshada boş bedel.
     - "Bedel negatif olamaz": `circulation/services.py` `_mark_loaned_copy`, `RuleViolation`.
     - "Bu durum değişikliği yapılamaz: <eski> → <yeni>" plandandır; durumlar Türkçe etiketleriyle yazılır (G10 maddesi).
+- **2026-11-01, G13 — açılıştan önce verilen kararlar (kullanıcı onayı 2026-11-01):**
+  - **Kritik:** [ADR-0052](../decisions/0052-smtp-timeout.md). `library_site/settings/prod.py`'ye `EMAIL_TIMEOUT = 10` (saniye) eklenir. Django'nun varsayılanı `None`'dır; SMTP yanıt vermezse elle hatırlatma bir waitress iş parçacığını, `send_reminders` zamanlayıcı iş parçacığını (KL-5) süresiz kilitler. Zaman aşımı `OSError` olarak FAILED kaydına düşer ve pencere içinde yeniden denenir (faz 3 küçük karar 7). Reddedilenler: 30 saniye, `LIBRARY_EMAIL_TIMEOUT` ortam değişkeni, varsayılanı korumak. G13'ün "Dosyalar" satırına `prod.py` eklendi; bir ayar testi değeri sabitler.
+  - **Küçük kararlar:**
+    1. Elle hatırlatma POST'u PRG ile `/gecikenler/`e döner (G11'deki `messages` geleneği). Seçilen her ödünç için bir mesaj gösterilir: "<üye no> <ad>, <kitap>: gönderildi | rıza yok | e-posta yok | gönderilemedi | gecikmemiş". `sent` başarı mesajıdır, diğerleri uyarıdır.
+    2. Boş seçimde liste 200 ile yeniden gösterilir ve "Hatırlatma göndermek için en az bir ödünç seçin" hata mesajı çıkar (uygulayıcı seçimi; G13 metin listesinde).
+    3. `send_manual_reminders`, `send_due_reminders` ile aynı akışı izler: yetki denetimi, e-posta, ardından `reminder_log` kendi işleminde yazılır. SMTP sırasında açık `transaction.atomic()` olmaz. Bu, §4.0'daki "her genel servis tek bir `transaction.atomic()`" kuralının bilinçli istisnasıdır (data-design §5, architecture §10).
+    4. E-postadaki `daily_fine` ve `fine_cap` ödüncün kopyalarından gelir (`Loan.daily_fine_kurus`, `fine_cap_kurus`; ADR-0023), güncel ayardan değil. `library_name` ayarlardan gelir.
+    5. Yalnız `smtplib.SMTPException` ve `OSError` FAILED olarak yakalanır; `error` = `f"{type(exc).__name__}: {exc}"[:500]`. Diğer istisnalar yükselir.
+    6. Base menüsüne ve ana sayfaya "Gecikenler" bağlantısı eklenir (G11'deki "Ödünç" ve "İade" gibi).
+    7. `send_reminders --date` geçersizse `CommandError("Geçersiz tarih: …")` verilir.
+  - Elle hatırlatma denetim kaydı yazmaz; kaydı `reminder_log.triggered_by` tutar. `AuditAction` 14 değerde kalır (KL-30).
