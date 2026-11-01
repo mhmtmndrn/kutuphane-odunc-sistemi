@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{# Django's csrf_failure renders this without a request: the staff menu stays empty. #}
+
+{% block title %}Form güvenlik kontrolünden geçemedi · Kütüphane{% endblock %}
+
+{% block content %}
+  <h1>Form güvenlik kontrolünden geçemedi</h1>
+  <p>Sayfayı yenileyip formu yeniden gönderin; sorun sürerse tarayıcıda çerezlerin açık olduğunu kontrol edin.</p>
+{% endblock %}

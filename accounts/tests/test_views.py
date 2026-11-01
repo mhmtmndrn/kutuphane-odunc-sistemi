@@ -12,7 +12,7 @@ import pytest
 from django.contrib.auth import SESSION_KEY
 from django.http import HttpRequest, HttpResponse
 from django.test import Client
-from django.urls import path
+from django.urls import include, path
 
 from accounts.models import Role
 from accounts.permissions import require_role, staff_view
@@ -210,9 +210,12 @@ def _clerk_view(request: HttpRequest) -> HttpResponse:
     return HttpResponse("staff")
 
 
+# The project URLs follow the test views: error templates extend base.html,
+# whose staff menu reverses names such as "administration:home" (B10).
 urlpatterns = [
     path("yonetici/<int:pk>/", _admin_view),
     path("personel-sayfasi/", _clerk_view),
+    path("", include("library_site.urls")),
 ]
 
 _THIS_URLCONF = __name__

@@ -1,0 +1,17 @@
+{# Standalone on purpose: server_error renders without a request or context, #}
+{# and a failing 500 page has no fallback, so no extends, url or static here. #}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sunucu hatası · Kütüphane</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; color: #222; }
+  </style>
+</head>
+<body>
+  <h1>Sunucu hatası</h1>
+  <p>Beklenmeyen bir hata oluştu. İşlemi yeniden deneyin; sorun sürerse yöneticiye bildirin.</p>
+</body>
+</html>
