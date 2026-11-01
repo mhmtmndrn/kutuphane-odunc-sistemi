@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Kütüphane ödünç sistemi: Caddy servisi (HTTPS ve statik dosyalar), WinSW 2.12.0.
+  C:\Kutuphane\winsw\library-caddy.xml olarak kopyalanır; yanındaki
+  WinSW-x64.exe library-caddy.exe adını alır (docs/kurulum.md).
+  __DOLDUR__ değerlerini kurulumda doldurun. C:\Kutuphane\caddy klasörü
+  yerel CA'nın özel anahtarını taşır; izni yalnız yöneticilere ve
+  library-svc hesabına açıktır (ADR-0062).
+-->
+<service>
+  <id>library-caddy</id>
+  <name>Kütüphane Caddy</name>
+  <description>Kütüphane ödünç sistemi: Caddy ile HTTPS ve statik dosyalar.</description>
+
+  <executable>C:\Kutuphane\caddy\caddy.exe</executable>
+  <arguments>run --config C:\Kutuphane\app\deploy\Caddyfile --adapter caddyfile</arguments>
+  <workingdirectory>C:\Kutuphane\caddy</workingdirectory>
+  <startmode>Automatic</startmode>
+  <depend>library-app</depend>
+
+  <serviceaccount>
+    <domain>.</domain>
+    <user>library-svc</user>
+    <password>__DOLDUR__</password>
+    <allowservicelogon>true</allowservicelogon>
+  </serviceaccount>
+
+  <onfailure action="restart" delay="10 sec"/>
+  <onfailure action="restart" delay="10 sec"/>
+  <onfailure action="restart" delay="10 sec"/>
+  <resetfailure>1 day</resetfailure>
+
+  <logpath>C:\Kutuphane\winsw\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>8</keepFiles>
+  </log>
+
+  <env name="LIBRARY_HOST" value="__DOLDUR__"/>
+  <env name="LIBRARY_BIND" value="__DOLDUR__"/>
+  <env name="LIBRARY_STATIC_ROOT" value="C:\Kutuphane\static"/>
+  <env name="XDG_DATA_HOME" value="C:\Kutuphane\caddy"/>
+  <env name="XDG_CONFIG_HOME" value="C:\Kutuphane\caddy"/>
+</service>

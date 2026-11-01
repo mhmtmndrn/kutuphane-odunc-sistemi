@@ -1,0 +1,31 @@
+# Kütüphane ödünç sistemi: Caddy yapılandırması (ADR-0005, ADR-0029).
+# Değerler ortam değişkenlerinden gelir: Windows'ta library-caddy.xml,
+# Linux'ta /etc/library/library.env (docs/kurulum.md).
+#
+# Erişim logu bilerek yoktur (ADR-0065): arama sorguları üye adı ve
+# telefonu taşır. Bu dosyaya log yönergesi eklemeyin.
+{
+	# Servis hesabı yönetici değildir; kök sertifikayı sunucunun güven
+	# deposuna yükleme denemesi yapılmaz. Kök sertifika personel
+	# bilgisayarlarına elle yüklenir (docs/kurulum.md).
+	skip_install_trust
+}
+
+{$LIBRARY_HOST} {
+	# Yalnız LAN arayüzünü dinle (NFR-08).
+	bind {$LIBRARY_BIND}
+
+	# Yerel CA ile sunucunun IP adresine sertifika (ADR-0061).
+	tls internal
+
+	# collectstatic çıktısı (ADR-0029).
+	handle_path /static/* {
+		root * {$LIBRARY_STATIC_ROOT}
+		file_server
+	}
+
+	# Diğer bütün yollar waitress'e (ADR-0012).
+	handle {
+		reverse_proxy 127.0.0.1:8000
+	}
+}

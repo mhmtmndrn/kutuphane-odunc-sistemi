@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Kütüphane ödünç sistemi: uygulama servisi (waitress), WinSW 2.12.0.
+  C:\Kutuphane\winsw\library-app.xml olarak kopyalanır; yanındaki
+  WinSW-x64.exe library-app.exe adını alır (docs/kurulum.md).
+  __DOLDUR__ değerlerini kurulumda doldurun. Dosya gizli değer taşır;
+  izni yalnız yöneticilere ve library-svc hesabına açıktır (ADR-0062).
+-->
+<service>
+  <id>library-app</id>
+  <name>Kütüphane uygulaması</name>
+  <description>Kütüphane ödünç sistemi: waitress uygulama sunucusu ve zamanlayıcı.</description>
+
+  <executable>C:\Kutuphane\venv\Scripts\waitress-serve.exe</executable>
+  <arguments>--listen=127.0.0.1:8000 --threads=8 library_site.wsgi:application</arguments>
+  <workingdirectory>C:\Kutuphane\app</workingdirectory>
+  <startmode>Automatic</startmode>
+
+  <serviceaccount>
+    <domain>.</domain>
+    <user>library-svc</user>
+    <password>__DOLDUR__</password>
+    <allowservicelogon>true</allowservicelogon>
+  </serviceaccount>
+
+  <onfailure action="restart" delay="10 sec"/>
+  <onfailure action="restart" delay="10 sec"/>
+  <onfailure action="restart" delay="10 sec"/>
+  <resetfailure>1 day</resetfailure>
+
+  <logpath>C:\Kutuphane\winsw\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>8</keepFiles>
+  </log>
+
+  <env name="DJANGO_SETTINGS_MODULE" value="library_site.settings.prod"/>
+  <env name="LIBRARY_SECRET_KEY" value="__DOLDUR__"/>
+  <env name="LIBRARY_DB_PATH" value="C:\Kutuphane\data\library.sqlite3"/>
+  <env name="LIBRARY_ALLOWED_HOSTS" value="__DOLDUR__"/>
+  <env name="LIBRARY_BACKUP_DIR" value="__DOLDUR__"/>
+  <env name="LIBRARY_EXPORT_DIR" value="__DOLDUR__"/>
+  <env name="LIBRARY_EXPORT_PASSPHRASE_FILE" value="C:\Kutuphane\secrets\export-passphrase.txt"/>
+  <env name="LIBRARY_EMAIL_HOST" value="__DOLDUR__"/>
+  <env name="LIBRARY_EMAIL_PORT" value="587"/>
+  <env name="LIBRARY_EMAIL_USER" value="__DOLDUR__"/>
+  <env name="LIBRARY_EMAIL_PASSWORD" value="__DOLDUR__"/>
+  <env name="LIBRARY_EMAIL_FROM" value="__DOLDUR__"/>
+  <env name="LIBRARY_SCHEDULER_ENABLED" value="1"/>
+  <env name="LIBRARY_STATIC_ROOT" value="C:\Kutuphane\static"/>
+</service>
