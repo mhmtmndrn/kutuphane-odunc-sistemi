@@ -129,9 +129,8 @@ Aşağıdaki sıra iki platformda aynıdır. Her adımın komutları platform b�
 **Kontrol:** Kurulumdan sonra şunları deneyin:
 
 - Bir personel bilgisayarında `https://<IP>/` giriş ekranını sertifika uyarısı olmadan açar; `http://<IP>/` HTTPS'e yönlendirilir.
-- `curl -k https://<IP>/static/css/app.css` → 200.
-- `https://<IP>/admin/` → 404 (yönetim paneli üretimde yoktur).
-- Sunucuda waitress yalnız `127.0.0.1:8000`'i, Caddy yalnız `<IP>:80` ve `<IP>:443`'ü dinler (platform bölümünde "Kontrol").
+- Sunucuda `https://<IP>/static/css/app.css` → 200, `https://<IP>/admin/` → 404 (yönetim paneli üretimde yoktur), `http://<IP>/` → 308 ile `https://<IP>/` (komutlar platform bölümünde, "Kontrol").
+- Ağa açık dinleme yalnız Caddy'nin `<IP>:80` ve `<IP>:443`'üdür. Waitress `127.0.0.1:8000`'i, Caddy'nin yönetim ucu `127.0.0.1:2019`'u dinler; ikisine yalnız sunucunun kendisinden erişilir (platform bölümünde "Kontrol").
 - LAN dışından (ör. cep telefonunun mobil verisiyle) sunucuya ulaşılamaz.
 - Ertesi sabah yöneticinin ana sayfasında yedek uyarısı yoktur ve yedek klasöründe `library-YYYYMMDD.sqlite3` dosyası vardır.
 
@@ -320,6 +319,12 @@ C:\Kutuphane\venv\Scripts\python.exe -c "import secrets; print(secrets.token_url
 
 İki XML'i Not Defteri ile açın ve bütün `__DOLDUR__` değerlerini doldurun: `library-svc` parolası (`<password>`), `LIBRARY_SECRET_KEY`, IP adresi (`LIBRARY_ALLOWED_HOSTS`, `LIBRARY_HOST`, `LIBRARY_BIND`), yedek ve dışa aktarma klasörleri ve SMTP değerleri. XML'de `&`, `<` ve `"` karakterleri `&amp;`, `&lt;` ve `&quot;` olarak yazılır. Dosyaları UTF-8 olarak kaydedin.
 
+Doldurulmamış değer kalmadığını kontrol edin; çıktı boş olmalıdır. Desen yalnız değerleri arar, XML'lerin baştaki açıklamasındaki `__DOLDUR__` sözcüğünü değil:
+
+```powershell
+Select-String 'value="__DOLDUR__"|>__DOLDUR__<' C:\Kutuphane\winsw\*.xml
+```
+
 ### Caddy
 
 Caddy 2.11.7'nin Windows arşivini indirin ve SHA-512 özetini yayımlanan `checksums.txt`'teki değerle karşılaştırın:
@@ -372,12 +377,17 @@ Profil "Ortak" (Public) görünüyorsa `Set-NetConnectionProfile -InterfaceAlias
 
 ### NTP
 
+Windows Saati servisi (`w32time`) etki alanına bağlı olmayan bilgisayarlarda çoğu zaman "El ile" başlar ve durur; durmuşken `w32tm` komutları "Hizmet başlatılmadı. (0x80070426)" hatası verir. Servisi otomatik başlatmaya alıp başlatın, sonra eşitleyin:
+
 ```powershell
-w32tm /query /status
+Set-Service w32time -StartupType Automatic
+Start-Service w32time
 w32tm /resync
+w32tm /query /status
+Get-TimeZone
 ```
 
-"Kaynak" (Source) satırı bir zaman sunucusu göstermelidir (ör. `time.windows.com`). "Local CMOS Clock" görünüyorsa Ayarlar → Saat ve dil → Tarih ve saat'te "Saati otomatik olarak ayarla"yı açın ve `w32tm /resync` çalıştırın. Saat dilimi (UTC+03:00) İstanbul olmalıdır.
+"Kaynak" (Source) satırı bir zaman sunucusu göstermelidir (ör. `time.windows.com`). "Local CMOS Clock" görünüyorsa Ayarlar → Saat ve dil → Tarih ve saat'te "Saati otomatik olarak ayarla"yı açın ve `w32tm /resync` çalıştırın. `Get-TimeZone` çıktısında `Id` `Turkey Standard Time`, `BaseUtcOffset` `03:00:00` olmalıdır.
 
 ### Komutların elle çalıştırılması
 
@@ -397,11 +407,23 @@ Ardından ör. `python manage.py backup_db`. Uygulama servisi açıkken geri yü
 
 ### Kontrol
 
+Dinlenen adresler (Caddy'nin bütün dinlemeleri ve 80, 443, 8000, 2019 portları):
+
 ```powershell
-netstat -ano | findstr ":8000 :443 :80"
+Get-NetTCPConnection -State Listen | Where-Object { $_.LocalPort -in 80, 443, 8000, 2019 -or $_.OwningProcess -eq (Get-Process caddy).Id } | Sort-Object LocalPort | Select-Object LocalAddress, LocalPort, OwningProcess
 ```
 
-`127.0.0.1:8000` ve `<IP>:443`, `<IP>:80` dışında bir dinleme adresi olmamalıdır.
+Tam olarak dört satır çıkmalıdır: `<IP>:80`, `<IP>:443`, `127.0.0.1:2019` (Caddy) ve `127.0.0.1:8000` (waitress). `0.0.0.0` ya da başka bir adres görünürse `LIBRARY_BIND` değerini kontrol edin.
+
+İstekler (Windows PowerShell'de `curl`, `Invoke-WebRequest`'in takma adıdır; `curl.exe` yazın):
+
+```powershell
+curl.exe -k -s -o NUL -w "%{http_code}\n" https://<IP>/static/css/app.css
+curl.exe -k -s -o NUL -w "%{http_code}\n" https://<IP>/admin/
+curl.exe -s -o NUL -w "%{http_code} %{redirect_url}\n" http://<IP>/
+```
+
+Beklenen: `200`, `404`, `308 https://<IP>/`.
 
 ## Linux
 
@@ -549,11 +571,23 @@ Ardından ör. `python manage.py backup_db`. Bu oturumda `pip install` çalışm
 
 ### Kontrol
 
+Dinlenen adresler (Caddy'nin bütün dinlemeleri ve 80, 443, 8000, 2019 portları):
+
 ```bash
-sudo ss -ltnp | grep -E ':(80|443|8000)\b'
+sudo ss -ltnp | grep -E ':(80|443|8000|2019)\b|"caddy"'
 ```
 
-`127.0.0.1:8000` ve `<IP>:443`, `<IP>:80` dışında bir dinleme adresi olmamalıdır.
+Tam olarak dört satır çıkmalıdır: `<IP>:80`, `<IP>:443`, `127.0.0.1:2019` (Caddy) ve `127.0.0.1:8000` (waitress). `0.0.0.0` ya da başka bir adres görünürse `LIBRARY_BIND` değerini kontrol edin.
+
+İstekler:
+
+```bash
+curl -k -s -o /dev/null -w "%{http_code}\n" https://<IP>/static/css/app.css
+curl -k -s -o /dev/null -w "%{http_code}\n" https://<IP>/admin/
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://<IP>/
+```
+
+Beklenen: `200`, `404`, `308 https://<IP>/`.
 
 ## Sorun giderme
 
