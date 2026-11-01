@@ -1661,7 +1661,7 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
 | TC-227 | Kapsam dışı | USB okuyucu yok |
 | TC-228 | Kapsam dışı | Etiket kağıdı ve okuyucu yok |
 | TC-229 | Kısmi | Yalnız dinlenen portlar; LAN dışı deneme kapsam dışı |
-| TC-230 | Kısmi | Bu makinede `root.crt` CurrentUser deposunda; personel bilgisayarı kapsam dışı |
+| TC-230 | Kısmi | `root.crt` bu makineye `docs/kurulum.md` "Personel bilgisayarları" adımlarıyla eklenir; ayrı personel bilgisayarı kapsam dışı |
 | TC-231 | Tam | Chrome, Edge, Firefox; 1366 px |
 | TC-232 | Kapsam dışı | Kurum SMTP hesabı yok |
 | TC-233 | Kapsam dışı | Çok günlük çalışma yok; telafi mantığı otomatik testlerde (ADR-0053) |

@@ -27,7 +27,7 @@
 - **Sürüm:** `main` üzerine annotated `v1.0.0-rc.1` etiketi atılır, kurulum bu etiketin ADR-0064 komutuyla üretilen zip'inden yapılır. Faz 6'da kod değişirse `v1.0.0-rc.2` atılır. `v1.0.0` yalnız faz 6 geçince atılır. Her etiketin push'u ayrıca onaylanır.
 - **TC kapsamı:**
   - Tam yapılır: TC-223, TC-225, TC-231 (Chrome, Edge, Firefox; Firefox kullanıcı tarafından kurulur), TC-234, TC-319.
-  - Kısmen yapılır: TC-229 (yalnız dinlenen portlar), TC-230 (Caddy `root.crt`'si CurrentUser deposuna eklenir; üç tarayıcıda uyarı çıkmadığı ve HTTP→HTTPS yönlendirmesi kontrol edilir). Eksik kısımları kapsam dışıdır.
+  - Kısmen yapılır: TC-229 (yalnız dinlenen portlar), TC-230 (Caddy `root.crt`'si bu makineye belgedeki `certutil -addstore -f Root` komutuyla eklenir; üç tarayıcıda uyarı çıkmadığı ve HTTP→HTTPS yönlendirmesi kontrol edilir). Eksik kısımları kapsam dışıdır.
   - Kapsam dışı (deneme projesi): TC-226, TC-227, TC-228, TC-232, TC-233. TC-233'ün telafi mantığı (ADR-0053) otomatik testlerle kapsanır.
 - **Durum işareti:** `docs/test-plan.md`'de "Geçti", "Kaldı" ya da "Kapsam dışı (deneme projesi)".
 - **Temizlik:** Servisler, `library-svc` hesabı, kök sertifika ve Firefox'un kalıp kalmayacağı faz 6 sonunda kullanıcıya sorulur.
