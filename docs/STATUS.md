@@ -1,8 +1,8 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-11-01 (faz 5, PR #6 yerelde doğrulandı ve onaylandı; ADR-0059 ile kitap dosyası commit'lendi)
-- **Aşama:** eng-process **faz 5**. PR #1…#5 (G01–G16) birleşti; `main` = `8256786`. `feature/seed-load` (**G17 → G18**, PR #6) tamam, yerel Windows doğrulaması geçti. Kullanıcı metinleri ve birleştirmeyi onayladı; bu commit'ten sonra `gh pr merge 6 --merge` ile birleşir.
-- **Sıradaki adım:** PR #6 birleşince `main`'i çek. Yerel `main`'deki eski STATUS stash'i ("local STATUS handoff before G17-G18 verification") bu notla geçersiz kaldı; kullanıcı onayıyla düşür. Sonra sıradaki grup **G19** (`feature/deploy`, dağıtım dosyaları ve kullanıcı belgeleri): açılış soruları sorulur, ardından bulut oturumu istemi hazırlanır.
+- **Güncelleme:** 2026-11-01 (faz 5, G19 bulut oturumu açıldı: `feature/deploy`, ADR-0060…0066)
+- **Aşama:** eng-process **faz 5**. PR #1…#6 (G01–G18) birleşti; `main` = `e1ba56a` (PR #6'nın merge commit'i). `feature/seed-load` kapandı. `feature/deploy` (**G19**, dağıtım dosyaları ve kullanıcı belgeleri) `main`'den açıldı; bulut oturumunda uygulanıyor.
+- **Sıradaki adım:** G19'un ilk `docs:` commit'i (açılış kararları ADR-0060…0066, plan G19 ve §11, TC-359…TC-366), ardından TDD ile dağıtım dosyaları ve belgeler. Kararlar plan §11 "2026-11-01, G19 — açılıştan önce verilen kararlar"da.
 - **Yerel doğrulama (2026-11-01, Windows 11, Python 3.11):** Bulutun sonuçları birebir tekrarlandı (1018 passed, `slow` 7, migration temiz, kapsam eşikleri çıkış 0). ADR-0056 gereği çekilen `seed/books_openlibrary.json`'un 300 kaydının 43'ü yabancı baskıydı. Kullanıcı kararıyla [ADR-0059](decisions/0059-demo-books-turkish-edition.md) yazıldı: kayıt eşleşen Türkçe baskıdan alınıyor, Open Library 5xx ve zaman aşımında yeniden deneniyor (TC-357, TC-358). Ardından: 300 kayıt, hepsi 978605 önekli `OL…M` baskı; `load_seed_data --profile demo` → "kitap=300, nüsha=592, üye=200, açık ödünç=150 (gecikmiş 10), kapalı ödünç=350", çıkış 0; `pytest -q` → 1022 passed; `-m slow` → 7; `makemigrations --check` temiz; kapsam `fetch_demo_books.py` %98, proje %97. Ayrıntı plan G17 kanıtı ve §11 "PR #6 yerel doğrulaması ve onaylar".
 - **`feature/seed-load` commit'leri** (her biri push edildi):
   - **`b6e4a30` (`docs:`):** STATUS'taki bayat satırlar (`main` = `8256786`), ADR-0056…0058, plan §11 "G17–G18 — açılıştan önce verilen kararlar", G17 ve G18 bölümleri, test planına TC-340…TC-356 ve §7 izlenebilirlik.
@@ -14,7 +14,7 @@
 - **Test planı:** 340 TC "Geçti" (308 + G17'nin 25'i + G18'in 7'si; TC-223 elle, faz 6).
 - **Plan:** [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G17 ve G18 kutuları kanıtıyla işaretli; açılış kararları, uygulama ayrıntıları ve onaya sunulan metinler §11'de ("G17–G18 — açılıştan önce verilen kararlar", "G17–G18 — uygulama ayrıntıları", "G17–G18 uygulayıcının seçtiği kullanıcıya görünen metinler").
 - **G14–G16 (PR #5, birleşti):** 972 test, yerel Windows doğrulaması geçti; ayrıntı plan §11 ve git geçmişinde.
-- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`8256786`), `feature/foundation`, `feature/catalog-members`, `feature/circulation`, `feature/notifications` ve `feature/operations` (kapandı), `feature/seed-load` (açık).
+- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`e1ba56a`), `feature/foundation`, `feature/catalog-members`, `feature/circulation`, `feature/notifications`, `feature/operations` ve `feature/seed-load` (kapandı), `feature/deploy` (açık).
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
 - **Bulut oturumu:** Her grup için kullanıcı yeni bir bulut oturumu açar, Claude açılış istemini hazırlar (KL-38). Oturum kritik soruyu oturumun içinde sorar; planın vermediği metinleri seçip §11'de listeler ve PR'da onaya sunar (plan §11, 2026-11-01 kararları).
   - **Tarayıcı (önerilen):** claude.ai/code; repo `mhmtmndrn/kutuphane-odunc-sistemi`, ortam **Default** (Trusted ağ; pip için PyPI gerekir).
@@ -62,10 +62,9 @@
 
 ## Sıradaki adım
 
-1. **Birleştirme:** PR #6 bu commit'ten sonra `gh pr merge 6 --merge` ile birleşir (kullanıcı onayı 2026-11-01). Yerel doğrulama, kitap dosyası ve metin onayı tamam.
-2. **`main`'i çek:** Yerel `main`'deki eski STATUS stash'ini ("local STATUS handoff before G17-G18 verification") kullanıcı onayıyla düşür; bu not onu geçersiz kılar.
-3. **Sonraki grup:** `feature/deploy` (**G19**: dağıtım dosyaları ve kullanıcı belgeleri; README'yi genişletir). TC-234 (tohum üyelerinden örneklem) G19'da. Açılış soruları sorulur, sonra bulut oturumu istemi hazırlanır. İsteğe bağlı: faz 6'dan önce demo verisiyle `python -m waitress` + `scripts/loadtest.py --duration 10` yerelde koşulabilir.
-   - Genel sıra: G01 → G18 birleşti (G18 PR #6 ile), G19.
+1. **G19 (bu oturum, `feature/deploy`):** İlk `docs:` commit'inden sonra TDD ile `tests/test_deploy_files.py` (TC-359…TC-366), dağıtım dosyaları (`deploy/`), `docs/kurulum.md`, `docs/kullanim-kilavuzu.md` ve README. Sonra handoff `docs:` ve `main`'e PR (birleştirilmez).
+   - Genel sıra: G01 → G18 birleşti (G18 PR #6 ile, `e1ba56a`), G19 sürüyor.
+2. **PR #6 sonrası:** PR #6 birleşti (`e1ba56a`). Yerel `main`'deki eski STATUS stash'i ("local STATUS handoff before G17-G18 verification") geçersizdir; kullanıcı onayıyla düşürülür.
 
 ## Açık sorular ve riskler
 
@@ -80,9 +79,9 @@
 
 - **SRS:** [docs/srs.md](srs.md), onaylı. 35 FR (24 Must, 11 Should), 7 Won't, 13 NFR, 35 AC.
 - **Tasarım:** [architecture.md](architecture.md) ve [data-design.md](data-design.md).
-- **ADR'ler:** [0001–0058](decisions/), hepsi kabul edildi; özet plan §3. Sıradaki numara 0059.
+- **ADR'ler:** [0001–0066](decisions/), hepsi kabul edildi; özet plan §3. Sıradaki numara 0067.
 - **Plan:** §3 kararlar ve KL-1…KL-46; §4 görevler G01–G19; §7 izlenebilirlik; §8 tutarlılık; §11 sapmalar ve metinler.
-- **Test planı:** [docs/test-plan.md](test-plan.md): 356 TC (TC-320…TC-339 G14–G16, TC-340…TC-356 G17–G18 açılışında eklendi); 338'i "Geçti". Elle TC'ler: TC-223, TC-225…TC-234, TC-319 (faz 6).
+- **Test planı:** [docs/test-plan.md](test-plan.md): 366 TC (TC-320…TC-339 G14–G16, TC-340…TC-356 G17–G18 açılışında, TC-357…TC-358 ADR-0059 ile, TC-359…TC-366 G19 açılışında eklendi); 340'ı "Geçti". Elle TC'ler: TC-223, TC-225…TC-234, TC-319 (faz 6).
 - **Araştırma:** [ISBN meta veri](research/2026-10-31-isbn-meta-veri-apileri.md), [demo veri seti](research/2026-10-31-demo-kitap-veri-seti.md).
 
 ## Geçmiş (özet)
