@@ -1,8 +1,8 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-11-01 (faz 5 bitti: G19 yerel doğrulaması geçti, PR #7 onaylandı ve birleştiriliyor)
-- **Aşama:** eng-process **faz 5 tamam**. PR #1…#7 (G01–G19) birleşti; PR #7 (https://github.com/mhmtmndrn/kutuphane-odunc-sistemi/pull/7) bu commit'ten hemen sonra `main`'e birleştirildi (yeni `main` hash'i bir sonraki dalın ilk `docs:` commit'inde yazılır).
-- **Sıradaki adım:** Faz 6: test ortamına kurulum (`docs/kurulum.md`) ve elle TC'ler (TC-223, TC-225…TC-234, TC-319); sürüm etiketi (`vX.Y.Z`, küçük karar 9) kullanıcı onayıyla. Faz 6'nın açılış soruları (ortam, kim kurar, hangi platform önce) yeni bir oturumda sorulur.
+- **Güncelleme:** 2026-11-01 (faz 6 başladı: açılış kararları ADR-0067'de; proje artık bir deneme projesi)
+- **Aşama:** eng-process **faz 6 (doğrulama)**. Faz 5 tamam: PR #1…#7 (G01–G19) birleşti, `main` = `b3cc2a1`. Dal `feature/phase6-verification`. Kalan: faz 6 ve faz 7 (kapanış).
+- **Sıradaki adım:** `v1.0.0-rc.1` etiketi ve zip'i (push ayrıca onaylanır); ardından kullanıcı `docs/kurulum.md` Windows yolunu Claude'un kontrol listesiyle bu makinede `127.0.0.2` adresine kurar (ADR-0067). Elle TC'lerin kapsamı plan §12.1'de. Kullanıcı Firefox'u kurar (TC-231).
 - **Yerel doğrulama (2026-11-01, Windows 11, Python 3.11.9):** 1042 passed, `slow` 7, migration temiz, dört kapsam eşiği çıkış 0, proje %97. Caddy 2.11.7 Windows ikilisi (SHA-512 `checksums.txt` ve ADR-0063 ile aynı): `caddy validate` geçerli, LF Caddyfile `fmt` farksız; `127.0.0.2`'de waitress + Caddy: `/static/css/app.css` 200, `/admin/` 404, `/giris/` 200, HTTP 308, IP SAN'lı sertifika `root.crt` ile doğrulandı, arama sorgusu Caddy loguna düşmedi. Servis kaydı yapılmadı. Dikkat: Git for Windows `curl`'ü (Schannel) yerel CA'da `--cacert` ile 000 döner; `--ssl-no-revoke` ya da `-k` gerekir. Metinler ve birleştirme onaylandı (plan §11 "PR #7 yerel doğrulaması ve onaylar").
 - **`feature/deploy` commit'leri** (her biri push edildi):
   - **`7c69b7b` (`docs:`):** STATUS'taki bayat satırlar (`main` = `e1ba56a`), ADR-0060…0066, plan G19 ve §2, §3, §5, §7, §11 ("G19 — açılıştan önce verilen kararlar"), test planına TC-359…TC-366.
@@ -14,7 +14,7 @@
 - **Plan:** [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G19 kutusu kanıtıyla işaretli; kararlar, uygulama ayrıntıları ve onaya sunulan metinler §11'de ("G19 — açılıştan önce verilen kararlar", "G19 — uygulama ayrıntıları", "G19 uygulayıcının seçtiği kullanıcıya görünen metinler").
 - **G17–G18 (PR #6, birleşti `e1ba56a`):** 1022 test, yerel Windows doğrulaması geçti, ADR-0059; ayrıntı plan §11 ve git geçmişinde.
 - **G14–G16 (PR #5, birleşti):** 972 test, yerel Windows doğrulaması geçti; ayrıntı plan §11 ve git geçmişinde.
-- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`e1ba56a`), `feature/foundation`, `feature/catalog-members`, `feature/circulation`, `feature/notifications`, `feature/operations` ve `feature/seed-load` (kapandı), `feature/deploy` (kapandı).
+- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`b3cc2a1`), `feature/phase6-verification` (açık), `feature/foundation`, `feature/catalog-members`, `feature/circulation`, `feature/notifications`, `feature/operations` ve `feature/seed-load` (kapandı), `feature/deploy` (kapandı).
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
 - **Bulut oturumu:** Her grup için kullanıcı yeni bir bulut oturumu açar, Claude açılış istemini hazırlar (KL-38). Oturum kritik soruyu oturumun içinde sorar; planın vermediği metinleri seçip §11'de listeler ve PR'da onaya sunar (plan §11, 2026-11-01 kararları).
   - **Tarayıcı (önerilen):** claude.ai/code; repo `mhmtmndrn/kutuphane-odunc-sistemi`, ortam **Default** (Trusted ağ; pip için PyPI gerekir).
@@ -23,6 +23,7 @@
 
 ## Bu oturumda sorulan ve cevaplanan
 
+- **Faz 6 açılışı (2026-11-01, kullanıcı onayı):** Proje bir deneme projesidir; gerçek bir kütüphanede kullanılmayacak, kurulmuş temel gereksiz yere değiştirilmez. [ADR-0067](decisions/0067-phase6-trial-project-single-windows-machine.md): bu Windows 11 makinesi, yalnız Windows, `127.0.0.2`, kurulumu kullanıcı yapar, `v1.0.0-rc.1` → `v1.0.0`, Firefox kurulur; TC-226/227/228/232/233 kapsam dışı, TC-229/230 kısmi. On küçük karar plan §12'de. Sıradaki ADR 0068.
 - **G19 açılışından önce (2026-11-01, kullanıcı onayı):** Yedi kritik karar: [ADR-0060](decisions/0060-install-doc-common-body-two-platforms.md) (kurulum belgesinin yapısı), [ADR-0061](decisions/0061-access-by-static-ip.md) (sabit IP), [ADR-0062](decisions/0062-service-account.md) (servis hesabı), [ADR-0063](decisions/0063-tool-versions-winsw-caddy.md) (WinSW 2.12.0, Caddy 2.11.7), [ADR-0064](decisions/0064-release-zip-and-update-procedure.md) (sürüm zip'i ve güncelleme), [ADR-0065](decisions/0065-caddy-no-access-log.md) (erişim logu yok), [ADR-0066](decisions/0066-deploy-files-consistency-tests.md) (tutarlılık testleri). On iki küçük karar ve yerel doğrulama kararı plan §11'de. Oturum içinde yeni kritik soru çıkmadı; sıradaki ADR 0067.
 - **G17–G18 açılışından önce (2026-11-01, kullanıcı onayı):** Üç kritik karar: [ADR-0056](decisions/0056-open-library-fetch-network-blocked.md) (Open Library'ye erişilemezse JSON olmadan devam; gerçek dosya yerel doğrulamada), [ADR-0057](decisions/0057-seed-phone-numbers.md) (tohum telefonları `000 ddd dd dd`) ve [ADR-0058](decisions/0058-loadtest-seed-only-guard.md) (yük betiği `@example.invalid` dışı e-postalı üye görürse istek atmadan çıkış 1). On iki küçük karar (README, bugüne göre tarihler, demo ve yük profilleri, domain fonksiyonları ve tek işlem, sentetik kitap, audit yok ve Allocation, çıktı, rıza, betiğin yeniden seçimi, `scripts/` paketi, duman testi) plan §11'de. Yeni davranışların testleri TC-340…TC-356. Sıradaki ADR numarası 0060 (ADR-0059 yerel doğrulamada yazıldı).
 - **G14–G16 açılışından önce (2026-11-01, kullanıcı onayı):** Üç kritik karar: [ADR-0053](decisions/0053-hourly-catch-up.md) (açılışa ek saatlik telafi; `misfire_grace_time=3600`, `coalesce=True`), [ADR-0054](decisions/0054-restore-keeps-pre-restore-copy.md) (geri yükleme mevcut veritabanını `<db>.pre-restore-YYYYMMDD-HHMMSS` olarak bırakır) ve [ADR-0055](decisions/0055-reminder-log-error-cleared-on-unlink.md) (bağ koparılırken `reminder_log.error` NULL). Dokuz küçük karar (komut argümanları ve geçersiz tarih, magic bayt, migration yok, `.tmp` + `os.replace`, tek işçili zamanlayıcı, komut sarmalayıcı ve stderr `LOGGING`, "Saklama" bağlantısı, `Member.display_name`, ilk istisnada durma) plan §11'de.
@@ -72,11 +73,10 @@
 
 ## Sıradaki adım
 
-1. **Yerel Windows doğrulaması (PR #7):** `main`'i ve `feature/deploy`'u çek; Python 3.11 ile `python -m pytest -q` (1042), `-m slow`, `makemigrations --check`, kapsam eşikleri. Plan §11 yerel doğrulama kararı: resmî taşınabilir Caddy 2.11.7 Windows ikilisi scratchpad'e indirilir; `caddy validate --config deploy\Caddyfile --adapter caddyfile` ve geçici portlarda waitress + Caddy ile `/static/css/app.css` → 200, `/admin/` → 404. Servis kaydı ve sisteme kurulum yapılmaz.
-2. **Onaylar:** Plan §11 "G19 uygulayıcının seçtiği kullanıcıya görünen metinler" ve `docs/kurulum.md`, `docs/kullanim-kilavuzu.md` metinleri; ardından PR #7'nin birleştirilmesi.
-3. **Faz 6:** Test ortamına `docs/kurulum.md` ile tam kurulum (ilk sürüm etiketi `vX.Y.Z` kullanıcı onayıyla atılır, ADR-0064); elle TC'ler TC-223, TC-225…TC-234, TC-319.
-   - Genel sıra: G01 → G18 birleşti, G19 PR #7'de.
-4. **Yerel `main` stash'i:** Eski STATUS stash'i ("local STATUS handoff before G17-G18 verification") geçersizdir; kullanıcı onayıyla düşürülür.
+1. **Etiket:** `main` (`b3cc2a1`) üzerine annotated `v1.0.0-rc.1`; `git archive` zip'i (ADR-0064). Push kullanıcı onayıyla.
+2. **Kurulum:** Kullanıcı `docs/kurulum.md` Windows yolunu izler; adres `127.0.0.2`, klasörler `C:\Kutuphane\{app,backups,exports}`; DHCP, güvenlik duvarı ve kısayol adımları atlanır (ADR-0067). Takılınan adımlar plan §12.2'ye.
+3. **Elle TC'ler:** TC-223, TC-225, TC-231, TC-234, TC-319 tam; TC-229, TC-230 kısmi (plan §12.1).
+4. **Doğrulama:** Tam test koşusu, kabul tablosu (plan §12.3), `spec-reviewer`, bulgular kullanıcıya; ardından `v1.0.0` ve temizlik sorusu; faz 7.
 
 ## Açık sorular ve riskler
 

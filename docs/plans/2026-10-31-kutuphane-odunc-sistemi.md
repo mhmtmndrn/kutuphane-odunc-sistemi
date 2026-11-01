@@ -2,7 +2,7 @@
 
 - **Tarih:** 2026-10-31
 - **İz:** Tam
-- **Durum:** Faz 4 tamamlandı, onay kapısı geçildi. Kararlar alındı (ADR-0026…0048; küçük karar listesi onaylandı, 2026-10-31). Görevler, risk kaydı, test planı (319 TC), izlenebilirlik ve tutarlılık kontrolü yazıldı; inşa kontrolü ayıklandı (§8.1). Plan, test planı ve KL-1…KL-46 onaylandı (2026-10-31); faz 5 başladı: G01 tamam (2026-10-31); G02 kararları ADR-0049, ADR-0050 ve §11'de.
+- **Durum:** Faz 4 tamamlandı, onay kapısı geçildi. Kararlar alındı (ADR-0026…0048; küçük karar listesi onaylandı, 2026-10-31). Görevler, risk kaydı, test planı (319 TC), izlenebilirlik ve tutarlılık kontrolü yazıldı; inşa kontrolü ayıklandı (§8.1). Plan, test planı ve KL-1…KL-46 onaylandı (2026-10-31); faz 5 başladı: G01 tamam (2026-10-31); G02 kararları ADR-0049, ADR-0050 ve §11'de. Faz 5 tamamlandı (G01–G19, PR #1…#7, 2026-11-01). Faz 6 başladı (2026-11-01): ADR-0067, §12.
 
 ## 1. Süreç uyarlaması
 
@@ -29,6 +29,7 @@
 | docs/decisions/0056…0058 | Faz 5'te, G17–G18 açılışında yazıldı (2026-11-01): Open Library çekimi, tohum telefonları, yük betiği koruması |
 | docs/decisions/0059 | Faz 5'te, PR #6'nın yerel doğrulamasında yazıldı (2026-11-01): demo kitap kaydı eşleşen Türkçe baskıdan alınır; ADR-0033'ün durumu güncellendi |
 | docs/decisions/0060…0066 | Faz 5'te, G19 açılışında yazıldı (2026-11-01): kurulum belgesinin yapısı, sabit IP, servis hesabı, araç sürümleri, sürüm arşivi ve güncelleme, Caddy erişim logu yok, dağıtım dosyalarının testleri |
+| docs/decisions/0067 | Faz 6 açılışında yazıldı (2026-11-01): deneme projesi, tek Windows makinesi, `127.0.0.2`, kapsam dışı elle TC'ler, `v1.0.0-rc.1` etiketi |
 | docs/architecture.md, docs/data-design.md | Faz 4 tutarlılık düzeltmeleri (§8) |
 | docs/test-plan.md | Faz 4'te oluşturuldu (2026-10-31): 319 TC, test taslağından revize edildi; G14–G16 açılışında TC-320…TC-339, G17–G18 açılışında TC-340…TC-356, PR #6 yerel doğrulamasında TC-357…TC-358, G19 açılışında TC-359…TC-366 eklendi (2026-11-01) |
 | docs/data-design.md | I6'ya ADR-0018 istisnası yazıldı (§8 T-02) |
@@ -195,7 +196,9 @@ Kapsam içi FR sayısı 31 (23 Must, 8 Should), Won't sayısı 7.
 - [ADR-0065](../decisions/0065-caddy-no-access-log.md): Caddy erişim logu tutulmaz; Caddyfile'da `log` yönergesi yoktur (NFR-08; faz 5, G19 açılışı).
 - [ADR-0066](../decisions/0066-deploy-files-consistency-tests.md): Dağıtım dosyaları ve kullanıcı belgeleri `tests/test_deploy_files.py`'deki tutarlılık testleriyle denetlenir; elle TC'ler de kalır (faz 5, G19 açılışı).
 
-Sıradaki ADR numarası: 0067.
+- [ADR-0067](../decisions/0067-phase6-trial-project-single-windows-machine.md): Faz 6 deneme projesi olarak bu Windows 11 makinesinde, yalnız Windows, `127.0.0.2` adresiyle yapılır; kurulumu kullanıcı belgeyi izleyerek yapar; kurulum `v1.0.0-rc.1` zip'inden; TC-226, TC-227, TC-228, TC-232, TC-233 kapsam dışı, TC-229 ve TC-230 kısmi (faz 6 açılışı).
+
+Sıradaki ADR numarası: 0068.
 
 **Faz 4 küçük kararları (onaylandı 2026-10-31):**
 
@@ -1632,3 +1635,43 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - **Yerel doğrulama:** Plan §11'deki karar uyarınca yapıldı; kanıt G19'da. Caddy indirme komutunu auto mode sınıflandırıcısı reddettiği için hazırlanan betiği kullanıcı `!` önekiyle çalıştırdı; HTTPS kontrolleri Schannel `curl`'ün iptal denetimi yüzünden yeniden (`--ssl-no-revoke` ve Python `ssl`) çalıştırıldı.
   - **Metinler:** "G19 uygulayıcının seçtiği kullanıcıya görünen metinler" listesinin tamamı onaylandı.
   - **Birleştirme:** PR #7'nin `main`'e birleştirilmesi onaylandı.
+
+## 12. Faz 6 doğrulama
+
+- **Başlangıç:** 2026-11-01. Dal `feature/phase6-verification`. Ortam ve kapsam [ADR-0067](../decisions/0067-phase6-trial-project-single-windows-machine.md).
+- **Faz 6 küçük kararları (onaylandı 2026-11-01):**
+  1. Dal `feature/phase6-verification`; PR ile `main`'e birleşir.
+  2. Ortam ve kapsam kararları tek ADR'de (ADR-0067).
+  3. Faz 6 kaydı ayrı plan dosyası yerine bu bölümde; kabul tablosu burada.
+  4. TC durumları `docs/test-plan.md`'de "Geçti", "Kaldı" ya da "Kapsam dışı (deneme projesi)".
+  5. Yedek ve dışa aktarma klasörleri `C:\Kutuphaneackups` ve `C:\Kutuphane\exports` (makinede yalnız C: var); uygulama `C:\Kutuphanepp`.
+  6. `main` üzerine annotated `v1.0.0-rc.1`; push ayrıca onaylanır; zip ADR-0064 komutuyla.
+  7. Kurulumda takılınan her adım §12.2'de bulgu olarak kaydedilir; belge düzeltmesi `docs:` commit'iyle, kod değişirse `v1.0.0-rc.2`.
+  8. TC-223 `docs/kurulum.md` "Yük testi" notuna göre ayrı bir test veritabanında, `--profile load` ile; `127.0.0.1` `LIBRARY_ALLOWED_HOSTS`'a geçici eklenir, sonra kaldırılır.
+  9. Servisler, `library-svc`, kök sertifika ve Firefox'un temizliği faz 6 sonunda sorulur.
+  10. `spec-reviewer` elle TC'lerden sonra çalıştırılır.
+
+### 12.1 Elle TC'ler
+
+| TC | Kapsam | Not |
+|---|---|---|
+| TC-223 | Tam | Yük testi, ayrı test veritabanı (küçük karar 8) |
+| TC-225 | Tam | Geri yükleme süresi |
+| TC-226 | Kapsam dışı | İkinci bilgisayar yok |
+| TC-227 | Kapsam dışı | USB okuyucu yok |
+| TC-228 | Kapsam dışı | Etiket kağıdı ve okuyucu yok |
+| TC-229 | Kısmi | Yalnız dinlenen portlar; LAN dışı deneme kapsam dışı |
+| TC-230 | Kısmi | Bu makinede `root.crt` CurrentUser deposunda; personel bilgisayarı kapsam dışı |
+| TC-231 | Tam | Chrome, Edge, Firefox; 1366 px |
+| TC-232 | Kapsam dışı | Kurum SMTP hesabı yok |
+| TC-233 | Kapsam dışı | Çok günlük çalışma yok; telafi mantığı otomatik testlerde (ADR-0053) |
+| TC-234 | Tam | Tohum üye örneklemi |
+| TC-319 | Tam | Kılavuz ve README okuması |
+
+### 12.2 Kurulum bulguları
+
+Henüz yok.
+
+### 12.3 Kabul tablosu
+
+Elle TC'ler ve tam test koşusu bittikten sonra doldurulur.
