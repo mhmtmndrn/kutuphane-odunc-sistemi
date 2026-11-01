@@ -1,8 +1,9 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-11-01 (faz 5, G19 bulut oturumu bitti; PR #7 açık, birleştirilmedi)
-- **Aşama:** eng-process **faz 5**. PR #1…#6 (G01–G18) birleşti; `main` = `e1ba56a`. `feature/deploy` (**G19**, dağıtım dosyaları ve kullanıcı belgeleri) tamam; PR #7 (https://github.com/mhmtmndrn/kutuphane-odunc-sistemi/pull/7) açıldı, birleştirilmedi.
-- **Sıradaki adım:** PR #7'nin yerel Windows doğrulaması (Python 3.11 ile testler; taşınabilir Caddy ikilisiyle `caddy validate` ve geçici portlarda waitress + Caddy sınaması, servis kaydı yok), onaya sunulan metinlerin ve birleştirmenin onayı. Sonra faz 6 (kurulum ve elle TC'ler).
+- **Güncelleme:** 2026-11-01 (faz 5 bitti: G19 yerel doğrulaması geçti, PR #7 onaylandı ve birleştiriliyor)
+- **Aşama:** eng-process **faz 5 tamam**. PR #1…#7 (G01–G19) birleşti; PR #7 (https://github.com/mhmtmndrn/kutuphane-odunc-sistemi/pull/7) bu commit'ten hemen sonra `main`'e birleştirildi (yeni `main` hash'i bir sonraki dalın ilk `docs:` commit'inde yazılır).
+- **Sıradaki adım:** Faz 6: test ortamına kurulum (`docs/kurulum.md`) ve elle TC'ler (TC-223, TC-225…TC-234, TC-319); sürüm etiketi (`vX.Y.Z`, küçük karar 9) kullanıcı onayıyla. Faz 6'nın açılış soruları (ortam, kim kurar, hangi platform önce) yeni bir oturumda sorulur.
+- **Yerel doğrulama (2026-11-01, Windows 11, Python 3.11.9):** 1042 passed, `slow` 7, migration temiz, dört kapsam eşiği çıkış 0, proje %97. Caddy 2.11.7 Windows ikilisi (SHA-512 `checksums.txt` ve ADR-0063 ile aynı): `caddy validate` geçerli, LF Caddyfile `fmt` farksız; `127.0.0.2`'de waitress + Caddy: `/static/css/app.css` 200, `/admin/` 404, `/giris/` 200, HTTP 308, IP SAN'lı sertifika `root.crt` ile doğrulandı, arama sorgusu Caddy loguna düşmedi. Servis kaydı yapılmadı. Dikkat: Git for Windows `curl`'ü (Schannel) yerel CA'da `--cacert` ile 000 döner; `--ssl-no-revoke` ya da `-k` gerekir. Metinler ve birleştirme onaylandı (plan §11 "PR #7 yerel doğrulaması ve onaylar").
 - **`feature/deploy` commit'leri** (her biri push edildi):
   - **`7c69b7b` (`docs:`):** STATUS'taki bayat satırlar (`main` = `e1ba56a`), ADR-0060…0066, plan G19 ve §2, §3, §5, §7, §11 ("G19 — açılıştan önce verilen kararlar"), test planına TC-359…TC-366.
   - **`a97ef80` (`feat:` G19):** `deploy/Caddyfile`, `deploy/winsw/library-{app,caddy}.xml` (WinSW 2.12.0), `deploy/systemd/library-{app,caddy}.service`, `deploy/library.env.example`, `docs/kurulum.md` (ortak gövde + Windows ve Linux), `docs/kullanim-kilavuzu.md`, `README.md` ("Belgeler", "Geliştirme ortamı", "Testler"), `tests/test_deploy_files.py` (TC-359…TC-366; TDD, önce 19 failed).
@@ -13,7 +14,7 @@
 - **Plan:** [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G19 kutusu kanıtıyla işaretli; kararlar, uygulama ayrıntıları ve onaya sunulan metinler §11'de ("G19 — açılıştan önce verilen kararlar", "G19 — uygulama ayrıntıları", "G19 uygulayıcının seçtiği kullanıcıya görünen metinler").
 - **G17–G18 (PR #6, birleşti `e1ba56a`):** 1022 test, yerel Windows doğrulaması geçti, ADR-0059; ayrıntı plan §11 ve git geçmişinde.
 - **G14–G16 (PR #5, birleşti):** 972 test, yerel Windows doğrulaması geçti; ayrıntı plan §11 ve git geçmişinde.
-- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`e1ba56a`), `feature/foundation`, `feature/catalog-members`, `feature/circulation`, `feature/notifications`, `feature/operations` ve `feature/seed-load` (kapandı), `feature/deploy` (açık).
+- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`e1ba56a`), `feature/foundation`, `feature/catalog-members`, `feature/circulation`, `feature/notifications`, `feature/operations` ve `feature/seed-load` (kapandı), `feature/deploy` (kapandı).
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
 - **Bulut oturumu:** Her grup için kullanıcı yeni bir bulut oturumu açar, Claude açılış istemini hazırlar (KL-38). Oturum kritik soruyu oturumun içinde sorar; planın vermediği metinleri seçip §11'de listeler ve PR'da onaya sunar (plan §11, 2026-11-01 kararları).
   - **Tarayıcı (önerilen):** claude.ai/code; repo `mhmtmndrn/kutuphane-odunc-sistemi`, ortam **Default** (Trusted ağ; pip için PyPI gerekir).
