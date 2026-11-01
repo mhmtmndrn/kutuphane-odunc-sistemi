@@ -1,0 +1,2112 @@
+{
+ "_meta": {
+  "source": "Open Library (https://openlibrary.org), arama API'si",
+  "query": "language:tur isbn:978605*",
+  "fetched_on": "2026-11-01",
+  "license": "Open Library kataloğu verisi CC0 (kamu malı) olarak sunulur; yalnız bibliyografik alanlar (başlık, yazar, yıl, ISBN) ve OL kimliği alındı, kapak alınmadı.",
+  "filter_version": 2,
+  "count": 300
+ },
+ "books": [
+  {
+   "ol_id": "OL35382683M",
+   "title": "Atomik Alışkanlıklar",
+   "author": "James Clear",
+   "year": 2016,
+   "isbn13": "9786052998380"
+  },
+  {
+   "ol_id": "OL35366895M",
+   "title": "Bizimle başladı bizimle bitti",
+   "author": "Colleen Hoover",
+   "year": 2012,
+   "isbn13": "9786051739939"
+  },
+  {
+   "ol_id": "OL35406748M",
+   "title": "Ustalık Gerektiren Kafaya Takmama Sanatı",
+   "author": "Mark Manson",
+   "year": 2016,
+   "isbn13": "9786059397254"
+  },
+  {
+   "ol_id": "OL35406254M",
+   "title": "Dönüsüm",
+   "author": "Franz Kafka",
+   "year": 1915,
+   "isbn13": "9786059328166"
+  },
+  {
+   "ol_id": "OL62528538M",
+   "title": "Küçük Prens",
+   "author": "Antoine de Saint-Exupéry",
+   "year": 1943,
+   "isbn13": "9786052448496"
+  },
+  {
+   "ol_id": "OL35302690M",
+   "title": "Açlık Oyunları",
+   "author": "Suzanne Collins",
+   "year": 2008,
+   "isbn13": "9786050929997"
+  },
+  {
+   "ol_id": "OL46543587M",
+   "title": "Kendime Düşünceler",
+   "author": "Marcus Aurelius",
+   "year": 1626,
+   "isbn13": "9786052954027"
+  },
+  {
+   "ol_id": "OL35360079M",
+   "title": "Sis ve Öfke Sarayı",
+   "author": "Sarah J. Maas",
+   "year": 2014,
+   "isbn13": "9786050940626"
+  },
+  {
+   "ol_id": "OL32199671M",
+   "title": "Damızlık Kızın Öyküsü",
+   "author": "Margaret Atwood",
+   "year": 1985,
+   "isbn13": "9786050940596"
+  },
+  {
+   "ol_id": "OL35368211M",
+   "title": "Paramparça Bir Kız",
+   "author": "Kathleen Glasgow",
+   "year": 2000,
+   "isbn13": "9786051866109"
+  },
+  {
+   "ol_id": "OL26501142M",
+   "title": "Sırça Fanus",
+   "author": "Sylvia Plath",
+   "year": 1948,
+   "isbn13": "9786054764716"
+  },
+  {
+   "ol_id": "OL35608710M",
+   "title": "Zamanın Resimli Kısa Tarihi",
+   "author": "Stephen Hawking",
+   "year": 1988,
+   "isbn13": "9786050380712"
+  },
+  {
+   "ol_id": "OL35365721M",
+   "title": "Otostopçunun Galaksi Rehberi",
+   "author": "Douglas Adams",
+   "year": 1979,
+   "isbn13": "9786051715124"
+  },
+  {
+   "ol_id": "OL35359836M",
+   "title": "Dikenler ve Güller Sarayı",
+   "author": "Sarah J. Maas",
+   "year": 2013,
+   "isbn13": "9786050935448"
+  },
+  {
+   "ol_id": "OL35366283M",
+   "title": "Çirkin Aşk",
+   "author": "Colleen Hoover",
+   "year": 2014,
+   "isbn13": "9786051730295"
+  },
+  {
+   "ol_id": "OL35394117M",
+   "title": "Savaş ve Barış",
+   "author": "Лев Толстой",
+   "year": 1845,
+   "isbn13": "9786055541590"
+  },
+  {
+   "ol_id": "OL35363865M",
+   "title": "Akhilleus'un Şarkısı",
+   "author": "Madeline Miller",
+   "year": 2011,
+   "isbn13": "9786051416434"
+  },
+  {
+   "ol_id": "OL32202279M",
+   "title": "Uyumsuz - Film Özel Baskısı",
+   "author": "Veronica Roth",
+   "year": 2010,
+   "isbn13": "9786051424224"
+  },
+  {
+   "ol_id": "OL35401167M",
+   "title": "Kya'nın Şarkı Söylediği Yer",
+   "author": "Delia Owens",
+   "year": 2018,
+   "isbn13": "9786057879134"
+  },
+  {
+   "ol_id": "OL35362365M",
+   "title": "TİTANIN LANETİ",
+   "author": "Rick Riordan",
+   "year": 2007,
+   "isbn13": "9786051110479"
+  },
+  {
+   "ol_id": "OL35407823M",
+   "title": "Çizgili Pijamalı Çocuk",
+   "author": "John Boyne",
+   "year": 2006,
+   "isbn13": "9786059604741"
+  },
+  {
+   "ol_id": "OL35313223M",
+   "title": "Şüphe Asla Uyumaz",
+   "author": "Arthur Conan Doyle",
+   "year": 1903,
+   "isbn13": "9786053480129"
+  },
+  {
+   "ol_id": "OL35359603M",
+   "title": "Alaycı Kuş",
+   "author": "Suzanne Collins",
+   "year": 2010,
+   "isbn13": "9786050930665"
+  },
+  {
+   "ol_id": "OL35407796M",
+   "title": "Birimiz Yalan Söylüyor",
+   "author": "Karen M. McManus, Moisés Barcia Rodríguez, Yaʻel Akhmon",
+   "year": 2014,
+   "isbn13": "9786059585866"
+  },
+  {
+   "ol_id": "OL27298151M",
+   "title": "Rüzgarın gücü",
+   "author": "Patrick Rothfuss, Marc Simonetti",
+   "year": 2007,
+   "isbn13": "9786053751342"
+  },
+  {
+   "ol_id": "OL35360344M",
+   "title": "Labirent Savaşı",
+   "author": "Rick Riordan",
+   "year": 2005,
+   "isbn13": "9786050946482"
+  },
+  {
+   "ol_id": "OL47303983M",
+   "title": "Gece Yarısı Kütüphanesi",
+   "author": "Matt Haig",
+   "year": 2020,
+   "isbn13": "9786051981833"
+  },
+  {
+   "ol_id": "OL35360360M",
+   "title": "Cam Şato",
+   "author": "Sarah J. Maas",
+   "year": 2012,
+   "isbn13": "9786050946871"
+  },
+  {
+   "ol_id": "OL35315365M",
+   "title": "Kiyamet Gösterisi",
+   "author": "Terry Pratchett, Neil Gaiman",
+   "year": 1990,
+   "isbn13": "9786053751830"
+  },
+  {
+   "ol_id": "OL35381319M",
+   "title": "Kızıl Kraliçe",
+   "author": "Victoria Aveyard",
+   "year": 2015,
+   "isbn13": "9786053437154"
+  },
+  {
+   "ol_id": "OL35366818M",
+   "title": "Kahve Soğumadan Önce",
+   "author": "川口俊和, Toshikazu Kawaguchi",
+   "year": 2015,
+   "isbn13": "9786051738956"
+  },
+  {
+   "ol_id": "OL32202045M",
+   "title": "Üç Cisim Problemi",
+   "author": "刘慈欣, Vincent Schmitt, Gwennaël Gaffric, Marc Simonetti",
+   "year": 2008,
+   "isbn13": "9786053754992"
+  },
+  {
+   "ol_id": "OL35374540M",
+   "title": "Hz. Süleyman'ın Hazineleri",
+   "author": "H. Rider Haggard",
+   "year": 1876,
+   "isbn13": "9786052944707"
+  },
+  {
+   "ol_id": "OL35380875M",
+   "title": "Karanlığın Elli Tonu",
+   "author": "E. L. James",
+   "year": 2011,
+   "isbn13": "9786053430018"
+  },
+  {
+   "ol_id": "OL32200611M",
+   "title": "Kuşların ve Yılanların Şarkısı",
+   "author": "Suzanne Collins",
+   "year": 2020,
+   "isbn13": "9786050973877"
+  },
+  {
+   "ol_id": "OL35356463M",
+   "title": "Savaşçı Kediler - Vahşi Doğa",
+   "author": "Erin Hunter",
+   "year": 2003,
+   "isbn13": "9786050058758"
+  },
+  {
+   "ol_id": "OL35299568M",
+   "title": "Athena'nin İşareti",
+   "author": "Rick Riordan",
+   "year": 2011,
+   "isbn13": "9786050911091"
+  },
+  {
+   "ol_id": "OL35390733M",
+   "title": "Anlaşma",
+   "author": "Elle Kennedy",
+   "year": 2000,
+   "isbn13": "9786055016715"
+  },
+  {
+   "ol_id": "OL35359368M",
+   "title": "Percy Jackson Ve Yunan Tanrıları",
+   "author": "Rick Riordan",
+   "year": 2006,
+   "isbn13": "9786050924534"
+  },
+  {
+   "ol_id": "OL35299660M",
+   "title": "Olimpos'un Kanı",
+   "author": "Rick Riordan",
+   "year": 2001,
+   "isbn13": "9786050922844"
+  },
+  {
+   "ol_id": "OL35360489M",
+   "title": "Kanatlar ve Küller Sarayı",
+   "author": "Sarah J. Maas",
+   "year": 2017,
+   "isbn13": "9786050949810"
+  },
+  {
+   "ol_id": "OL24659672M",
+   "title": "Outliers (Çizginin Dışındakiler)",
+   "author": "Malcolm Gladwell",
+   "year": 2008,
+   "isbn13": "9786055755300"
+  },
+  {
+   "ol_id": "OL35298408M",
+   "title": "Gölge ve Kemik",
+   "author": "Leigh Bardugo",
+   "year": 2012,
+   "isbn13": "9786053480778"
+  },
+  {
+   "ol_id": "OL35360081M",
+   "title": "Apollon`un Görevleri",
+   "author": "Rick Riordan",
+   "year": 2016,
+   "isbn13": "9786050940664"
+  },
+  {
+   "ol_id": "OL32112340M",
+   "title": "Kağıttan kentler",
+   "author": "John Green",
+   "year": 2008,
+   "isbn13": "9786053436560"
+  },
+  {
+   "ol_id": "OL35308014M",
+   "title": "Ego Düşmanındır",
+   "author": "Ryan Holiday",
+   "year": 2016,
+   "isbn13": "9786052314029"
+  },
+  {
+   "ol_id": "OL35362427M",
+   "title": "Kırmızı Piramit",
+   "author": "Rick Riordan",
+   "year": 2010,
+   "isbn13": "9786051117799"
+  },
+  {
+   "ol_id": "OL35372647M",
+   "title": "Yandaş",
+   "author": "Veronica Roth",
+   "year": 2011,
+   "isbn13": "9786051424521"
+  },
+  {
+   "ol_id": "OL35315331M",
+   "title": "Yükselen Güneşin Ülkesinde",
+   "author": "Chimamanda Ngozi Adichie",
+   "year": 2006,
+   "isbn13": "9786053750048"
+  },
+  {
+   "ol_id": "OL35360359M",
+   "title": "Ateşin Varisi",
+   "author": "Sarah J. Maas",
+   "year": 2014,
+   "isbn13": "9786050946864"
+  },
+  {
+   "ol_id": "OL35359326M",
+   "title": "Karanlık Taç",
+   "author": "Sarah J. Maas",
+   "year": 2013,
+   "isbn13": "9786050923520"
+  },
+  {
+   "ol_id": "OL35368135M",
+   "title": "Sahte Krallık",
+   "author": "Leigh Bardugo",
+   "year": 2016,
+   "isbn13": "9786051862828"
+  },
+  {
+   "ol_id": "OL35409376M",
+   "title": "Mürekkep Yürek",
+   "author": "Cornelia Funke",
+   "year": 2003,
+   "isbn13": "9786059800952"
+  },
+  {
+   "ol_id": "OL35358928M",
+   "title": "Ateş Tahtı",
+   "author": "Rick Riordan",
+   "year": 2011,
+   "isbn13": "9786050901955"
+  },
+  {
+   "ol_id": "OL32201075M",
+   "title": "Gölgeler Kraliçesi",
+   "author": "Sarah J. Maas",
+   "year": 2015,
+   "isbn13": "9786050949117"
+  },
+  {
+   "ol_id": "OL35381458M",
+   "title": "Cam Kılıç",
+   "author": "Victoria Aveyard",
+   "year": 2016,
+   "isbn13": "9786053439356"
+  },
+  {
+   "ol_id": "OL35356968M",
+   "title": "Karanlık Bir Dünyada Bilimin Mum Işığı",
+   "author": "Carl Sagan",
+   "year": 1995,
+   "isbn13": "9786050207743"
+  },
+  {
+   "ol_id": "OL35361417M",
+   "title": "Gümüş Alevler Sarayı",
+   "author": "Sarah J. Maas",
+   "year": 2021,
+   "isbn13": "9786050986464"
+  },
+  {
+   "ol_id": "OL35376251M",
+   "title": "Niçin Uyuruz?",
+   "author": "Matthew P. Walker",
+   "year": 2017,
+   "isbn13": "9786052996300"
+  },
+  {
+   "ol_id": "OL35365473M",
+   "title": "Kurtlar Hanedanı",
+   "author": "Hilary Mantel",
+   "year": 2009,
+   "isbn13": "9786051711362"
+  },
+  {
+   "ol_id": "OL32202020M",
+   "title": "Buz ve Yıldızışığı Sarayı",
+   "author": "Sarah J. Maas",
+   "year": 2018,
+   "isbn13": "9786050977615"
+  },
+  {
+   "ol_id": "OL32063393M",
+   "title": "Körlük",
+   "author": "José Saramago",
+   "year": 1995,
+   "isbn13": "9786052980811"
+  },
+  {
+   "ol_id": "OL35386248M",
+   "title": "Vampir Günlükleri",
+   "author": "Lisa Jane Smith",
+   "year": 1991,
+   "isbn13": "9786054228300"
+  },
+  {
+   "ol_id": "OL35361326M",
+   "title": "Hilal Şehir",
+   "author": "Sarah J. Maas",
+   "year": 2019,
+   "isbn13": "9786050982770"
+  },
+  {
+   "ol_id": "OL35364124M",
+   "title": "Tek Kurşun",
+   "author": "Lee Child",
+   "year": 2005,
+   "isbn13": "9786051422275"
+  },
+  {
+   "ol_id": "OL35384408M",
+   "title": "Kristal Parçası",
+   "author": "R. A. Salvatore",
+   "year": 1988,
+   "isbn13": "9786053755821"
+  },
+  {
+   "ol_id": "OL35300426M",
+   "title": "Fırtınalar İmparatorluğu",
+   "author": "Sarah J. Maas",
+   "year": 2016,
+   "isbn13": "9786050957174"
+  },
+  {
+   "ol_id": "OL35371250M",
+   "title": "Kücük Öfkeli Gezegene Yolculuk",
+   "author": "Becky Chambers",
+   "year": 2014,
+   "isbn13": "9786052221549"
+  },
+  {
+   "ol_id": "OL32204296M",
+   "title": "Güz Alacakaranlığı Ejderhaları",
+   "author": "Margaret Weis, Tracy Hickman",
+   "year": 1984,
+   "isbn13": "9786053755760"
+  },
+  {
+   "ol_id": "OL35397422M",
+   "title": "Şifre Kitabı",
+   "author": "Simon Singh",
+   "year": 1999,
+   "isbn13": "9786056902451"
+  },
+  {
+   "ol_id": "OL35306470M",
+   "title": "Üçün Kitabı",
+   "author": "Lloyd Alexander",
+   "year": 1964,
+   "isbn13": "9786051420073"
+  },
+  {
+   "ol_id": "OL35408666M",
+   "title": "Körebe",
+   "author": "Lee Child",
+   "year": 2000,
+   "isbn13": "9786059702539"
+  },
+  {
+   "ol_id": "OL35357096M",
+   "title": "Kuşatma ve Fırtına",
+   "author": "Leigh Bardugo",
+   "year": 2013,
+   "isbn13": "9786050322286"
+  },
+  {
+   "ol_id": "OL32200615M",
+   "title": "Bin Öpücük",
+   "author": "Tillie Cole",
+   "year": 2016,
+   "isbn13": "9786059585835"
+  },
+  {
+   "ol_id": "OL35384514M",
+   "title": "Toz Gibi Yıldızlar-Galaktik İmparatorluk Serisi 1",
+   "author": "Isaac Asimov",
+   "year": 1951,
+   "isbn13": "9786053758280"
+  },
+  {
+   "ol_id": "OL35317679M",
+   "title": "Eşekarısı Fabrikası",
+   "author": "Iain Banks",
+   "year": 1984,
+   "isbn13": "9786054629992"
+  },
+  {
+   "ol_id": "OL35372524M",
+   "title": "Beşinci Mevsim",
+   "author": "N. K. Jemisin",
+   "year": 2015,
+   "isbn13": "9786050946598"
+  },
+  {
+   "ol_id": "OL35304686M",
+   "title": "Tırışkadan İşler",
+   "author": "David Graeber",
+   "year": 2018,
+   "isbn13": "9786051855899"
+  },
+  {
+   "ol_id": "OL35361205M",
+   "title": "Kül Krallığı",
+   "author": "Sarah J. Maas",
+   "year": 2018,
+   "isbn13": "9786050975765"
+  },
+  {
+   "ol_id": "OL32202004M",
+   "title": "Sabah Yıldızı",
+   "author": "Pierce Brown",
+   "year": 2016,
+   "isbn13": "9786053439158"
+  },
+  {
+   "ol_id": "OL26506159M",
+   "title": "Özgürlüğe Giden Uzun Yol",
+   "author": "Nelson Mandela",
+   "year": 1994,
+   "isbn13": "9786054986972"
+  },
+  {
+   "ol_id": "OL32958838M",
+   "title": "Çember",
+   "author": "Dave Eggers",
+   "year": 2013,
+   "isbn13": "9786055903626"
+  },
+  {
+   "ol_id": "OL35376264M",
+   "title": "Auschwitz Dövmecisi",
+   "author": "Heather Morris, Heather Morris, Morris, Heather teacher., Morris Heather, Sarah Fields",
+   "year": 2018,
+   "isbn13": "9786052996621"
+  },
+  {
+   "ol_id": "OL35313035M",
+   "title": "Tüm Sirlarin Sahibi Kiz",
+   "author": "Mike Carey",
+   "year": 2014,
+   "isbn13": "9786053438595"
+  },
+  {
+   "ol_id": "OL35402526M",
+   "title": "Matematiksel İmha Silahları",
+   "author": "Cathy O'Neil",
+   "year": 2016,
+   "isbn13": "9786058043398"
+  },
+  {
+   "ol_id": "OL35319502M",
+   "title": "Başka Dilde Aşk",
+   "author": "Mia Sheridan",
+   "year": 2014,
+   "isbn13": "9786055016357"
+  },
+  {
+   "ol_id": "OL35366538M",
+   "title": "Coğrafya Mahkumları",
+   "author": "Tim Marshall",
+   "year": 2015,
+   "isbn13": "9786051733968"
+  },
+  {
+   "ol_id": "OL35418935M",
+   "title": "Şehir ve Şehir",
+   "author": "China Miéville",
+   "year": 2009,
+   "isbn13": "9786055541637"
+  },
+  {
+   "ol_id": "OL32203172M",
+   "title": "Göç",
+   "author": "R. A. Salvatore",
+   "year": 1991,
+   "isbn13": "9786053755562"
+  },
+  {
+   "ol_id": "OL35366824M",
+   "title": "Görünmez Kadinlar",
+   "author": "Caroline Criado Perez",
+   "year": 2019,
+   "isbn13": "9786051738796"
+  },
+  {
+   "ol_id": "OL35384338M",
+   "title": "Sessizliğin Müziği",
+   "author": "Patrick Rothfuss",
+   "year": 2013,
+   "isbn13": "9786053754527"
+  },
+  {
+   "ol_id": "OL35384413M",
+   "title": "İlkbahar Şafağı Ejderhaları",
+   "author": "Margaret Weis, Tracy Hickman, Andrew Dabb, Paul Boehmer",
+   "year": 1900,
+   "isbn13": "9786053755753"
+  },
+  {
+   "ol_id": "OL35360447M",
+   "title": "Kapalı Kapılar Ardında",
+   "author": "B.A. Paris",
+   "year": 2016,
+   "isbn13": "9786050949001"
+  },
+  {
+   "ol_id": "OL33032620M",
+   "title": "Kalp hırsızı",
+   "author": "Georgette Heyer",
+   "year": 1972,
+   "isbn13": "9786054188536"
+  },
+  {
+   "ol_id": "OL35304733M",
+   "title": "Kimseye Söyleme",
+   "author": "Harlan Coben",
+   "year": 2000,
+   "isbn13": "9786051865850"
+  },
+  {
+   "ol_id": "OL35382144M",
+   "title": "Çöküş ve Yükseliş",
+   "author": "Leigh Bardugo",
+   "year": 2014,
+   "isbn13": "9786053485629"
+  },
+  {
+   "ol_id": "OL35316911M",
+   "title": "Beden Hırsızı",
+   "author": "Anne Rice",
+   "year": 1992,
+   "isbn13": "9786054335527"
+  },
+  {
+   "ol_id": "OL35393473M",
+   "title": "Şeytanla Dans",
+   "author": "Anne Rice",
+   "year": 1995,
+   "isbn13": "9786055420321"
+  },
+  {
+   "ol_id": "OL35307746M",
+   "title": "Güvencesizlikteki Bilgelik; Endise Cagi Icin Güclü Bir Mesaj",
+   "author": "Alan Watts",
+   "year": 1951,
+   "isbn13": "9786052250280"
+  },
+  {
+   "ol_id": "OL35394099M",
+   "title": "Perdido Sokağı İstasyonu",
+   "author": "China Miéville",
+   "year": 2000,
+   "isbn13": "9786055541231"
+  },
+  {
+   "ol_id": "OL35361042M",
+   "title": "Tiran'ın Mezarı",
+   "author": "Rick Riordan",
+   "year": 2019,
+   "isbn13": "9786050969566"
+  },
+  {
+   "ol_id": "OL35384404M",
+   "title": "Kış Gecesi Ejderhaları",
+   "author": "Margaret Weis, Tracy Hickman",
+   "year": 1985,
+   "isbn13": "9786053755777"
+  },
+  {
+   "ol_id": "OL35384396M",
+   "title": "Gümüş Damarları",
+   "author": "R. A. Salvatore",
+   "year": 1989,
+   "isbn13": "9786053755838"
+  },
+  {
+   "ol_id": "OL35315389M",
+   "title": "Bitmemiş Öyküler",
+   "author": "J.R.R. Tolkien, Christopher Tolkien, ʻImanuʼel Loṭem",
+   "year": 1980,
+   "isbn13": "9786053752417"
+  },
+  {
+   "ol_id": "OL32202845M",
+   "title": "Sürgün - Drizzt Efsanesi 2",
+   "author": "R. A. Salvatore",
+   "year": 1990,
+   "isbn13": "9786053755586"
+  },
+  {
+   "ol_id": "OL35304095M",
+   "title": "Ya Hiç Gelmeseydin",
+   "author": "Colleen Hoover",
+   "year": 2012,
+   "isbn13": "9786051731681"
+  },
+  {
+   "ol_id": "OL35365692M",
+   "title": "Kabulleniş",
+   "author": "Jeff VanderMeer",
+   "year": 2014,
+   "isbn13": "9786051714790"
+  },
+  {
+   "ol_id": "OL32205209M",
+   "title": "Yasamak Için Öldür - James Bond",
+   "author": "Ian Fleming",
+   "year": 1954,
+   "isbn13": "9786057879790"
+  },
+  {
+   "ol_id": "OL35410453M",
+   "title": "Cimorene ve Ejderhanın Sırrı - Büyülü Orman Günlükleri",
+   "author": "Patricia C. Wrede",
+   "year": 1990,
+   "isbn13": "9786059915755"
+  },
+  {
+   "ol_id": "OL35365988M",
+   "title": "Büyük Sorulara Kisa Yanitlar",
+   "author": "Stephen Hawking",
+   "year": 2014,
+   "isbn13": "9786051719092"
+  },
+  {
+   "ol_id": "OL35357098M",
+   "title": "Yara İzi Kralı",
+   "author": "Leigh Bardugo",
+   "year": 2019,
+   "isbn13": "9786050322590"
+  },
+  {
+   "ol_id": "OL35304144M",
+   "title": "Kim Demis Kötüyüz Diye 1 - Yasasin Iyilik",
+   "author": "Aaron Blabey",
+   "year": 2016,
+   "isbn13": "9786051734064"
+  },
+  {
+   "ol_id": "OL35313024M",
+   "title": "Ürperti",
+   "author": "Maggie Stiefvater",
+   "year": 2008,
+   "isbn13": "9786053437482"
+  },
+  {
+   "ol_id": "OL35382203M",
+   "title": "Bana Söz Ver",
+   "author": "Harlan Coben",
+   "year": 2006,
+   "isbn13": "9786053488026"
+  },
+  {
+   "ol_id": "OL35384426M",
+   "title": "İkizlerin Sınavı",
+   "author": "Margaret Weis, Tracy Hickman",
+   "year": 1986,
+   "isbn13": "9786053756132"
+  },
+  {
+   "ol_id": "OL35310224M",
+   "title": "Demir Altın",
+   "author": "Pierce Brown",
+   "year": 2018,
+   "isbn13": "9786052995372"
+  },
+  {
+   "ol_id": "OL35368493M",
+   "title": "Babamın Ejderhası - 1",
+   "author": "Ruth S. Gannett",
+   "year": 1948,
+   "isbn13": "9786051881225"
+  },
+  {
+   "ol_id": "OL35408652M",
+   "title": "Asla Geri Dönme",
+   "author": "Lee Child",
+   "year": 2013,
+   "isbn13": "9786059702270"
+  },
+  {
+   "ol_id": "OL35358967M",
+   "title": "Büyük Tasarim",
+   "author": "Stephen Hawking, Leonard Mlodinow",
+   "year": 1998,
+   "isbn13": "9786050905700"
+  },
+  {
+   "ol_id": "OL32202939M",
+   "title": "Hesaplaşma",
+   "author": "Elle Kennedy",
+   "year": 2016,
+   "isbn13": "9786059585507"
+  },
+  {
+   "ol_id": "OL35384438M",
+   "title": "Buçukluğun Mücevheri",
+   "author": "R. A. Salvatore",
+   "year": 1990,
+   "isbn13": "9786053756415"
+  },
+  {
+   "ol_id": "OL35376043M",
+   "title": "Kralın Kafesi",
+   "author": "Victoria Aveyard",
+   "year": 2017,
+   "isbn13": "9786052993064"
+  },
+  {
+   "ol_id": "OL35307162M",
+   "title": "Çaya Gelen Kaplan",
+   "author": "Judith Kerr",
+   "year": 1968,
+   "isbn13": "9786051920993"
+  },
+  {
+   "ol_id": "OL32328078M",
+   "title": "Hiç kimse sıradan değildir",
+   "author": "Markus Zusak",
+   "year": 2002,
+   "isbn13": "9786053480204"
+  },
+  {
+   "ol_id": "OL35315412M",
+   "title": "Ötekiler Arasında",
+   "author": "Jo Walton",
+   "year": 2011,
+   "isbn13": "9786053753353"
+  },
+  {
+   "ol_id": "OL35609178M",
+   "title": "Hitler Oyuncağımı Çaldı",
+   "author": "Judith Kerr",
+   "year": 1971,
+   "isbn13": "9786052853269"
+  },
+  {
+   "ol_id": "OL35311887M",
+   "title": "KRAL IV. HENRY II CİLTLİ",
+   "author": "William Shakespeare",
+   "year": 1600,
+   "isbn13": "9786053321453"
+  },
+  {
+   "ol_id": "OL25663506M",
+   "title": "Sonbahar Ülkesi",
+   "author": "Ray Bradbury",
+   "year": 1955,
+   "isbn13": "9786053754367"
+  },
+  {
+   "ol_id": "OL35387369M",
+   "title": "Cadı Ve Sihirbaz",
+   "author": "James Patterson, Gabrielle Charbonnet",
+   "year": 1999,
+   "isbn13": "9786054560646"
+  },
+  {
+   "ol_id": "OL35390446M",
+   "title": "Kamelyalı Kadın",
+   "author": "Alexandre Dumas fils",
+   "year": 1848,
+   "isbn13": "9786054985005"
+  },
+  {
+   "ol_id": "OL35419655M",
+   "title": "Asla Vazgeçme",
+   "author": "Harlan Coben",
+   "year": 2008,
+   "isbn13": "9786055872250"
+  },
+  {
+   "ol_id": "OL35310236M",
+   "title": "Savaş Fırtınası",
+   "author": "Victoria Aveyard",
+   "year": 2017,
+   "isbn13": "9786052995983"
+  },
+  {
+   "ol_id": "OL35376097M",
+   "title": "Nevernight Kuzgunun Gölgesi",
+   "author": "Jay Kristoff",
+   "year": 2016,
+   "isbn13": "9786052994115"
+  },
+  {
+   "ol_id": "OL35360639M",
+   "title": "Melez Kampı Gizli Belgeleri",
+   "author": "Rick Riordan",
+   "year": 2017,
+   "isbn13": "9786050953411"
+  },
+  {
+   "ol_id": "OL35368192M",
+   "title": "Kan ve Altın",
+   "author": "Anne Rice",
+   "year": 1998,
+   "isbn13": "9786051865287"
+  },
+  {
+   "ol_id": "OL35698074M",
+   "title": "Kaybolan Şimşek Gibi",
+   "author": "Ada Palmer",
+   "year": 2016,
+   "isbn13": "9786057690548"
+  },
+  {
+   "ol_id": "OL35402747M",
+   "title": "Çocuk Geliyor",
+   "author": "Han Kang, Alba Cunill Fulquet",
+   "year": 2014,
+   "isbn13": "9786058108837"
+  },
+  {
+   "ol_id": "OL35420058M",
+   "title": "Kayıp Kaşık",
+   "author": "Sam Kean",
+   "year": 2010,
+   "isbn13": "9786056355929"
+  },
+  {
+   "ol_id": "OL49809521M",
+   "title": "Kuyruklu Yıldız Geliyor",
+   "author": "Tove Jansson",
+   "year": 1946,
+   "isbn13": "9786057336590"
+  },
+  {
+   "ol_id": "OL35366074M",
+   "title": "Elçilik Kenti",
+   "author": "China Miéville, China Miville",
+   "year": 2011,
+   "isbn13": "9786051721491"
+  },
+  {
+   "ol_id": "OL45811796M",
+   "title": "Şimşek Hırsızı",
+   "author": "Robert Venditti, Rick Riordan",
+   "year": 2005,
+   "isbn13": "9786050908480"
+  },
+  {
+   "ol_id": "OL35410226M",
+   "title": "Aylak Bir Adamdan Aylak Düsünceler",
+   "author": "Jerome Klapka Jérôme",
+   "year": 1880,
+   "isbn13": "9786059902229"
+  },
+  {
+   "ol_id": "OL32202838M",
+   "title": "Vampir Günlükleri - Vol. 2 Öfke ve Karanlık Buluşma",
+   "author": "Lisa Jane Smith",
+   "year": 2007,
+   "isbn13": "9786054228942"
+  },
+  {
+   "ol_id": "OL32207477M",
+   "title": "Bir Gün Kediler Dünyadan Yok Olsaydi",
+   "author": "川村元気",
+   "year": 2012,
+   "isbn13": "9786050981537"
+  },
+  {
+   "ol_id": "OL33337321M",
+   "title": "Judy Moody ünlü oluyor!",
+   "author": "Megan McDonald",
+   "year": 2001,
+   "isbn13": "9786054482566"
+  },
+  {
+   "ol_id": "OL61554107M",
+   "title": "Yatakta Sigara İçmenin Zararları",
+   "author": "Mariana Enríquez",
+   "year": 2009,
+   "isbn13": "9786052654316"
+  },
+  {
+   "ol_id": "OL35380980M",
+   "title": "Ateş",
+   "author": "Kristin Cashore",
+   "year": 2009,
+   "isbn13": "9786053431640"
+  },
+  {
+   "ol_id": "OL35311013M",
+   "title": "Doğanın Keşfi",
+   "author": "Andrea Wulf",
+   "year": 2015,
+   "isbn13": "9786053141891"
+  },
+  {
+   "ol_id": "OL35317148M",
+   "title": "GREGOR VE KAN KEHANETİ",
+   "author": "Suzanne Collins",
+   "year": 2005,
+   "isbn13": "9786054456826"
+  },
+  {
+   "ol_id": "OL35314645M",
+   "title": "Genetik Analize Giriş",
+   "author": "Anthony J. F. Griffiths, Susan R. Wessler, Richard C. Lewontin, William M. Gelbart, David T. Suzuki, Jeffrey H. Miller",
+   "year": 1993,
+   "isbn13": "9786053552857"
+  },
+  {
+   "ol_id": "OL35365492M",
+   "title": "Ben Bir Garip Döngüyüm",
+   "author": "Douglas R. Hofstadter",
+   "year": 2007,
+   "isbn13": "9786051711706"
+  },
+  {
+   "ol_id": "OL35391760M",
+   "title": "Paldır Küldür",
+   "author": "Kurt Vonnegut",
+   "year": 1976,
+   "isbn13": "9786055162863"
+  },
+  {
+   "ol_id": "OL35313398M",
+   "title": "İhanetin Beş Yüzü",
+   "author": "Harlan Coben",
+   "year": 2002,
+   "isbn13": "9786053487142"
+  },
+  {
+   "ol_id": "OL32204527M",
+   "title": "Hoşça Kal Demeden",
+   "author": "Harlan Coben",
+   "year": 1990,
+   "isbn13": "9786053483403"
+  },
+  {
+   "ol_id": "OL35368106M",
+   "title": "Başka Şansın Yok",
+   "author": "Harlan Coben",
+   "year": 2003,
+   "isbn13": "9786051861210"
+  },
+  {
+   "ol_id": "OL35369295M",
+   "title": "Yangında Kaybettiklerimiz",
+   "author": "Mariana Enríquez",
+   "year": 2016,
+   "isbn13": "9786051980119"
+  },
+  {
+   "ol_id": "OL35364043M",
+   "title": "Zlata'nın Günlüğü",
+   "author": "Zlata Filipović",
+   "year": 1993,
+   "isbn13": "9786051420028"
+  },
+  {
+   "ol_id": "OL35364060M",
+   "title": "Tanrıların Arabaları",
+   "author": "Erich von Däniken, Javaid Toosy",
+   "year": 1968,
+   "isbn13": "9786051420356"
+  },
+  {
+   "ol_id": "OL35359058M",
+   "title": "Parçalanmış Krallıklar",
+   "author": "N. K. Jemisin",
+   "year": 2010,
+   "isbn13": "9786050914085"
+  },
+  {
+   "ol_id": "OL35304217M",
+   "title": "Kalite Ülkesi",
+   "author": "Marc-Uwe Kling",
+   "year": 2017,
+   "isbn13": "9786051736600"
+  },
+  {
+   "ol_id": "OL35609606M",
+   "title": "Büyücünün şapkası",
+   "author": "Tove Jansson",
+   "year": 1950,
+   "isbn13": "9786055648343"
+  },
+  {
+   "ol_id": "OL35368138M",
+   "title": "Sığınak",
+   "author": "Harlan Coben",
+   "year": 2011,
+   "isbn13": "9786051862910"
+  },
+  {
+   "ol_id": "OL35315351M",
+   "title": "Gümüş Şahinin Pençesi",
+   "author": "Raymond E. Feist",
+   "year": 2002,
+   "isbn13": "9786053750796"
+  },
+  {
+   "ol_id": "OL35410784M",
+   "title": "Icgüdü",
+   "author": "James Patterson, Michael Ledwidge",
+   "year": 2012,
+   "isbn13": "9786059961585"
+  },
+  {
+   "ol_id": "OL35420802M",
+   "title": "Zafer Takı",
+   "author": "Erich Maria Remarque",
+   "year": 1945,
+   "isbn13": "9786056972096"
+  },
+  {
+   "ol_id": "OL35357367M",
+   "title": "Ortaçağın Sonbaharı",
+   "author": "Johan Huizinga",
+   "year": 1919,
+   "isbn13": "9786050381191"
+  },
+  {
+   "ol_id": "OL35368140M",
+   "title": "Tek Bir Bakış",
+   "author": "Harlan Coben",
+   "year": 2001,
+   "isbn13": "9786051863177"
+  },
+  {
+   "ol_id": "OL35391558M",
+   "title": "Savaş okulunda yılbaşı",
+   "author": "Orson Scott Card",
+   "year": 2006,
+   "isbn13": "9786055150297"
+  },
+  {
+   "ol_id": "OL35372502M",
+   "title": "Evrene Açılan Gizli Anahtar 1",
+   "author": "Stephen Hawking, Lucy Hawking, Hugh Dancy",
+   "year": 1998,
+   "isbn13": "9786050924930"
+  },
+  {
+   "ol_id": "OL35303172M",
+   "title": "Berlin - Aleksander Meydani",
+   "author": "Alfred Döblin",
+   "year": 1929,
+   "isbn13": "9786051416632"
+  },
+  {
+   "ol_id": "OL35380936M",
+   "title": "ZÜMRÜT YEŞİL",
+   "author": "Kerstin Gier, Anthea Bell",
+   "year": 2010,
+   "isbn13": "9786053431077"
+  },
+  {
+   "ol_id": "OL35611586M",
+   "title": "Mary Poppins Geri Dönüyor",
+   "author": "Pamela L. Travers, Mary Shepard",
+   "year": 1935,
+   "isbn13": "9786054435098"
+  },
+  {
+   "ol_id": "OL35381236M",
+   "title": "Çevrimiçi Kız",
+   "author": "Zoe Sugg",
+   "year": 2005,
+   "isbn13": "9786053435808"
+  },
+  {
+   "ol_id": "OL35376332M",
+   "title": "Aurora'nın Dönüşü",
+   "author": "Jay Kristoff, Amie Kaufman",
+   "year": 2019,
+   "isbn13": "9786052997925"
+  },
+  {
+   "ol_id": "OL35418626M",
+   "title": "Büyük Vuruş",
+   "author": "Harlan Coben",
+   "year": 1996,
+   "isbn13": "9786055420253"
+  },
+  {
+   "ol_id": "OL35304624M",
+   "title": "Çekirgenin Günü",
+   "author": "Nathanael West",
+   "year": 1939,
+   "isbn13": "9786051852126"
+  },
+  {
+   "ol_id": "OL32200124M",
+   "title": "Gondolin'in Düsüsü",
+   "author": "J.R.R. Tolkien, Christopher Tolkien",
+   "year": 1985,
+   "isbn13": "9786057762689"
+  },
+  {
+   "ol_id": "OL32203694M",
+   "title": "Kanaldaki Kadın",
+   "author": "Maj Sjöwall, Per Wahlöö",
+   "year": 1967,
+   "isbn13": "9786058072732"
+  },
+  {
+   "ol_id": "OL35381816M",
+   "title": "Geri Dönüş",
+   "author": "Harlan Coben",
+   "year": 1997,
+   "isbn13": "9786053480686"
+  },
+  {
+   "ol_id": "OL35304168M",
+   "title": "1493-Amerika'nın Keşfinden Küreselleşmeye Kısa Dünya Tarihi",
+   "author": "Charles C. Mann",
+   "year": 2011,
+   "isbn13": "9786051734859"
+  },
+  {
+   "ol_id": "OL32201589M",
+   "title": "Demir Yıl",
+   "author": "Holly Black, Cassandra Clare",
+   "year": 2014,
+   "isbn13": "9786050923162"
+  },
+  {
+   "ol_id": "OL35394377M",
+   "title": "Mumiler ve Büyük Sel Baskını",
+   "author": "Tove Jansson",
+   "year": 1945,
+   "isbn13": "9786055648480"
+  },
+  {
+   "ol_id": "OL35391686M",
+   "title": "Yaşam Suyu",
+   "author": "Clarice Lispector",
+   "year": 1973,
+   "isbn13": "9786055159597"
+  },
+  {
+   "ol_id": "OL35376549M",
+   "title": "Vampir Günlükleri - Stefan Günlükleri Vol",
+   "author": "Lisa Jane Smith",
+   "year": 1991,
+   "isbn13": "9786053043164"
+  },
+  {
+   "ol_id": "OL35419076M",
+   "title": "Mumi Baba'nın Başarıları",
+   "author": "Tove Jansson",
+   "year": 1950,
+   "isbn13": "9786055648206"
+  },
+  {
+   "ol_id": "OL32202342M",
+   "title": "Yalnız Kadınlar Sokağı",
+   "author": "Maeve Binchy",
+   "year": 1988,
+   "isbn13": "9786050953374"
+  },
+  {
+   "ol_id": "OL58463991M",
+   "title": "Kasırga Mevsimi",
+   "author": "Fernanda Melchor",
+   "year": 2017,
+   "isbn13": "9786052655122"
+  },
+  {
+   "ol_id": "OL35378493M",
+   "title": "Örgütlerde Liderlik - Leadership In Organizations",
+   "author": "Gary A. Yukl",
+   "year": 1981,
+   "isbn13": "9786053208464"
+  },
+  {
+   "ol_id": "OL35384153M",
+   "title": "Tilkiler Kralı",
+   "author": "Raymond E. Feist",
+   "year": 2003,
+   "isbn13": "9786053751038"
+  },
+  {
+   "ol_id": "OL35376297M",
+   "title": "Kuzgun Karası",
+   "author": "Ann Cleeves",
+   "year": 2006,
+   "isbn13": "9786052997253"
+  },
+  {
+   "ol_id": "OL35408924M",
+   "title": "Tüm Yönleriyle Matematiksel Deneyim",
+   "author": "Philip J. Davis, Reuben Hersh, Elena Anne Marchisotto",
+   "year": 1980,
+   "isbn13": "9786059746014"
+  },
+  {
+   "ol_id": "OL35313302M",
+   "title": "Zaman Tükeniyor",
+   "author": "Harlan Coben",
+   "year": 2000,
+   "isbn13": "9786053482079"
+  },
+  {
+   "ol_id": "OL35375987M",
+   "title": "Zalim Krallık",
+   "author": "Victoria Aveyard",
+   "year": 2016,
+   "isbn13": "9786052992340"
+  },
+  {
+   "ol_id": "OL35386676M",
+   "title": "Kayıp",
+   "author": "Harlan Coben",
+   "year": 2009,
+   "isbn13": "9786054335053"
+  },
+  {
+   "ol_id": "OL35313447M",
+   "title": "Yüksek Gerilim",
+   "author": "Harlan Coben",
+   "year": 2011,
+   "isbn13": "9786053489610"
+  },
+  {
+   "ol_id": "OL59468254M",
+   "title": "Akşamlar rahatsız edicidir",
+   "author": "Marieke Lucas Rijneveld",
+   "year": 2018,
+   "isbn13": "9786057072269"
+  },
+  {
+   "ol_id": "OL35381790M",
+   "title": "Geçmişle Dans",
+   "author": "Harlan Coben",
+   "year": 2012,
+   "isbn13": "9786053480235"
+  },
+  {
+   "ol_id": "OL35384163M",
+   "title": "Sürgünün Dönüşü",
+   "author": "Raymond E. Feist",
+   "year": 2004,
+   "isbn13": "9786053751281"
+  },
+  {
+   "ol_id": "OL35375884M",
+   "title": "Son Yildiz-5. Dalga Serisi Ücüncü Kitap",
+   "author": "Richard Yancey",
+   "year": 2016,
+   "isbn13": "9786052990407"
+  },
+  {
+   "ol_id": "OL32087847M",
+   "title": "TENTENİN MACERALARI 13 - 7 KRİSTAL KÜRE",
+   "author": "Hergé",
+   "year": 1961,
+   "isbn13": "9786051718453"
+  },
+  {
+   "ol_id": "OL35381856M",
+   "title": "Yanlış Bir Adım",
+   "author": "Harlan Coben",
+   "year": 1998,
+   "isbn13": "9786053481010"
+  },
+  {
+   "ol_id": "OL35427196M",
+   "title": "Bilim İnsanı Ada Arı",
+   "author": "Andrea Beaty",
+   "year": 2016,
+   "isbn13": "9786059933599"
+  },
+  {
+   "ol_id": "OL35376260M",
+   "title": "Dikenlikler İmparatoru",
+   "author": "Mark Lawrence",
+   "year": 2012,
+   "isbn13": "9786052996539"
+  },
+  {
+   "ol_id": "OL35395650M",
+   "title": "Karanlıktaki Umut",
+   "author": "Rebecca Solnit, Luca Barahona, Bel Olid Báez",
+   "year": 2004,
+   "isbn13": "9786055903770"
+  },
+  {
+   "ol_id": "OL35410066M",
+   "title": "Dilek Şurubu",
+   "author": "Michael Ende",
+   "year": 1989,
+   "isbn13": "9786059872119"
+  },
+  {
+   "ol_id": "OL35384168M",
+   "title": "Gece Şahinlerinin Uçuşu",
+   "author": "Raymond E. Feist",
+   "year": 2004,
+   "isbn13": "9786053751441"
+  },
+  {
+   "ol_id": "OL35358935M",
+   "title": "Yağmuru Seven Çocuk",
+   "author": "Amélie Nothomb",
+   "year": 2000,
+   "isbn13": "9786050902945"
+  },
+  {
+   "ol_id": "OL35374237M",
+   "title": "Anya'yı Beklerken",
+   "author": "Michael Morpurgo, Nicholas Rowe, Tudem Yayınları, Reade MORPURGO",
+   "year": 1990,
+   "isbn13": "9786052851982"
+  },
+  {
+   "ol_id": "OL35418896M",
+   "title": "Istiridye Cocugun Hüzünlü Ölümü",
+   "author": "Tim Burton",
+   "year": 1997,
+   "isbn13": "9786055532529"
+  },
+  {
+   "ol_id": "OL35312845M",
+   "title": "O Geri Döndü",
+   "author": "Timur Vermes, Pilar Estelrich Arce",
+   "year": 2012,
+   "isbn13": "9786053433170"
+  },
+  {
+   "ol_id": "OL35383183M",
+   "title": "MASKELİ FARE",
+   "author": "Julia Donaldson",
+   "year": 2011,
+   "isbn13": "9786053601913"
+  },
+  {
+   "ol_id": "OL35363812M",
+   "title": "Dönüş Yolu",
+   "author": "Erich Maria Remarque",
+   "year": 1931,
+   "isbn13": "9786051410333"
+  },
+  {
+   "ol_id": "OL32203691M",
+   "title": "Felidae",
+   "author": "Akif Pirinçci",
+   "year": 1989,
+   "isbn13": "9786055691783"
+  },
+  {
+   "ol_id": "OL35376287M",
+   "title": "Tanrımezarı",
+   "author": "Jay Kristoff",
+   "year": 2017,
+   "isbn13": "9786052997031"
+  },
+  {
+   "ol_id": "OL35312394M",
+   "title": "Gece Maymunu Gündüz Maymunu",
+   "author": "Julia Donaldson",
+   "year": 2002,
+   "isbn13": "9786053411161"
+  },
+  {
+   "ol_id": "OL35300400M",
+   "title": "İtalyanca Aşk Başkadır",
+   "author": "Maeve Binchy",
+   "year": 1994,
+   "isbn13": "9786050955101"
+  },
+  {
+   "ol_id": "OL35379706M",
+   "title": "Prenses ile Büyücü",
+   "author": "Julia Donaldson",
+   "year": 2001,
+   "isbn13": "9786053328650"
+  },
+  {
+   "ol_id": "OL35365697M",
+   "title": "Kuantum Mekaniği",
+   "author": "Leonard Susskind, Art Friedman",
+   "year": 2014,
+   "isbn13": "9786051714615"
+  },
+  {
+   "ol_id": "OL35311069M",
+   "title": "Kan Çiçekleri",
+   "author": "Ngũgĩ wa Thiongʼo",
+   "year": 1977,
+   "isbn13": "9786053143864"
+  },
+  {
+   "ol_id": "OL26416807M",
+   "title": "Aram Derler Adıma",
+   "author": "William Saroyan",
+   "year": 1937,
+   "isbn13": "9786055753870"
+  },
+  {
+   "ol_id": "OL31856855M",
+   "title": "Önceki Kiz",
+   "author": "J. P. Delaney",
+   "year": 2000,
+   "isbn13": "9786059441094"
+  },
+  {
+   "ol_id": "OL35300653M",
+   "title": "Nişanlı",
+   "author": "Kiera Cass",
+   "year": 2020,
+   "isbn13": "9786050980660"
+  },
+  {
+   "ol_id": "OL35359929M",
+   "title": "Sahane Günler",
+   "author": "Raphael Montes",
+   "year": 2014,
+   "isbn13": "9786050937626"
+  },
+  {
+   "ol_id": "OL35365742M",
+   "title": "Kuramsal Başlangıç; Fizik Yapmaya Baslamak Icin Bilmeniz Gerekenler",
+   "author": "Leonard Susskind, George Hrabovsky",
+   "year": 2013,
+   "isbn13": "9786051715292"
+  },
+  {
+   "ol_id": "OL35609171M",
+   "title": "Balinalar Geldiğinde",
+   "author": "Michael Morpurgo",
+   "year": 1760,
+   "isbn13": "9786052853023"
+  },
+  {
+   "ol_id": "OL32205522M",
+   "title": "Şüphe",
+   "author": "B.A. Paris",
+   "year": 2014,
+   "isbn13": "9786050964868"
+  },
+  {
+   "ol_id": "OL32200795M",
+   "title": "Özlüyorum Seni",
+   "author": "Harlan Coben",
+   "year": 2014,
+   "isbn13": "9786051869841"
+  },
+  {
+   "ol_id": "OL35386401M",
+   "title": "Yüregime Ask Düstü",
+   "author": "Eloisa James",
+   "year": 2007,
+   "isbn13": "9786054263561"
+  },
+  {
+   "ol_id": "OL35425805M",
+   "title": "Zihni Sömürgeden Azad",
+   "author": "Ngũgĩ wa Thiongʼo, Blanca Busquets",
+   "year": 1986,
+   "isbn13": "9786059556521"
+  },
+  {
+   "ol_id": "OL35357664M",
+   "title": "Aru Shah ve Ölüm Sarkisi",
+   "author": "Roshani Chokshi",
+   "year": 2019,
+   "isbn13": "9786050680430"
+  },
+  {
+   "ol_id": "OL35375881M",
+   "title": "Kudüs",
+   "author": "Simon Sebag-Montefiore",
+   "year": 2011,
+   "isbn13": "9786052990353"
+  },
+  {
+   "ol_id": "OL35357734M",
+   "title": "Gülen Polis - Martin Beck Serisi 04",
+   "author": "Maj Sjöwall, Per Wahlöö",
+   "year": 1968,
+   "isbn13": "9786050697216"
+  },
+  {
+   "ol_id": "OL35381169M",
+   "title": "Evlilik Sözleşmesi",
+   "author": "Cathy Maxwell",
+   "year": 2001,
+   "isbn13": "9786053434535"
+  },
+  {
+   "ol_id": "OL35395823M",
+   "title": "Özel Hasta özel Baski Cep",
+   "author": "P. D. James",
+   "year": 2008,
+   "isbn13": "9786055943769"
+  },
+  {
+   "ol_id": "OL35367980M",
+   "title": "Yetişkinlerin Yalan Hayatı",
+   "author": "Elena Ferrante",
+   "year": 2019,
+   "isbn13": "9786051855196"
+  },
+  {
+   "ol_id": "OL35382127M",
+   "title": "Şantaj",
+   "author": "Harlan Coben",
+   "year": 2004,
+   "isbn13": "9786053485612"
+  },
+  {
+   "ol_id": "OL35418085M",
+   "title": "En Karanlık Zevk",
+   "author": "Gena Showalter",
+   "year": 2008,
+   "isbn13": "9786053431145"
+  },
+  {
+   "ol_id": "OL35319569M",
+   "title": "İnsan Beyninin Gizemi",
+   "author": "Sam Kean",
+   "year": 2014,
+   "isbn13": "9786055029531"
+  },
+  {
+   "ol_id": "OL30526863M",
+   "title": "Görmek",
+   "author": "José Saramago",
+   "year": 2004,
+   "isbn13": "9786052981320"
+  },
+  {
+   "ol_id": "OL32201983M",
+   "title": "Anlatış",
+   "author": "Ursula K. Le Guin",
+   "year": 2000,
+   "isbn13": "9786053757153"
+  },
+  {
+   "ol_id": "OL35381446M",
+   "title": "Geç Kalmış Aşk",
+   "author": "Cathy Maxwell",
+   "year": 1997,
+   "isbn13": "9786053439073"
+  },
+  {
+   "ol_id": "OL24997274M",
+   "title": "Uçan Spagetti Canavarının Kutsal Kitabı",
+   "author": "Bobby Henderson",
+   "year": 2006,
+   "isbn13": "9786055532093"
+  },
+  {
+   "ol_id": "OL35609175M",
+   "title": "Olduğun Yerde Kal",
+   "author": "John Boyne",
+   "year": 2013,
+   "isbn13": "9786052852040"
+  },
+  {
+   "ol_id": "OL35425764M",
+   "title": "Prenses Leianin Günlügü",
+   "author": "Carrie Fisher",
+   "year": 2016,
+   "isbn13": "9786059545761"
+  },
+  {
+   "ol_id": "OL35393157M",
+   "title": "DEATH NOTE ÖLÜM DEFTERİ 5",
+   "author": "Tsugumi Ohba, Takeshi Obata",
+   "year": 2005,
+   "isbn13": "9786055381080"
+  },
+  {
+   "ol_id": "OL35362305M",
+   "title": "Üc Sahtekar",
+   "author": "Arthur Machen",
+   "year": 1895,
+   "isbn13": "9786051069050"
+  },
+  {
+   "ol_id": "OL35299416M",
+   "title": "Kadimzamanlar ve Diğer Vakitler",
+   "author": "Olga Tokarczuk",
+   "year": 1996,
+   "isbn13": "9786050833386"
+  },
+  {
+   "ol_id": "OL35311099M",
+   "title": "Kargalar Büyücüsü",
+   "author": "Ngũgĩ wa Thiongʼo",
+   "year": 2006,
+   "isbn13": "9786053145028"
+  },
+  {
+   "ol_id": "OL35356602M",
+   "title": "Kozmik Bağlantı",
+   "author": "Carl Sagan",
+   "year": 1973,
+   "isbn13": "9786050202021"
+  },
+  {
+   "ol_id": "OL32203589M",
+   "title": "Leylak Zamanı",
+   "author": "Maeve Binchy",
+   "year": 1984,
+   "isbn13": "9786050961706"
+  },
+  {
+   "ol_id": "OL35377562M",
+   "title": "Başlama Yeri",
+   "author": "Ursula K. Le Guin",
+   "year": 1980,
+   "isbn13": "9786053141273"
+  },
+  {
+   "ol_id": "OL35386420M",
+   "title": "Aşkı Sende Buldum",
+   "author": "Cathy Maxwell",
+   "year": 2008,
+   "isbn13": "9786054263905"
+  },
+  {
+   "ol_id": "OL35381014M",
+   "title": "Cüceler",
+   "author": "Markus Heitz",
+   "year": 2004,
+   "isbn13": "9786053432197"
+  },
+  {
+   "ol_id": "OL50988381M",
+   "title": "Sessizlik Zamanı",
+   "author": "Luis Martín-Santos",
+   "year": 1962,
+   "isbn13": "9786057728906"
+  },
+  {
+   "ol_id": "OL35376493M",
+   "title": "Vampir Günlükleri-Stefan Günlükleri Vol",
+   "author": "Lisa Jane Smith",
+   "year": 2011,
+   "isbn13": "9786053041894"
+  },
+  {
+   "ol_id": "OL35423188M",
+   "title": "Duman Olan Adam",
+   "author": "Maj Sjöwall, Per Wahlöö",
+   "year": 1966,
+   "isbn13": "9786058072756"
+  },
+  {
+   "ol_id": "OL35306829M",
+   "title": "Doğu Batı Sokağı",
+   "author": "Philippe Sands",
+   "year": 2016,
+   "isbn13": "9786051716169"
+  },
+  {
+   "ol_id": "OL35368766M",
+   "title": "Eve Dönelim, Küçük Ayi",
+   "author": "Martin Waddell",
+   "year": 1990,
+   "isbn13": "9786051885643"
+  },
+  {
+   "ol_id": "OL32203727M",
+   "title": "Vampir Günlükleri",
+   "author": "Lisa Jane Smith, Kevin Williamson, Julie Plec",
+   "year": 2012,
+   "isbn13": "9786053045861"
+  },
+  {
+   "ol_id": "OL35314706M",
+   "title": "Olmedo Sövalyesi",
+   "author": "Lope de Vega",
+   "year": 1606,
+   "isbn13": "9786053600541"
+  },
+  {
+   "ol_id": "OL35395634M",
+   "title": "Kayıp Çocuk Arşivi",
+   "author": "Valeria Luiselli",
+   "year": 2019,
+   "isbn13": "9786055903794"
+  },
+  {
+   "ol_id": "OL35393093M",
+   "title": "Yüreğimdeki Arzu",
+   "author": "Eloisa James",
+   "year": 2008,
+   "isbn13": "9786055360962"
+  },
+  {
+   "ol_id": "OL33126887M",
+   "title": "Kaçiş",
+   "author": "Elmore Leonard",
+   "year": 1996,
+   "isbn13": "9786053751168"
+  },
+  {
+   "ol_id": "OL35372033M",
+   "title": "Siyah İktidarı",
+   "author": "Charles V. Hamilton, Kwame Ture",
+   "year": 1967,
+   "isbn13": "9786052318454"
+  },
+  {
+   "ol_id": "OL35424717M",
+   "title": "Aşk ve Matematik",
+   "author": "Edward Frenkel",
+   "year": 2013,
+   "isbn13": "9786059200042"
+  },
+  {
+   "ol_id": "OL35611767M",
+   "title": "Yüreğim Seni Seçti",
+   "author": "Eloisa James",
+   "year": 2007,
+   "isbn13": "9786054456437"
+  },
+  {
+   "ol_id": "OL35381935M",
+   "title": "Umuda uyandigim gün",
+   "author": "David Baldacci",
+   "year": 2011,
+   "isbn13": "9786053482406"
+  },
+  {
+   "ol_id": "OL35376174M",
+   "title": "Şapkacı",
+   "author": "A. G. Howard",
+   "year": 2014,
+   "isbn13": "9786052995228"
+  },
+  {
+   "ol_id": "OL60098974M",
+   "title": "Margo'nun Paraya İhtiyacı Var",
+   "author": "Rufi Thorpe",
+   "year": 2024,
+   "isbn13": "9786051983851"
+  },
+  {
+   "ol_id": "OL35304779M",
+   "title": "Virata, Ya Da Ölümsüz Bir Kardesin Gözleri",
+   "author": "Stefan Zweig",
+   "year": 1922,
+   "isbn13": "9786051868547"
+  },
+  {
+   "ol_id": "OL35310090M",
+   "title": "Günahkar",
+   "author": "Maggie Stiefvater",
+   "year": 2014,
+   "isbn13": "9786052991459"
+  },
+  {
+   "ol_id": "OL32203405M",
+   "title": "Cennetteki Gölgeler",
+   "author": "Erich Maria Remarque",
+   "year": 1971,
+   "isbn13": "9786051852119"
+  },
+  {
+   "ol_id": "OL32202870M",
+   "title": "Ruh Kırıcı",
+   "author": "Sebastian Fitzek",
+   "year": 2008,
+   "isbn13": "9786052996508"
+  },
+  {
+   "ol_id": "OL35312895M",
+   "title": "Sessizliğin Ağırlığı",
+   "author": "Heather Gudenkauf",
+   "year": 2009,
+   "isbn13": "9786053434184"
+  },
+  {
+   "ol_id": "OL35420179M",
+   "title": "İnsana hiç rahat yok kendinden",
+   "author": "Grace Paley",
+   "year": 1959,
+   "isbn13": "9786056492006"
+  },
+  {
+   "ol_id": "OL44516049M",
+   "title": "Gülistan tercümesi",
+   "author": "Saʻdī.",
+   "year": 1700,
+   "isbn13": "9786054370962"
+  },
+  {
+   "ol_id": "OL35377916M",
+   "title": "Eros'un Istırabı",
+   "author": "Byung-Chul Han",
+   "year": 2012,
+   "isbn13": "9786053161790"
+  },
+  {
+   "ol_id": "OL35392692M",
+   "title": "Kördüğüm",
+   "author": "Gena Showalter",
+   "year": 2009,
+   "isbn13": "9786055289584"
+  },
+  {
+   "ol_id": "OL35479294M",
+   "title": "kül olmuş gölgeler",
+   "author": "Kamila Shamsie",
+   "year": 2009,
+   "isbn13": "9786055506872"
+  },
+  {
+   "ol_id": "OL35396632M",
+   "title": "İngiliz Gelin Annabel",
+   "author": "Lynsay Sands",
+   "year": 2013,
+   "isbn13": "9786056540769"
+  },
+  {
+   "ol_id": "OL32843671M",
+   "title": "Bunny Munro'nun Ölümü",
+   "author": "Nick Cave",
+   "year": 2009,
+   "isbn13": "9786055903138"
+  },
+  {
+   "ol_id": "OL35402655M",
+   "title": "Balkondaki Adam",
+   "author": "Maj Sjöwall, Per Wahlöö",
+   "year": 1968,
+   "isbn13": "9786058072787"
+  },
+  {
+   "ol_id": "OL35376479M",
+   "title": "Vampir Günlükleri - Kurtulus - Maskesiz - Vol 3",
+   "author": "Lisa Jane Smith, Aubrey Clark",
+   "year": 2000,
+   "isbn13": "9786053041535"
+  },
+  {
+   "ol_id": "OL35356973M",
+   "title": "Dunya'dan Fısıltılar",
+   "author": "Carl Sagan, F D Drake, Ann Druyan, Timothy Ferris, Jon Lomberg, Linda Salzman Sagan",
+   "year": 1978,
+   "isbn13": "9786050207873"
+  },
+  {
+   "ol_id": "OL32859686M",
+   "title": "Dantel falcısı",
+   "author": "Brunonia Barry",
+   "year": 2006,
+   "isbn13": "9786051112213"
+  },
+  {
+   "ol_id": "OL35390798M",
+   "title": "Bitmeyen Keşif DNA",
+   "author": "Sam Kean",
+   "year": 2012,
+   "isbn13": "9786055029081"
+  },
+  {
+   "ol_id": "OL35376621M",
+   "title": "Tanrıça Kızlar - Bilge Athena",
+   "author": "Joan Holub, Suzanne Williams",
+   "year": 2011,
+   "isbn13": "9786053044758"
+  },
+  {
+   "ol_id": "OL35310229M",
+   "title": "Bilim Kadınları",
+   "author": "Rachel Ignotofsky",
+   "year": 2016,
+   "isbn13": "9786052995594"
+  },
+  {
+   "ol_id": "OL35369092M",
+   "title": "Dev Zıplak",
+   "author": "Julia Donaldson",
+   "year": 2007,
+   "isbn13": "9786051923161"
+  },
+  {
+   "ol_id": "OL35409453M",
+   "title": "Düzenbaz",
+   "author": "James Patterson, David Ellis",
+   "year": 2013,
+   "isbn13": "9786059809092"
+  },
+  {
+   "ol_id": "OL35370370M",
+   "title": "Zaman Yolculuğu",
+   "author": "James Gleick",
+   "year": 2016,
+   "isbn13": "9786052116593"
+  },
+  {
+   "ol_id": "OL35375669M",
+   "title": "Ücra Adalar Atlasi",
+   "author": "Judith Schalansky",
+   "year": 2009,
+   "isbn13": "9786052985656"
+  },
+  {
+   "ol_id": "OL35384471M",
+   "title": "Kisgörmez",
+   "author": "R. A. Salvatore",
+   "year": 2011,
+   "isbn13": "9786053757252"
+  },
+  {
+   "ol_id": "OL35381258M",
+   "title": "Bir Gün, Belki Bir Gün",
+   "author": "Lauren Graham",
+   "year": 2013,
+   "isbn13": "9786053436089"
+  },
+  {
+   "ol_id": "OL35356806M",
+   "title": "Öklid'in Penceresi",
+   "author": "Leonard Mlodinow",
+   "year": 2001,
+   "isbn13": "9786050205121"
+  },
+  {
+   "ol_id": "OL35384130M",
+   "title": "Genç Stalin",
+   "author": "Simon Sebag-Montefiore",
+   "year": 2007,
+   "isbn13": "9786053750710"
+  },
+  {
+   "ol_id": "OL35310525M",
+   "title": "Vampir Günlükleri - Stefan Günlükleri Vol. 4 Karındeşen",
+   "author": "Lisa Jane Smith",
+   "year": 2011,
+   "isbn13": "9786053045571"
+  },
+  {
+   "ol_id": "OL35395637M",
+   "title": "Dürüst Yalancı",
+   "author": "Tove Jansson",
+   "year": 1982,
+   "isbn13": "9786055903862"
+  },
+  {
+   "ol_id": "OL35385863M",
+   "title": "Bir avuç yıldız",
+   "author": "Rafik Schami",
+   "year": 1987,
+   "isbn13": "9786054156313"
+  },
+  {
+   "ol_id": "OL32207073M",
+   "title": "Kilitli Oda",
+   "author": "Maj Sjöwall, Per Wahlöö",
+   "year": 1972,
+   "isbn13": "9786050697285"
+  }
+ ]
+}
