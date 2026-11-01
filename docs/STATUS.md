@@ -1,16 +1,18 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-11-01 (faz 6 kurulumu bitti: plan §12.4 adım 1–19; bulgular B1–B9, hepsi `docs/kurulum.md` düzeltmesiyle kapandı; B6–B9 düzeltmeleri commit'lenmedi)
+- **Güncelleme:** 2026-11-02 (elle TC sonuçları işlendi; B10 bulundu, düzeltmesi onaylandı, küçük karar listesi onay bekliyor)
 - **Aşama:** eng-process **faz 6 (doğrulama)**, plan §12. Faz 5 tamam (PR #1…#7, G01–G19, `main` = `b3cc2a1`). Proje artık bir **deneme projesi**: gerçek kütüphanede kullanılmayacak, kurulmuş temel gereksiz değiştirilmez (ADR-0067). Kalan: faz 6 ve faz 7 (kapanış).
-- **Sıradaki adım (kullanıcı "devam et" diyerek gelecek):** eng-process faz 6, plan §12.1.
-  1. **Commit onayı iste (ilk iş):** Çalışma ağacında commit'lenmemiş `docs/kurulum.md`, plan §12.2 (B6–B9) ve bu dosya var. Önerilen mesaj: `docs: record install findings B6-B9 and fix the control, NTP and placeholder checks`. Onaysız commit'leme; push ayrıca sorulur.
-  2. Ardından elle TC'ler (plan §12.1): TC-223, 225, 231, 234, 319 tam; TC-229, 230 kısmi. TC-229'un "dinlenen portlar" kısmı ve TC-230'un bu makinedeki kısmı adım 16–19 çıktılarıyla zaten karşılanmış olabilir; TC'ye geçerken kullanıcıyla netleştir. Sonra tam test koşusu, kabul tablosu (§12.3), `spec-reviewer`, bulgular, `v1.0.0` ve temizlik sorusu (küçük karar 9). Her yeni takılma §12.2'ye **B10**'dan başlayan numarayla girer; düzeltme biçimi AskUserQuestion ile sorulur.
-- **Kullanıcı tercihi:** Plan ve STATUS'a yönlendirme yerine, sıradaki adımın komutlarını doğrudan, kopyalanabilir hâlde ve nerede çalıştırılacağıyla birlikte ver.
-- **Git:** Dal `feature/phase6-verification`. Push edildi: `4179afe`, `6dfe30e`, `25c5c78`, annotated `v1.0.0-rc.1` → `b3cc2a1`. **Yerelde, push edilmedi:** `54fd1bf` (B1, ADR-0068) ve `7423b31` (B2–B5; kurulum belgesinin yeniden sıralanması, architecture §8). Push'u sormadan yapma.
+- **Sıradaki adım (kullanıcı "devam et" diyerek gelecek):** eng-process faz 6.
+  1. **B10 düzeltmesi** (plan §12.2; Türkçe hata şablonları + `v1.0.0-rc.2`, kullanıcı onayı 2026-11-02). Önce küçük karar listesi (şablon metinleri, 500'ün bağlamsız çizimi, TC numarası TC-367…, dal ve rc.2 etiketinin yeri, güncelleme adımları) onaya sunulur; sonra failing test, şablonlar, tam test koşusu, **onayla** rc.2 etiketi ve zip, test ortamında `docs/kurulum.md` güncelleme adımları, TC-231'in hata sayfası kısmı (`/admin/`, olmayan üye no, yönetici olmayan personelle yönetici yolu) üç tarayıcıda; geçerse TC-231 "Geçti".
+  2. Tam test koşusu (aşağıda "Nasıl çalıştırılır"), kabul tablosu §12.3, `spec-reviewer`, bulgular (her biri ayrı soru), **onayla** `v1.0.0` (annotated, `main` üzerine), **onayla** push ve PR/merge, temizlik sorusu (küçük karar 9), faz 7. Yeni takılmalar §12.2'ye **B11**'den başlayan numarayla girer; düzeltme biçimi AskUserQuestion ile sorulur.
+- **Elle TC sonuçları (plan §12.1.1):** TC-223, 225, 234, 319 Geçti; TC-229, 230 Geçti (kısmi); TC-231 Kaldı (B10). Yük testi veritabanı `C:\Kutuphane\loadtest\library-load.sqlite3` temizliğe kadar duruyor.
+- **Temizlik komutları** (karar 9 sorulduktan sonra): servisleri durdur, iki `winsw … uninstall`, `Cert:\LocalMachine\Root`'tan "Caddy Local Authority" kaldır, `Remove-LocalUser library-svc`, `C:\Kutuphane` ve `C:\Program Files\Python311` sil; Firefox Ayarlar'dan.
+- **Kullanıcı tercihi:** Plan ve STATUS'a yönlendirme yerine, kalan adımların hepsini doğrudan, kopyalanabilir hâlde ve nerede çalıştırılacağıyla birlikte ver (2026-11-01: "kalan adımların hepsini direkt ver").
+- **Git:** Dal `feature/phase6-verification`. Push edildi: `4179afe`, `6dfe30e`, `25c5c78`, annotated `v1.0.0-rc.1` → `b3cc2a1`. **Yerelde, push edilmedi:** `54fd1bf` (B1, ADR-0068), `7423b31` (B2–B5), `78454d4` (B6–B9) ve elle TC sonuç kaydı. Push'u sormadan yapma.
 - **Kurulmuş test ortamı (§12.4 adım 1–19 tamam, ayrıntı plan §12.2):** `C:\Kutuphane\{app,venv,caddy,winsw,backups,exports,static}`; Python `C:\Program Files\Python311` (NuGet, ADR-0068); servisler `library-app` ve `library-caddy` Running; `https://127.0.0.2/` Chrome, Edge ve Firefox 159'da uyarısız, `http://` → 308 HTTPS; kök sertifika Windows deposunda (Firefox `security.enterprise_roots.enabled` zaten `true`). İlk yönetici `admin`; demo verisi: 300 kitap, 592 nüsha, 200 üye, 150 açık ödünç (10 gecikmiş), 350 kapalı. `w32time` Otomatik'e alınmadı, yalnız başlatıldı. Dinleme: `127.0.0.2:80/443`, `127.0.0.1:8000` (waitress), `127.0.0.1:2019` (Caddy yönetim ucu, B8'de kabul edildi).
 - **Sürüm arşivi:** `C:\Users\MEHMET~1\AppData\Local\Temp\claude\C--Users-Mehmet-Emin-AppData-Local-Temp-ai-config-evals-at-02-manual\55dd558d-6ee3-4fff-8dbc-862017410a75\scratchpad\library-v1.0.0-rc.1.zip` (596 538 bayt, SHA-256 `d43b5ed5ad943f7938df96ea530f9cf97c0f954ad7d06d9264ceb5e087e912c3`). Kaybolursa depo klasöründe `git archive --format=zip --prefix=library/ v1.0.0-rc.1 -o <scratchpad>\library-v1.0.0-rc.1.zip`.
 - **Kurulum öngörüleri:** Beşi de gerçekleşti ve kapandı: (a) B1, (b) B7, (c) B9, (d) B8, (e) B4.
-- **Test planı:** 348 TC "Geçti"; TC-226, 227, 228, 232, 233 "Kapsam dışı (deneme projesi, ADR-0067)"; elle kalan TC-223, 225, 229 (kısmi), 230 (kısmi), 231, 234, 319 "Planlandı".
+- **Test planı:** 354 TC "Geçti" (TC-229 ve 230 kısmi); TC-231 "Kaldı (B10)"; TC-226, 227, 228, 232, 233 "Kapsam dışı (deneme projesi, ADR-0067)". G01 TC'lerinden TC-01, 02, 03, 224, 235, 236 hâlâ "Planlandı" (önceki "348" sayımı bunları atlıyordu); adım 2'deki tam test koşusunun çıktısıyla işlenecek.
 - **Son doğrulama (faz 5 sonu, 2026-11-01, yerel Windows 11, Python 3.11.9):** 1042 passed, `slow` 7, migration temiz, dört kapsam eşiği çıkış 0, proje %97; Caddy + waitress `127.0.0.2`'de geçici denendi, servis kaydı yapılmadı. Ayrıntı plan G19 ve §11; PR #5…#7 notları git geçmişinde.
 - **Plan:** [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md) (faz 6: §12).
 - **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`b3cc2a1`), `feature/phase6-verification` (açık), `feature/foundation`, `feature/catalog-members`, `feature/circulation`, `feature/notifications`, `feature/operations` ve `feature/seed-load` (kapandı), `feature/deploy` (kapandı).
@@ -22,6 +24,8 @@
 
 ## Bu oturumda sorulan ve cevaplanan
 
+- **Elle TC sonuçları ve B10 (2026-11-02, kullanıcı onayı, ikisinde de önerilen):** Hata sayfalarının İngilizce olması (NFR-09) B10 oldu; Türkçe şablon + `v1.0.0-rc.2` ile düzeltilecek (bilinen sınırlama ve "sonraya" seçilmedi). TC-231 rc.2 denemesine kadar "Kaldı". TC-234'teki tanınmış ad-soyad eşleşmeleri (23, 94) kullanıcı kararıyla bulgu değil: telefon ve e-posta sentetik. Sonuçlar tek `docs:` commit'inde.
+- **Faz 6 elle TC'lere geçiş (2026-11-01, kullanıcı onayı, ikisinde de önerilen):** B6–B9 commit'lendi (`78454d4`); TC-229 ve TC-230 kurulum adım 16–19 çıktılarıyla "Geçti" yazılacak (yeniden koşulmayacak).
 - **Kurulum bulguları B6–B9 (2026-11-01, kullanıcı onayı, dördünde önerilen seçenek):** Yalnız `docs/kurulum.md` değişti, kod ve zip aynı (rc.2 yok). B6 dar `__DOLDUR__` kontrolü; B7 `w32time`'ı Otomatik yapıp başlatma ve `Get-TimeZone`; B8 `admin off` eklenmedi, belge `127.0.0.1:2019`'u yerel dinleme olarak yazıyor, kontrol komutu Caddy'nin bütün dinlemelerini listeliyor; B9 `curl` komutları platform "Kontrol"üne (Windows `curl.exe`). Windows komutları bu makinede doğrulandı, Linux'takiler çalıştırılmadı. ADR yazılmadı. Ayrıntı plan §12.2.
 - **Kurulum bulguları B3–B5 (2026-11-01, kullanıcı onayı):** Üçünün kökü aynı: "Ortam değişkenleri" Hazırlık'taydı, venv'den ve ortam dosyalarının yerine konmasından önce. "Tek yeniden sıralama" seçildi (yerinde küçük yamalar ve yalnız kayıt seçilmedi); B2–B5 tek `docs:` commit'inde (`7423b31`). Ayrıntı plan §12.2. ADR yazılmadı: ADR-0060'ın yapısı (ortak gövde, iki platformda aynı alt başlıklar) korundu.
 - **Kurulum bulgusu B1 (2026-11-01, kullanıcı onayı):** Kişisel Python 3.11.9 kuruluyken python.org yükleyicisi "all users" kurmuyor. [ADR-0068](decisions/0068-phase6-python-from-nuget-package.md): test ortamında Python resmi NuGet paketinden `C:\Program Files\Python311`'e açılır (kişisel kurulum ve 281 paketlik geliştirme ortamı korunur; paket ve venv scratchpad'de doğrulandı). `docs/kurulum.md` düzeltildi: Advanced Options yolu, kişisel kurulumu önce kaldırma notu, açık yollu venv komutu. Sıradaki ADR 0069.
@@ -62,20 +66,13 @@
 - **Yetki testi:** 19 yönetici yolunun hepsi var; TC-32 artık tam eşitlik ister. Yeni bir yönetici yolu eklenirse `tests/test_authorization.py`'deki liste de güncellenmelidir.
 - **Dosya listesi dışında değişenler:** Yok; açılışta G14–G16 listelerine eklenenler (`base.py`, `members/models.py`, şablonlar, `circulation/services.py`, `notifications/services.py`, `templates/base.html`, `tests/test_authorization.py`, `operations/domain.py`) dışında dosya değişmedi. `docs/architecture.md` §3'e `operations → notifications` oku eklendi (ADR-0055).
 
-## G13 için hâlâ geçerli notlar
+## G09–G13 için hâlâ geçerli notlar
 
 - `send_reminders` FAILED varken `CommandError("<n> hatırlatma gönderilemedi", returncode=1)` verir; G16 zamanlayıcısı bunu yakalayıp loglar, `job_run` SUCCESS'tir.
 - E-posta şablonları `autoescape off` düz metindir; gönderen `DEFAULT_FROM_EMAIL` (üretimde `LIBRARY_EMAIL_FROM`). Komut testleri `notifications/tests/test_commands.py`'dedir.
-
-## Önceki grup (G09–G12) için hâlâ geçerli notlar
-
 - Eşzamanlılık testleri (TC-103, TC-145…TC-148) `tests/support/concurrency.py`'deki `file_db` fixture'ıyla geçici dosya veritabanında, `run_parallel` ile iki iş parçacığında koşar.
 - `cancel_unpaid` denetim kaydı yazmaz; `CANCELLATION` yalnız elle iptalde. Ödünç, iade, uzatma, pasifleştirme ve elle hatırlatma denetim kaydı yazmaz.
 - `catalog.urls` `circulation.urls`'ten önce kalmalı (`/nushalar/etiket/`); bunu bir test sabitler.
-
-## Sıradaki adım
-
-Baştaki "Sıradaki adım" maddesine bakın (kurulum adım 13–19, bulgular, elle TC'ler, doğrulama, faz 7).
 
 ## Açık sorular ve riskler
 
@@ -100,10 +97,8 @@ Baştaki "Sıradaki adım" maddesine bakın (kurulum adım 13–19, bulgular, el
 - **2026-11-01, faz 6 yerel oturumları:** ADR-0067, ADR-0068, plan §12 ve §12.4 kontrol listesi, `v1.0.0-rc.1`; kurulum adım 1–12 ve bulgular B1–B5 (`54fd1bf`, `7423b31`).
 - **2026-11-01, `feature/deploy` bulut oturumu (G19):** İlk commit `docs:` (bayat STATUS satırları, ADR-0060…0066, açılış kararları, TC-359…TC-366), ardından TDD ile (testler önce kırmızı) tek `feat:` commit'i, sonra handoff `docs:`; her biri push edildi. Caddy 2.11.7 bulutta indirilebildi: `caddy validate` ve waitress + Caddy canlı denemesi geçti. Oturum içinde yeni kritik soru çıkmadı. PR #7 açıldı, birleştirilmedi.
 - **2026-11-01, `feature/seed-load` bulut oturumu:** İlk commit `docs:` (bayat STATUS satırları, ADR-0056…0058, açılış kararları, TC-340…TC-356), ardından G17 ve G18 görev başına TDD (testler önce kırmızı) ve birer `feat:` commit'i, sonra handoff `docs:`; her biri push edildi. Open Library bulut ağında engelliydi (ADR-0056). Demo verisi test istemcisiyle, yük betiği waitress'e karşı 10 saniyelik duman testiyle elle doğrulandı. Oturum içinde yeni kritik soru çıkmadı (sıradaki ADR 0059). PR açıldı, birleştirilmedi.
-- **2026-11-01, `feature/operations` bulut oturumu:** İlk commit `docs:` (bayat STATUS satırları, ADR-0053…0055, açılış kararları, TC-320…TC-339), ardından G14, G15, G16 görev başına TDD (testler önce kırmızı) ve birer `feat:` commit'i, sonra handoff `docs:`; her biri push edildi. Ekranlar Playwright ile, zamanlayıcı `waitress-serve` ile elle doğrulandı. Oturum içinde yeni kritik soru çıkmadı. PR açıldı, birleştirilmedi.
+- **2026-11-01, `feature/circulation`, `feature/notifications`, `feature/operations` bulut oturumları (G09–G16):** Her biri ilk `docs:` commit'i (bayat STATUS, ADR'ler, açılış kararları), görev başına TDD ve `feat:` commit'leri, handoff `docs:`; ekranlar Playwright ile, zamanlayıcı `waitress-serve` ile elle doğrulandı. Ayrıntı git geçmişinde ve plan §11.
 - **2026-10-31/11-01, PR #1…#4 (G01–G13):** Yerel Windows doğrulamaları (219, 515, 784, 852 passed), metinler onaylandı; merge commit'leri `1a93f2d`, `b6bd69d`, `d0c4555`, `c2e5bc8`. PR #1'de inceleme düzeltmeleri D1–D4 (ADR-0051, 106 onaylı metin).
-- **2026-11-01, `feature/notifications` bulut oturumu:** İlk commit `docs:` (bayat STATUS satırları, ADR-0052, G13 açılış kararları), ardından G13 TDD ile (20 TC önce kırmızı) tek `feat:` commit'i, sonra `docs:` (test planı, plan kutusu, §11, STATUS); her biri push edildi. Ekran Playwright ile göz kontrolünden geçti. PR açıldı, birleştirilmedi.
-- **2026-11-01, `feature/circulation` bulut oturumu:** İlk commit `docs:` (STATUS ve pasifleştirme koruması kararı), ardından G10, G09, G11, G12 görev başına TDD ve `feat:` commit'i, her biri push edildi. TC-91 için bir soru soruldu (denetim listesinde TL). Ekranlar geliştirme sunucusunda Playwright ile açılıp göz kontrolünden geçti. PR açıldı, birleştirilmedi.
 - **2026-10-31, faz 4 ve öncesi:** Test planı (319 TC), plan (G01–G19, KL-1…KL-46), ADR-0026…0048, faz 3 kararları (ADR-0001…0025), faz 2 araştırmaları, faz 1 SRS. Ayrıntı git geçmişinde ve plan §8–§10'da.
 
 ## Nasıl çalıştırılır ve test edilir
