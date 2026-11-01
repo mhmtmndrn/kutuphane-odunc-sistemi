@@ -1,0 +1,33 @@
+# Kütüphane ödünç sistemi: Caddy servisi (HTTPS ve statik dosyalar).
+# /etc/systemd/system/library-caddy.service olarak kopyalanır (docs/kurulum.md).
+# /var/lib/library/caddy yerel CA'nın özel anahtarını taşır (izin 0700).
+
+[Unit]
+Description=Kütüphane ödünç sistemi (Caddy)
+After=network-online.target library-app.service
+Wants=network-online.target library-app.service
+
+[Service]
+Type=notify
+User=library
+Group=library
+EnvironmentFile=/etc/library/library.env
+Environment=XDG_DATA_HOME=/var/lib/library/caddy XDG_CONFIG_HOME=/var/lib/library/caddy
+ExecStart=/usr/local/bin/caddy run --config /opt/library/app/deploy/Caddyfile --adapter caddyfile
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=5s
+UMask=0077
+
+# 80 ve 443 portları root olmadan dinlenir.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+# Sıkılaştırma: yalnız Caddy'nin kendi veri klasörüne yazılır.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/library/caddy
+
+[Install]
+WantedBy=multi-user.target

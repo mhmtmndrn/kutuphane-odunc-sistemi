@@ -1,0 +1,30 @@
+# Kütüphane ödünç sistemi: uygulama servisi (waitress ve zamanlayıcı).
+# /etc/systemd/system/library-app.service olarak kopyalanır (docs/kurulum.md).
+# Yollar /etc/library/library.env içindekilerle aynı olmalıdır.
+
+[Unit]
+Description=Kütüphane ödünç sistemi (waitress)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=library
+Group=library
+EnvironmentFile=/etc/library/library.env
+WorkingDirectory=/opt/library/app
+ExecStart=/opt/library/venv/bin/waitress-serve --listen=127.0.0.1:8000 --threads=8 library_site.wsgi:application
+Restart=on-failure
+RestartSec=5
+UMask=0027
+
+# Sıkılaştırma: yalnız veri, yedek ve dışa aktarma klasörlerine yazılır.
+# "-" öneki: harici disk takılı değilse servis yine başlar; yedek komutu
+# klasörü bulamayıp hata verir ve ana sayfada uyarı çıkar.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/library/data -/mnt/library-backup/backups -/mnt/library-backup/exports
+
+[Install]
+WantedBy=multi-user.target

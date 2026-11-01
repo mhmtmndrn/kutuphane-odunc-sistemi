@@ -28,8 +28,9 @@
 | docs/decisions/0049, 0050 | Faz 5'te, G02'den önce yazıldı (2026-10-31): kilit cevabı ve kilit süresi |
 | docs/decisions/0056…0058 | Faz 5'te, G17–G18 açılışında yazıldı (2026-11-01): Open Library çekimi, tohum telefonları, yük betiği koruması |
 | docs/decisions/0059 | Faz 5'te, PR #6'nın yerel doğrulamasında yazıldı (2026-11-01): demo kitap kaydı eşleşen Türkçe baskıdan alınır; ADR-0033'ün durumu güncellendi |
+| docs/decisions/0060…0066 | Faz 5'te, G19 açılışında yazıldı (2026-11-01): kurulum belgesinin yapısı, sabit IP, servis hesabı, araç sürümleri, sürüm arşivi ve güncelleme, Caddy erişim logu yok, dağıtım dosyalarının testleri |
 | docs/architecture.md, docs/data-design.md | Faz 4 tutarlılık düzeltmeleri (§8) |
-| docs/test-plan.md | Faz 4'te oluşturuldu (2026-10-31): 319 TC, test taslağından revize edildi; G14–G16 açılışında TC-320…TC-339, G17–G18 açılışında TC-340…TC-356, PR #6 yerel doğrulamasında TC-357…TC-358 eklendi (2026-11-01) |
+| docs/test-plan.md | Faz 4'te oluşturuldu (2026-10-31): 319 TC, test taslağından revize edildi; G14–G16 açılışında TC-320…TC-339, G17–G18 açılışında TC-340…TC-356, PR #6 yerel doğrulamasında TC-357…TC-358, G19 açılışında TC-359…TC-366 eklendi (2026-11-01) |
 | docs/data-design.md | I6'ya ADR-0018 istisnası yazıldı (§8 T-02) |
 | docs/risk-register.md | Faz 4'te oluşturuldu (2026-10-31); plan §6'daki riskler buraya taşındı |
 
@@ -186,7 +187,15 @@ Kapsam içi FR sayısı 31 (23 Must, 8 Should), Won't sayısı 7.
 - [ADR-0058](../decisions/0058-loadtest-seed-only-guard.md): `--db` içinde e-postası `@example.invalid` ile bitmeyen bir üye varsa yük betiği "Tohum verisi olmayan veritabanı" ile çıkış 1 verir ve hiç istek atmaz (faz 5, G17–G18 açılışı).
 - [ADR-0059](../decisions/0059-demo-books-turkish-edition.md): Demo kitap kaydının başlığı, ISBN'i ve OL kimliği eserden değil, aramanın `editions` alanındaki ilk Türkçe baskıdan alınır; ADR-0033'ün beş kuralı o baskıya uygulanır, Türkçe baskısı olmayan kayıt atılır; filtre sürümü 2. HTTP 5xx ve zaman aşımında aynı sayfa en çok 3 kez daha, 2/4/8 sn beklenerek istenir (faz 5, PR #6 yerel doğrulaması).
 
-Sıradaki ADR numarası: 0059.
+- [ADR-0060](../decisions/0060-install-doc-common-body-two-platforms.md): `docs/kurulum.md` ortak bir gövde ve iki eşit ayrıntıda platform bölümünden (Windows, Linux) oluşur; ortak adımlar bir kez yazılır (faz 5, G19 açılışı).
+- [ADR-0061](../decisions/0061-access-by-static-ip.md): Personel uygulamaya sunucunun DHCP rezervasyonuyla sabitlenmiş IP'siyle erişir; `LIBRARY_HOST`, `LIBRARY_BIND` ve `LIBRARY_ALLOWED_HOSTS` bu IP'dir, `tls internal` IP sertifikası üretir; personel bilgisayarlarına masaüstü kısayolu (faz 5, G19 açılışı).
+- [ADR-0062](../decisions/0062-service-account.md): Servisler ayrı yerel hesapla çalışır (Windows `library-svc`, Linux `library`); veri, gizli değer ve Caddy veri klasörleri yalnız bu hesaba açılır (faz 5, G19 açılışı).
+- [ADR-0063](../decisions/0063-tool-versions-winsw-caddy.md): WinSW 2.12.0; Caddy 2.11.7, indirme bağlantısı sürüme sabit, güncelleme elle (faz 5, G19 açılışı).
+- [ADR-0064](../decisions/0064-release-zip-and-update-procedure.md): Kod sunucuya bir `vX.Y.Z` etiketinden `git archive` ile üretilen zip olarak gelir; belge ilk kurulum ve güncelleme yordamını verir (faz 5, G19 açılışı).
+- [ADR-0065](../decisions/0065-caddy-no-access-log.md): Caddy erişim logu tutulmaz; Caddyfile'da `log` yönergesi yoktur (NFR-08; faz 5, G19 açılışı).
+- [ADR-0066](../decisions/0066-deploy-files-consistency-tests.md): Dağıtım dosyaları ve kullanıcı belgeleri `tests/test_deploy_files.py`'deki tutarlılık testleriyle denetlenir; elle TC'ler de kalır (faz 5, G19 açılışı).
+
+Sıradaki ADR numarası: 0067.
 
 **Faz 4 küçük kararları (onaylandı 2026-10-31):**
 
@@ -827,32 +836,43 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
 
 ### Görev G19: Dağıtım dosyaları ve kullanıcı belgeleri
 
-- **Gereksinimler:** FR-28 (geri yükleme adımı belgesi), NFR-04, NFR-08 (LAN), ADR-0005, ADR-0006, ADR-0010, ADR-0029, ADR-0032 ("adı sor" adımı), ADR-0038 (demo sırası), ADR-0040 (kapalı tarih notu), ADR-0047 (rıza notu); KL-21, KL-27, KL-29.
-- **Dosyalar:** oluştur `deploy/Caddyfile`, `deploy/winsw/library-app.xml`, `deploy/winsw/library-caddy.xml`, `deploy/systemd/library-app.service`, `deploy/systemd/library-caddy.service`, `deploy/library.env.example`, `docs/kurulum.md`, `docs/kullanim-kilavuzu.md`; değiştir `README.md`.
+- **Gereksinimler:** FR-28 (geri yükleme adımı belgesi), NFR-04, NFR-05 (yeniden başlatma), NFR-06, NFR-08 (LAN, erişim logu yok), ADR-0005, ADR-0006, ADR-0010, ADR-0012, ADR-0029, ADR-0032 ("adı sor" adımı), ADR-0038 (demo sırası), ADR-0040 (kapalı tarih notu), ADR-0047 (rıza notu), ADR-0054 (koruma kopyası KVKK notu), ADR-0060…ADR-0066; KL-21, KL-27, KL-29; G19 küçük kararları 1–12 (§11).
+- **Dosyalar:** oluştur `deploy/Caddyfile`, `deploy/winsw/library-app.xml`, `deploy/winsw/library-caddy.xml`, `deploy/systemd/library-app.service`, `deploy/systemd/library-caddy.service`, `deploy/library.env.example`, `docs/kurulum.md`, `docs/kullanim-kilavuzu.md`, `tests/test_deploy_files.py` (ADR-0066); değiştir `README.md` (küçük karar 11).
 - **Davranış:**
   - **Caddyfile:**
-    - Site adresi `{$LIBRARY_HOST}` ve `tls internal` ile tanımlanır.
+    - Site adresi `{$LIBRARY_HOST}` ve `tls internal` ile tanımlanır. `LIBRARY_HOST` sunucunun sabit IP adresidir; `tls internal` IP sertifikası üretir ([ADR-0061](../decisions/0061-access-by-static-ip.md)).
     - `handle_path /static/*` bloğu `root * {$LIBRARY_STATIC_ROOT}` ve `file_server` kullanır.
     - Diğer yollar `reverse_proxy 127.0.0.1:8000` ile waitress'e gider.
     - `bind`, LAN arayüzünün adresidir (`{$LIBRARY_BIND}`).
-  - **Servisler:** Uygulama servisinin komutu KL-5'tedir. Çökmede yeniden başlatma açıktır. Ortam değişkenleri architecture §6.4'tedir.
-  - **`docs/kurulum.md`** architecture §8'deki 7 adımı içerir. Ayrıca şunları içerir:
+    - `log` yönergesi yoktur; erişim logu tutulmaz ([ADR-0065](../decisions/0065-caddy-no-access-log.md)).
+  - **Servisler:**
+    - Uygulama servisinin komutu KL-5'tedir: `waitress-serve --listen=127.0.0.1:8000 --threads=8 library_site.wsgi:application`, `LIBRARY_SCHEDULER_ENABLED=1`. Ortam değişkenleri architecture §6.4'tedir; Caddy servisi `LIBRARY_HOST`, `LIBRARY_BIND` ve `LIBRARY_STATIC_ROOT`'u okur.
+    - İki servis de ayrı bir yerel hesapla çalışır: Windows'ta `library-svc` (WinSW `<serviceaccount>`), Linux'ta `library` ([ADR-0062](../decisions/0062-service-account.md)). Veri klasörü, gizli değer dosyaları ve Caddy veri klasörü yalnız bu hesaba ve yöneticilere açılır.
+    - Windows'ta WinSW 2.12.0: `onfailure restart` 10 sn, 3 deneme, `resetfailure` 1 gün; log `roll-by-size` 10 MB × 8 dosya; Caddy servisi `<depend>library-app</depend>`. Linux'ta systemd: `Restart=on-failure`, `RestartSec=5`, `NoNewPrivileges=yes`, `PrivateTmp=yes`, `ProtectSystem=strict`, `ReadWritePaths=` yalnız veri, yedek ve dışa aktarma klasörleri (Caddy'de kendi veri klasörü); Caddy unit'i `After=` ve `Wants=` ile uygulamaya bağlı ve `AmbientCapabilities=CAP_NET_BIND_SERVICE`; log journald (küçük kararlar 2–5).
+    - Caddy sürümü 2.11.7'dir; indirme bağlantısı bu sürüme sabitlenir ([ADR-0063](../decisions/0063-tool-versions-winsw-caddy.md)).
+  - **`deploy/library.env.example`:** §6.4 değişkenleri ile `LIBRARY_HOST` ve `LIBRARY_BIND`; her değişkenin üstünde bir Türkçe açıklama satırı, gizli değerler boş. WinSW `<env>` değerlerinde kuruma özgü ve gizli değerler `__DOLDUR__`'dur (küçük karar 8).
+  - **`docs/kurulum.md`** ortak bir gövde ve eşit ayrıntıda Windows ve Linux bölümlerinden oluşur ([ADR-0060](../decisions/0060-install-doc-common-body-two-platforms.md)). architecture §8'deki 7 adımı içerir. Ayrıca şunları içerir:
+    - Sürüm arşivinin üretilmesi (`git archive`), ilk kurulum ve güncelleme yordamı: servisi durdur → `backup_db` → zip'i aç → `pip install -r requirements.txt` → `migrate` → `collectstatic` → servisi başlat → kontrol ([ADR-0064](../decisions/0064-release-zip-and-update-procedure.md)).
     - Migration öncesinde elle `backup_db` çalıştırılması.
     - Yedekten geri yükleme yordamı: servisi durdur, `restore_backup`, servisi başlat ve sayımları kontrol et. AC-28'de bu yordamın süresi ölçülür.
     - Geri yüklemenin bıraktığı koruma kopyası (`<db>.pre-restore-…`, ADR-0054) saklama kuralı dışında kalan bir kişisel veri kopyasıdır; geri yükleme kontrol edildikten sonra elle silinmelidir (KVKK notu).
-    - USB rotasyonu, parolanın çevrimdışı saklanması, CA kök sertifikasının yüklenmesi, NTP ayarı ve SQLite dosyasının yerel diskte tutulması.
-  - **`docs/kullanim-kilavuzu.md`**, masa işlerini adım adım anlatır. Ödünçte "üyeye adını sor" adımı da buradadır. Ayrıca şu notları içerir: geçmiş kapalı tarihler silinmez (ADR-0040); geçmiş tarihli rıza olayı geçerli durumu değiştirmez (ADR-0047).
-- **Testler:** TC-225…TC-234, TC-319 (11 TC; `docs/test-plan.md` §6)
-- **Doğrulama:** Faz 6'da test ortamına kurulum yapılır ve şunlar kontrol edilir:
+    - Sabit IP (DHCP rezervasyonu) ve masaüstü kısayolu, servis hesabı ve klasör izinleri, güvenlik duvarı (Windows'ta 80/443 Private profil ve `LocalSubnet`, Linux'ta LAN alt ağıyla sınırlı `ufw`; yönlendiricide dışarı port açılmaz).
+    - USB rotasyonu, parolanın çevrimdışı saklanması, CA kök sertifikasının yüklenmesi (`certutil -addstore -f Root root.crt`, Firefox notu, kök sertifikanın Caddy veri klasöründeki yeri), NTP ayarı, SQLite dosyasının yerel diskte tutulması ve yedek ve dışa aktarma klasörlerinin elle açılması.
+  - **`docs/kullanim-kilavuzu.md`**, yalnız metin olarak masa işlerini adım adım anlatır: giriş, ödünç ("üyeye adını sor" adımı), iade, uzatma, üye kaydı ve rıza, ödeme, kayıp ve hasar, etiket ve kart basımı. Yönetici bölümü kapalı günleri, ayarları, yedek ve dışa aktarma uyarılarını anlatır. Ayrıca şu notları içerir: geçmiş kapalı tarihler silinmez (ADR-0040); geçmiş tarihli rıza olayı geçerli durumu değiştirmez (ADR-0047).
+  - **`README.md`:** "Veri kaynakları" ve "Demo verisi" korunur (TC-352); "Geliştirme ortamı", "Testler" ve "Belgeler" (kurulum ve kılavuz bağlantıları) eklenir; girişteki "G19'da eklenecek" cümlesi kaldırılır.
+- **Testler:** Elle: TC-225…TC-234, TC-319 (11 TC, faz 6). Otomatik ([ADR-0066](../decisions/0066-deploy-files-consistency-tests.md)): TC-359…TC-366 (`tests/test_deploy_files.py`).
+- **Doğrulama:** `python -m pytest tests/test_deploy_files.py -q` ve `python -m pytest -q` → hepsi geçer. Bulutta Caddy ikilisi indirilebilirse `caddy validate` ve `caddy adapt` çalıştırılır; indirilemezse not edilir. Yerel Windows doğrulamasında taşınabilir Caddy ikilisiyle `caddy validate` ve geçici portlarda waitress + Caddy ile `/static/css/app.css` → 200, `/admin/` → 404 kontrol edilir; servis kaydı yapılmaz. Faz 6'da test ortamına kurulum yapılır ve şunlar kontrol edilir:
   - `curl -k https://<host>/static/css/app.css` → 200.
   - `/admin/` → 404.
   - LAN dışından erişim olmamalı.
   - AC-28 geri yükleme süresi < 1 saat olmalı.
-- [ ] Tamamlandı
+  - Kanıt (2026-11-01, bulut oturumu, Linux, Python 3.11.18): TDD: `tests/test_deploy_files.py` önce yazıldı; dosyalar yokken 19 failed, 1 passed (TC-359 mevcut ayarlarla zaten tutarlı olduğu için geçti; koruma testidir). Ardından `python -m pytest tests/test_deploy_files.py -q` → 20 passed; `python -m pytest -q` → 1042 passed (önceki 1022); `python -m pytest -m slow -q` → 7 passed; `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı `*/domain.py` %100 (`--fail-under=90` çıkış 0), `accounts/permissions.py` ve `accounts/middleware.py` %100 (`--fail-under=100` çıkış 0), `billing/services.py` ve `circulation/services.py` %99 (`--fail-under=85` çıkış 0), `operations` %99 (`--fail-under=80` çıkış 0), proje %97. Caddy 2.11.7 Linux ikilisi GitHub sürüm sayfasından indirildi (SHA-512 `checksums.txt` ile aynı): `caddy validate --config deploy/Caddyfile --adapter caddyfile` → "Valid configuration"; `caddy fmt` farksız; `caddy adapt` → tek sunucu, `listen` yalnız `<LIBRARY_BIND>:443`, `tls` politikası `internal`. Canlı deneme (scratchpad, prod ayarları, geçici veritabanı, `LIBRARY_HOST`=`LIBRARY_BIND`=`127.0.0.2`): `waitress-serve --listen=127.0.0.1:8000 --threads=8 library_site.wsgi:application` ve `caddy run` ile `https://127.0.0.2/static/css/app.css` → 200, `/admin/` → 404, `/giris/` → 200, `http://127.0.0.2/giris/` → 308 HTTPS'e; dinlenen adresler `127.0.0.2:80`, `127.0.0.2:443`, `127.0.0.1:8000` ve Caddy yönetim ucu `127.0.0.1:2019`; sertifikanın SAN'ı `IP Address:127.0.0.2`, Caddy'nin ürettiği `root.crt` ile `curl --cacert` doğrulaması 200; `/uyeler/?q=…` isteğinden sonra Caddy logunda istek satırı yok (ADR-0065). `systemd-analyze verify` iki unit için yalnız sunucuda bulunmayan ikilileri (`/opt/library/venv/bin/waitress-serve`, `/usr/local/bin/caddy`) bildirdi, sözdizimi hatası yok. `library.env.example` `set -a; . …` ile kabukta yüklendi (16 değişken). WinSW 2.12.0 indirme bağlantısı 200 döndü; XML'ler ayrıştırıldı, WinSW Windows'ta çalıştırılmadı (yerel doğrulamada da servis kaydı yapılmaz, faz 6). Elle TC'ler (TC-225…TC-234, TC-319) faz 6'dadır.
+  - Kanıt (2026-11-01, yerel Windows 11, Python 3.11.9): `coverage run --branch -m pytest -q` → 1042 passed; `-m slow` → 7 passed; `makemigrations --check --dry-run` → "No changes detected"; dört kapsam eşiği çıkış 0 (`*/domain.py` %100, izinler %100, servisler %99, `operations` %99), proje %97. Caddy 2.11.7 Windows arşivinin SHA-512'si `checksums.txt` ve ADR-0063'teki değerle aynı; `caddy validate` → "Valid configuration"; repodaki (LF) Caddyfile `caddy fmt` ile farksız (çalışma kopyası `core.autocrlf` yüzünden CRLF, `validate` onunla da geçer). Prod ayarları, geçici veritabanı, `LIBRARY_HOST`=`LIBRARY_BIND`=`127.0.0.2`, waitress + Caddy: `/static/css/app.css` → 200, `/admin/` → 404, `/giris/` → 200, `http://…/giris/` → 308; sertifika SAN `IP Address 127.0.0.2`, `root.crt` ile doğrulandı; dinlenen adresler `127.0.0.2:80`, `127.0.0.2:443`, `127.0.0.1:8000`, `127.0.0.1:2019`; `/uyeler/?q=…` isteği Caddy loguna düşmedi. Not: Git for Windows `curl`'ü (Schannel) yerel CA'da iptal kontrolü yapamadığı için `--cacert` ile 000 döner; `--ssl-no-revoke` ya da `-k` gerekir (kurulum belgesindeki kontrol `-k` kullanıyor). Servis kaydı yapılmadı.
+- [x] Tamamlandı
 
 ## 5. Testler
 
-Test planı: [docs/test-plan.md](../test-plan.md). 358 TC (TC-01…TC-358; TC-320…TC-339 G14–G16, TC-340…TC-356 G17–G18 açılış kararlarıyla, TC-357…TC-358 ADR-0059 ile 2026-11-01'de eklendi); seviyeler, teknikler, kapsam hedefleri, ortam ve giriş-çıkış ölçütleri orada. Her görevin TC listesi görevin **Testler** satırındadır. Elle TC'ler (TC-223, TC-225…TC-234, TC-319) faz 6'da yapılır.
+Test planı: [docs/test-plan.md](../test-plan.md). 366 TC (TC-01…TC-366; TC-320…TC-339 G14–G16, TC-340…TC-356 G17–G18 açılış kararlarıyla, TC-357…TC-358 ADR-0059 ile, TC-359…TC-366 G19 açılış kararlarıyla 2026-11-01'de eklendi); seviyeler, teknikler, kapsam hedefleri, ortam ve giriş-çıkış ölçütleri orada. Her görevin TC listesi görevin **Testler** satırındadır. Elle TC'ler (TC-223, TC-225…TC-234, TC-319) faz 6'da yapılır.
 
 ## 6. Riskler
 
@@ -860,13 +880,13 @@ Riskler [docs/risk-register.md](../risk-register.md) dosyasına taşındı (2026
 
 ## 7. İzlenebilirlik
 
-Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve teste bağlı. Test sütunu `docs/test-plan.md` §6'nın "Gereksinim" sütunundan üretildi (AC'ler FR'lerine eşlendi). Her görev en az bir gereksinime hizmet ediyor; TC-02 ve TC-236 architecture §6.4'e bağlı.
+Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve teste bağlı. Test sütunu `docs/test-plan.md` §6'nın "Gereksinim" sütunundan üretildi (AC'ler FR'lerine eşlendi). Her görev en az bir gereksinime hizmet ediyor; TC-02, TC-236 ve TC-359…TC-362 architecture §6.4'e bağlı.
 
 | Gereksinim | Tasarım öğesi | Görev | Test |
 |---|---|---|---|
 | FR-01 | `members`: `create_member`, `update_member`, `search_members`; `member` tablosu | G06, G17 | TC-35, TC-44…TC-52, TC-261, TC-342 |
 | FR-02 | `circulation.services.deactivate_member`, `members.services.set_inactive`, `Blocker.MEMBER_INACTIVE` | G06, G10, G11 | TC-53…TC-56, TC-115, TC-126, TC-286 |
-| FR-03 | `consent_event`, `set_consent`, `update_member` (ADR-0022, ADR-0047); S6 rıza koşulu | G06, G13, G17 | TC-57…TC-59, TC-177, TC-254…TC-258, TC-319, TC-351 |
+| FR-03 | `consent_event`, `set_consent`, `update_member` (ADR-0022, ADR-0047); S6 rıza koşulu; `docs/kullanim-kilavuzu.md` rıza notu | G06, G13, G17, G19 | TC-57…TC-59, TC-177, TC-254…TC-258, TC-319, TC-351, TC-365 |
 | FR-04 | `catalog.domain`: `parse_isbn`, `normalize_tr`; `create_book`, `search_books`; `book` tablosu | G05, G07 | TC-35, TC-37…TC-43, TC-60…TC-63, TC-66…TC-68, TC-253, TC-264 |
 | FR-05 | `copy` tablosu, `add_copies`, `COPY_TRANSITIONS`, `check_transition` | G07, G10, G12 | TC-64…TC-65, TC-71, TC-163…TC-169, TC-262…TC-263 |
 | FR-06 | `pdf.sheets.render_sheet`, `LABEL_LAYOUT`, `label_pdf`, `copies_for_labels` (ADR-0036) | G08 | TC-69…TC-72, TC-228, TC-265…TC-267, TC-269 |
@@ -874,8 +894,8 @@ Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve
 | FR-08 | `checkout_blockers`, `check_out`, `loan` kısmi benzersiz indeksi | G10, G11 | TC-114, TC-116…TC-119, TC-124…TC-127, TC-145…TC-146, TC-149, TC-280, TC-284 |
 | FR-09 | `check_in`, iade ekranı | G11 | TC-111, TC-134…TC-135, TC-138, TC-147, TC-283 |
 | FR-10 | `renew_blockers`, `renewed_due_date`, `renew` | G10, G11 | TC-120…TC-123, TC-139…TC-144, TC-148, TC-280, TC-288 |
-| FR-11 | Ödünç ve iade ekranları, `scan.js`, `classify_member_input` (ADR-0046) | G10, G11, G19 | TC-128…TC-130, TC-227, TC-279, TC-281…TC-282, TC-319 |
-| FR-12 | `late_days` (ADR-0040), `fine`, `loan` oran kopyası (ADR-0023) | G10, G11, G12, G17 | TC-13, TC-110…TC-113, TC-132, TC-134, TC-136…TC-137, TC-152, TC-246, TC-276…TC-278, TC-283, TC-319, TC-347 |
+| FR-11 | Ödünç ve iade ekranları, `scan.js`, `classify_member_input` (ADR-0046); kılavuzdaki "üyeye adını sor" adımı (ADR-0032) | G10, G11, G19 | TC-128…TC-130, TC-227, TC-279, TC-281…TC-282, TC-319, TC-365 |
+| FR-12 | `late_days` (ADR-0040), `fine`, `loan` oran kopyası (ADR-0023); kılavuzdaki kapalı tarih notu | G10, G11, G12, G17, G19 | TC-13, TC-110…TC-113, TC-132, TC-134, TC-136…TC-137, TC-152, TC-246, TC-276…TC-278, TC-283, TC-319, TC-347, TC-365 |
 | FR-13 | `allocate_fifo`, `record_payment`, `allocation` tablosu (ADR-0017) | G09, G17 | TC-78…TC-85, TC-100, TC-103, TC-290, TC-345 |
 | FR-14 | `waive` (ADR-0021) | G09 | TC-86…TC-90 |
 | FR-15 | `mark_lost`, `mark_damaged`, `post_charge` | G12 | TC-150…TC-152, TC-162, TC-289…TC-290, TC-293 |
@@ -891,8 +911,8 @@ Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve
 | FR-25 | `anonymize_expired`, `add_years`, `deferred_members`, `Member.display_name` (ADR-0018, ADR-0045, ADR-0055) | G15, G16, G17 | TC-201…TC-208, TC-305…TC-309, TC-330…TC-334, TC-346 |
 | FR-26 | `audit.record_audit`, `AuditEvent`, `/denetim/` | G03, G04, G06, G09, G12 | TC-18, TC-22, TC-26…TC-27, TC-91, TC-93, TC-157…TC-158, TC-170, TC-247, TC-259, TC-273 |
 | FR-27 | Django `LoginView`, django-axes, oturum ayarları (ADR-0009) | G02 | TC-04…TC-10, TC-12, TC-30, TC-237 |
-| FR-28 | `backup_db`, `restore_backup` (koruma kopyası, ADR-0054), `applock`; kurulum belgesi | G14, G16, G19 | TC-186…TC-191, TC-199…TC-200, TC-208, TC-225, TC-301…TC-302, TC-320…TC-323, TC-325…TC-329 |
-| FR-29 | `fetch_demo_books`, `filter_records`, `operations.seed`, `load_seed_data`, `README.md` (ADR-0033, ADR-0038, ADR-0056, ADR-0057, ADR-0059) | G17 | TC-214…TC-219, TC-234, TC-315…TC-316, TC-340…TC-345, TC-347…TC-352, TC-357…TC-358 |
+| FR-28 | `backup_db`, `restore_backup` (koruma kopyası, ADR-0054), `applock`; `docs/kurulum.md` (güncelleme ve geri yükleme yordamı, ADR-0064) | G14, G16, G19 | TC-186…TC-191, TC-199…TC-200, TC-208, TC-225, TC-301…TC-302, TC-320…TC-323, TC-325…TC-329, TC-366 |
+| FR-29 | `fetch_demo_books`, `filter_records`, `operations.seed`, `load_seed_data`, `README.md` (ADR-0033, ADR-0038, ADR-0056, ADR-0057, ADR-0059) | G17, G19 | TC-214…TC-219, TC-234, TC-315…TC-316, TC-340…TC-345, TC-347…TC-352, TC-357…TC-358, TC-365 |
 | FR-37 | `libx`, `export_backup`, `export_age_warning` (ADR-0006, ADR-0011) | G03, G14, G16 | TC-25, TC-192…TC-198, TC-208, TC-226, TC-244…TC-245, TC-299…TC-300, TC-303…TC-304, TC-310, TC-323…TC-326, TC-328…TC-329 |
 | FR-38 | `CARD_LAYOUT`, `member_card_pdf`, `members_for_cards` (ADR-0032, ADR-0036) | G08 | TC-69, TC-74…TC-75, TC-228, TC-266, TC-268…TC-269 |
 | FR-39 | `mark_shelf_copy`, `withdraw` (ADR-0026) | G12 | TC-159…TC-161, TC-293 |
@@ -902,11 +922,11 @@ Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve
 | NFR-01 | data-design §4 indeksleri, `scripts/loadtest.py` (ADR-0031, ADR-0058) | G18 | TC-221…TC-223, TC-318, TC-353…TC-356 |
 | NFR-02 | `load_seed_data --profile load` | G17, G18 | TC-220, TC-223, TC-317, TC-346 |
 | NFR-03 | BACKUP 02:00, `backup_db`, telafi (saatlik, ADR-0053) | G14, G16, G19 | TC-190, TC-233, TC-336 |
-| NFR-04 | `restore_backup` (ADR-0054), `docs/kurulum.md` | G14, G19 | TC-225, TC-320 |
-| NFR-05 | `jobs_due_for_catch_up`, `catch_up` (saatlik, ADR-0053), `run_command`, tek işçili zamanlayıcı, `run_job`, `reminder_log` tekrar engeli | G03, G13, G16 | TC-178…TC-179, TC-209…TC-213, TC-233, TC-310…TC-314, TC-335…TC-339 |
-| NFR-06 | `Argon2PasswordHasher`, Caddy `tls internal` (ADR-0005) | G01, G19 | TC-03, TC-230 |
+| NFR-04 | `restore_backup` (ADR-0054), `docs/kurulum.md` (ADR-0060, ADR-0064) | G14, G19 | TC-225, TC-320, TC-366 |
+| NFR-05 | `jobs_due_for_catch_up`, `catch_up` (saatlik, ADR-0053), `run_command`, tek işçili zamanlayıcı, `run_job`, `reminder_log` tekrar engeli; servislerin yeniden başlatılması (WinSW `onfailure`, systemd `Restart=on-failure`) | G03, G13, G16, G19 | TC-178…TC-179, TC-209…TC-213, TC-233, TC-310…TC-314, TC-335…TC-339, TC-361, TC-362, TC-364 |
+| NFR-06 | `Argon2PasswordHasher`, Caddy `tls internal` (ADR-0005, ADR-0061) | G01, G19 | TC-03, TC-230, TC-363 |
 | NFR-07 | `require_role`, `tests/test_authorization.py` | G04 | TC-11, TC-31…TC-33 |
-| NFR-08 | `member` alanları, anonimleştirme, `reminder_log.error` temizliği (ADR-0055), `Member.display_name`, Caddy LAN bağlaması | G06, G15, G17, G19 | TC-52, TC-206, TC-229…TC-230, TC-330…TC-331, TC-342 |
+| NFR-08 | `member` alanları, anonimleştirme, `reminder_log.error` temizliği (ADR-0055), `Member.display_name`, Caddy LAN bağlaması, Caddy erişim logu yok (ADR-0065), servis hesabı (ADR-0062) | G06, G15, G17, G19 | TC-52, TC-206, TC-229…TC-230, TC-330…TC-331, TC-342, TC-359…TC-364 |
 | NFR-09 | `LANGUAGE_CODE = "tr"`, `TIME_ZONE`, `templates/base.html` | G01, G19 | TC-231, TC-235 |
 | NFR-10 | `normalize_tr`, `search_key` (ADR-0019) | G05, G06, G07 | TC-34, TC-36, TC-47, TC-67 |
 | NFR-11 | Ödünç ekranı odak akışı, `scan.js` | G11, G19 | TC-128, TC-227 |
@@ -1556,3 +1576,59 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - **Birleştirme:** Kitap dosyası commit'lendikten ve testler yeniden geçtikten sonra PR #6'nın `main`'e birleştirilmesi onaylandı.
   - **Kitap dosyası:** Filtre sürümü 1'in yabancı baskı sorunu yerelde düzeltildi ("yerelde yalnız doğrulama" kuralına kullanıcının onayladığı istisna). Baskı düzeyi seçildi ve 5xx ile zaman aşımında yeniden deneme eklendi: [ADR-0059](../decisions/0059-demo-books-turkish-edition.md), TC-357, TC-358. ADR-0033'ün durum satırı güncellendi. Kanıt G17'de.
   - **Uyarlanan testler:** TC-214…TC-216 ve TC-340'ın test yardımcısı (`doc`) artık eser ve eşleşen Türkçe baskıyı üretir; beklenen `ol_id`'ler `OL…M` oldu, sınanan davranış değişmedi.
+- **2026-11-01, G19 — açılıştan önce verilen kararlar (kullanıcı onayı 2026-11-01):**
+  - **Kritik:**
+    - [ADR-0060](../decisions/0060-install-doc-common-body-two-platforms.md), kurulum belgesinin yapısı: `docs/kurulum.md` ortak bir gövde ve iki eşit ayrıntıda platform bölümünden (Windows, Linux) oluşur; ortak adımlar bir kez yazılır. Reddedilenler: Windows ayrıntılı, Linux kısa; iki ayrı belge (ortak adımlar kayar).
+    - [ADR-0061](../decisions/0061-access-by-static-ip.md), erişim adresi: Personel uygulamaya sunucunun sabit IP'siyle erişir (`https://192.168.x.y`); IP yönlendiricide DHCP rezervasyonuyla sabitlenir. `LIBRARY_HOST` ve `LIBRARY_ALLOWED_HOSTS` bu IP'dir; `tls internal` IP sertifikası üretir. Personel bilgisayarlarına masaüstü kısayolu konur. Reddedilenler: hosts dosyasında ad (bilgisayar başına yönetici işi); yönlendiricide DNS kaydı (destek belirsiz).
+    - [ADR-0062](../decisions/0062-service-account.md), servis hesabı: Windows'ta `library-svc` yerel kullanıcısı (WinSW `<serviceaccount>`), Linux'ta `library` sistem kullanıcısı. Veri klasörü, gizli değer dosyaları ve Caddy veri klasörü (CA anahtarı) ACL ya da izinle yalnız bu hesaba açılır. Reddedilenler: Windows sanal hesabı `NT SERVICE\…` (WinSW 2.x'te belirsiz); LocalSystem ya da root (aşırı yetki).
+    - [ADR-0063](../decisions/0063-tool-versions-winsw-caddy.md), araç sürümleri: WinSW 2.12.0 (XML biçimi buna göre). Caddy'nin yazım anındaki son kararlı 2.x sürümü (2.11.7) belgeye yazılır, indirme bağlantısı o sürüme sabitlenir; güncelleme elle. Reddedilenler: WinSW 3.x alfa; sürüm sabitlememek.
+    - [ADR-0064](../decisions/0064-release-zip-and-update-procedure.md), dağıtım yolu ve güncelleme: Kod sunucuya bir etiketten `git archive` ile üretilen zip olarak (USB ya da ağ) gelir; sunucuda git ve GitHub erişimi gerekmez. Belgede ilk kurulum ve güncelleme yordamı vardır. Güncelleme: servisi durdur → `backup_db` → zip'i aç → `pip install -r requirements.txt` → `migrate` → `collectstatic` → servisi başlat → kontrol. Reddedilenler: `git clone` (özel depo için sunucuya anahtar); yalnız ilk kurulum.
+    - [ADR-0065](../decisions/0065-caddy-no-access-log.md), Caddy logu: Erişim logu tutulmaz (Caddyfile'da `log` yönergesi yok). Yalnız süreç hata logu WinSW'ye ve journald'a gider. Gerekçe: arama GET sorgu dizgesi üye adı ve telefonu taşır (KVKK, FR-25 saklama kuralı dışı kişisel veri); işlem izi denetim kaydındadır. Reddedilenler: maskeli erişim logu; tam erişim logu.
+    - [ADR-0066](../decisions/0066-deploy-files-consistency-tests.md), dağıtım dosyalarının otomatik testleri: pytest tutarlılık testleri yazılır (`deploy/library.env.example` ve iki WinSW XML'indeki `<env>` adları ile ayarların okuduğu `LIBRARY_*` kümesi aynı, §6.4 listesi; Caddy'ye özgü `LIBRARY_HOST` ve `LIBRARY_BIND` ayrıca; XML'lerin zorunlu öğeleri; systemd unit'lerinde ve Caddyfile'da zorunlu satırlar ve `log` yokluğu; TC-319'un metin koşulları otomatik, elle okuma da kalır). Reddedilen: yalnız elle TC'ler.
+  - **Küçük kararlar (onaylı):**
+    1. **Yollar:** Windows `C:\Kutuphane\{app,venv,data,static,secrets,caddy,winsw}`. Linux `/opt/library/{app,venv}`, `/var/lib/library/{data,static}`, `/etc/library/library.env` (0640, `root:library`). Yedek ve dışa aktarma klasörleri harici diskte, elle açılır.
+    2. Caddy de aynı servis hesabıyla çalışır; Linux'ta `AmbientCapabilities=CAP_NET_BIND_SERVICE`.
+    3. **Yeniden başlatma:** WinSW `onfailure restart` 10 sn, 3 deneme, `resetfailure` 1 gün. systemd `Restart=on-failure`, `RestartSec=5`. Caddy uygulama servisine bağlı: Windows `<depend>library-app</depend>`, Linux `After=` ve `Wants=`.
+    4. **Loglar:** WinSW `roll-by-size` 10 MB × 8 dosya; Linux journald.
+    5. **systemd sıkılaştırma:** `NoNewPrivileges=yes`, `PrivateTmp=yes`, `ProtectSystem=strict`, `ReadWritePaths=` yalnız veri, yedek ve dışa aktarma klasörleri (Caddy unit'inde kendi veri klasörü).
+    6. **Güvenlik duvarı (yalnız belge):** Windows'ta 80/443 gelen kuralı, Private profil ve `LocalSubnet`; Linux'ta LAN alt ağıyla sınırlı `ufw` örneği. Yönlendiricide dışarı port açılmaz (NFR-08).
+    7. **Kök CA:** Her personel bilgisayarında `certutil -addstore -f Root root.crt`; Firefox kurumsal kök notu; kök sertifikanın Caddy veri klasöründeki yeri belgede.
+    8. **Ortam dosyası:** `library.env.example`'da her değişkene bir Türkçe açıklama satırı, gizli değerler boş. WinSW `<env>` değerleri `__DOLDUR__`. `SECRET_KEY` üretimi: `python -c "import secrets; print(secrets.token_urlsafe(50))"`.
+    9. **Sürüm arşivi:** `git archive --format=zip --prefix=library/ <etiket> -o library-<etiket>.zip`; etiket `vX.Y.Z`. G19'da yalnız belgelenir; etiket faz 6'da kullanıcı onayıyla atılır.
+    10. **Testler:** `tests/test_deploy_files.py`; yeni TC'ler TC-359'dan başlar.
+    11. **README:** Mevcut "Veri kaynakları" ve "Demo verisi" korunur (TC-352); "Geliştirme ortamı", "Testler" ve "Belgeler" (kurulum ve kılavuz bağlantıları) eklenir; girişteki "G19'da eklenecek" cümlesi kaldırılır.
+    12. **Kullanım kılavuzu:** Yalnız metin. Masa işleri: giriş, ödünç ("üyeye adını sor" adımı, ADR-0032), iade, uzatma, üye kaydı ve rıza (geçmiş tarihli rıza olayı geçerli durumu değiştirmez, ADR-0047), ödeme, kayıp ve hasar, etiket ve kart basımı. Yönetici bölümü: kapalı günler (geçmiş kapalı tarihler silinmez, ADR-0040), ayarlar, yedek ve dışa aktarma uyarıları.
+  - **Yerel doğrulama kararı (ADR değil):** Bulut oturumundan sonraki yerel Windows doğrulamasında resmî taşınabilir Caddy ikilisi scratchpad'e indirilir; `caddy validate` ve geçici portlarda waitress + Caddy ile `/static/css/app.css` → 200, `/admin/` → 404 kontrol edilir. Servis kaydı ve sisteme kurulum yapılmaz; tam kurulum faz 6'dadır. Bulutta Caddy ikilisi indirilebilirse `caddy validate` ve `caddy adapt` orada da çalıştırılır; indirilemezse not edilir.
+  - **Plan G19'dan değişmeyenler:** Caddyfile'ın dört kuralı, uygulama servisinin komutu (KL-5) ve `LIBRARY_SCHEDULER_ENABLED=1`, `docs/kurulum.md`'deki architecture §8'in 7 adımı, migration öncesi `backup_db`, geri yükleme yordamı (AC-28 süresi ölçülür), koruma kopyası KVKK notu (ADR-0054), USB rotasyonu, parolanın çevrimdışı saklanması, CA kök sertifikası, NTP, SQLite'ın yerel diskte tutulması, yedek ve dışa aktarma klasörlerinin elle açılması.
+  - **Plana işlenenler:** G19 bölümünün "Gereksinimler", "Dosyalar", "Davranış", "Testler" ve "Doğrulama" satırları; §2'de ADR-0060…0066; §3'te ADR-0060…0066 (sıradaki numara 0067); §5'te TC sayısı; §7'de yeni TC'ler. Yeni otomatik TC'ler `docs/test-plan.md`'de TC-359…TC-366. Elle TC'ler (TC-225…TC-234, TC-319) faz 6'da yapılır, durumları "Planlandı" kalır.
+  - **Açılışta sabitlenen uygulama seçimleri** (kararların doğrudan sonucu; onaya sunulan metinler grubun sonunda bu bölüme eklenir):
+    - Caddyfile ve WinSW XML'leri sürüm arşiviyle gelir. Caddy, Caddyfile'ı doğrudan uygulama klasöründen okur (`C:\Kutuphane\app\deploy\Caddyfile`, `/opt/library/app/deploy/Caddyfile`); güncelleme Caddyfile'ı da günceller.
+    - Caddy'nin veri klasörü `XDG_DATA_HOME` ve `XDG_CONFIG_HOME` ile servis hesabının profili yerine sabit bir yere alınır: Windows `C:\Kutuphane\caddy`, Linux `/var/lib/library/caddy` (Linux'ta küçük karar 1'in listesine eklenen klasör). Kök sertifika `<veri klasörü>\caddy\pki\authorities\local\root.crt`'dedir.
+    - Caddyfile'ın genel seçeneklerinde `skip_install_trust` vardır: servis hesabı yönetici olmadığı için Caddy'nin kök sertifikayı sunucunun kendi güven deposuna yükleme denemesi başarısız olur ve loga hata yazar; kök sertifika personel bilgisayarlarına elle yüklenir (küçük karar 7).
+    - WinSW `<env>` değerlerinde yalnız kuruma özgü ya da gizli değerler (`LIBRARY_SECRET_KEY`, `LIBRARY_ALLOWED_HOSTS`, `LIBRARY_HOST`, `LIBRARY_BIND`, yedek ve dışa aktarma klasörleri, `LIBRARY_EMAIL_*`) ve hesap parolası `__DOLDUR__`'dur; küçük karar 1'in sabit yolları ve `LIBRARY_SCHEDULER_ENABLED=1` dolu gelir.
+    - `<depend>` yalnız Caddy servisinin XML'indedir; uygulama servisi başka bir servise bağlı değildir. ADR-0066'nın zorunlu öğe listesi buna göre okunur.
+    - Linux'ta harici disk `/mnt/library-backup`'a bağlanır (`/etc/fstab`); yedek ve dışa aktarma klasörleri `/mnt/library-backup/{backups,exports}`, dışa aktarma parola dosyası `/etc/library/export-passphrase.txt` (0640, `root:library`). Windows'ta harici disk örneği `E:\Kutuphane\{backups,exports}`, parola dosyası `C:\Kutuphane\secrets\export-passphrase.txt`.
+    - Elle çalıştırılan `manage.py` komutları servisin ortamıyla çalışır: Windows'ta PowerShell ortamı WinSW XML'indeki `<env>` öğelerinden yükler, Linux'ta komut `library` kullanıcısıyla ve `library.env` yüklenerek çalışır.
+    - Kurulum belgesinin içeriği de otomatik denetlenir (TC-366): 7 adımın komutları, güncelleme sırası, geri yükleme ve KVKK notu, iki platform bölümü, sabit Caddy sürümü.
+- **2026-11-01, G19 — uygulama ayrıntıları (bulut oturumu):**
+  - **TDD:** `tests/test_deploy_files.py` (TC-359…TC-366, 20 test) dosyalardan önce yazıldı ve kırmızı görüldü (19 failed). TC-359 ayarlar ile architecture §6.4'ün mevcut eşitliğini sabitleyen koruma testidir; baştan geçti.
+  - **Değişken kümeleri:** Ayarların okuduğu adlar `library_site/settings/*.py` içindeki `env("…")` çağrılarından, §6.4 listesi `docs/architecture.md`'deki satırdan okunur; ikisi aynı kümeyi verir (`DJANGO_SETTINGS_MODULE` dahil 14 ad). Uygulama XML'i bu kümeyi, Caddy XML'i yalnız Caddyfile'daki `{$LIBRARY_*}` adlarını (`LIBRARY_HOST`, `LIBRARY_BIND`, `LIBRARY_STATIC_ROOT`) ve `XDG_DATA_HOME`/`XDG_CONFIG_HOME`'u, `library.env.example` §6.4 ile iki Caddy değişkenini taşır. TC-364 ayrıca uygulama unit'inin `ReadWritePaths=` kümesini `library.env.example`'daki veritabanı klasörü, yedek ve dışa aktarma klasörleriyle karşılaştırır.
+  - **Caddyfile:** `caddy fmt` genel seçenek bloğundan önceki boş satırı istedi; satır kaldırıldı ve `caddy validate` uyarısız geçti. Statik dışı yollar `handle { reverse_proxy 127.0.0.1:8000 }` içindedir (`handle_path` ile karşılıklı dışlayıcı). Canlı denemede `bind`'in HTTP→HTTPS yönlendirme dinleyicisini de LAN adresine bağladığı (`<IP>:80`) ve yönetim ucunun `localhost:2019`'da kaldığı görüldü; ek genel seçenek gerekmedi.
+  - **systemd:** Yedek ve dışa aktarma yolları `ReadWritePaths=`'te `-` önekiyle yazıldı: disk takılı değilken servis yine başlar, yedek komutu klasörü bulamayıp hata verir ve ana sayfada uyarı çıkar (G14 davranışı). Caddy unit'i `Type=notify` (Caddy'nin resmî unit'i gibi), `UMask=0077` (CA anahtarı); uygulama unit'i `UMask=0027`. Caddy ikilisi `/usr/local/bin/caddy`.
+  - **WinSW:** Exe, XML ile aynı adı alır (`library-app.exe`, `library-caddy.exe`); loglar `C:\Kutuphane\winsw\logs` (`<logpath>`), boyut eşiği `10240` KB. `<serviceaccount>` 2.x biçimindedir: `<domain>.</domain>`, `<user>`, `<password>`, `<allowservicelogon>true</allowservicelogon>`.
+  - **Kurulum belgesi:** Windows'ta `icacls` komutları yerel dilden bağımsız olsun diye Administrators ve SYSTEM'i SID'leriyle (`*S-1-5-32-544`, `*S-1-5-18`) verir. Elle komut oturumu Windows'ta WinSW XML'inden, Linux'ta `library.env`'den yüklenir ve `LIBRARY_SCHEDULER_ENABLED=0` yapılır; Windows'ta konsol UTF-8'e alınır (STATUS "Windows konsolu" tuzağı). Caddy arşivlerinin SHA-512 değerleri `checksums.txt`'ten alınıp belgeye yazıldı. Linux komutları Debian 12 içindir (Python 3.11 paket deposunda).
+  - **Kılavuz:** Ekran adları şablonlardan ve formlardan alındı (ör. "Üye kartı, üye no, telefon ya da ad", "Onayla", "İade al", "Uzat", "Ödemeyi kaydet", engel metinleri). İlk girişte parola değişimi yalnız yöneticinin açtığı ya da sıfırladığı hesaplarda istenir (`create_staff`, `reset_password`); `createsuperuser` ile açılan ilk yönetici istenmez.
+  - **README:** "Belgeler" bölümü girişin hemen altına, "Geliştirme ortamı" ve "Testler" sona eklendi; "Veri kaynakları" ve "Demo verisi" değişmedi (TC-352 geçiyor).
+  - **Dosya listesi dışında değişen:** Yok. `docs/architecture.md` değişmedi.
+  - **Bulut ağı:** `caddyserver.com` ve GitHub API engelliydi; sürüm `git ls-remote --tags` ile bulundu (son kararlı etiket `v2.11.7`), ikililer GitHub sürüm indirmelerinden alındı.
+- **2026-11-01, G19 uygulayıcının seçtiği kullanıcıya görünen metinler** (PR'da onaya sunulur). Uygulamaya yeni arayüz ya da hata metni eklenmedi. Planın, ADR'lerin ve açılış kararlarının vermediği, kurulum sırasında görünen adlar ve açıklamalar:
+  - **WinSW servisleri:** `library-app` görünen adı "Kütüphane uygulaması", açıklaması "Kütüphane ödünç sistemi: waitress uygulama sunucusu ve zamanlayıcı."; `library-caddy` görünen adı "Kütüphane Caddy", açıklaması "Kütüphane ödünç sistemi: Caddy ile HTTPS ve statik dosyalar."
+  - **systemd:** `Description=Kütüphane ödünç sistemi (waitress)` ve `Description=Kütüphane ödünç sistemi (Caddy)`.
+  - **Windows:** Güvenlik duvarı kuralının adı "Kutuphane HTTPS"; `library-svc` hesabının açıklaması "Kütüphane servis hesabı"; parola istemi "library-svc parolası".
+  - **`deploy/library.env.example`:** Dosya başlığı ve her değişkenin üstündeki Türkçe açıklama satırları (küçük karar 8); örnek değerler `192.168.1.10`, `smtp.kurum.example`, `kutuphane@kurum.example`, `/mnt/library-backup/{backups,exports}`.
+  - **Dağıtım dosyalarındaki açıklama yorumları:** Caddyfile, iki WinSW XML'i ve iki unit'in baş ve satır yorumları.
+  - **Belgeler:** `docs/kurulum.md` ve `docs/kullanim-kilavuzu.md`'nin metinleri ve README'nin yeni bölümleri ("Belgeler", "Geliştirme ortamı", "Testler").
+- **2026-11-01, PR #7 yerel doğrulaması ve onaylar** (kullanıcı, soru penceresi):
+  - **Yerel doğrulama:** Plan §11'deki karar uyarınca yapıldı; kanıt G19'da. Caddy indirme komutunu auto mode sınıflandırıcısı reddettiği için hazırlanan betiği kullanıcı `!` önekiyle çalıştırdı; HTTPS kontrolleri Schannel `curl`'ün iptal denetimi yüzünden yeniden (`--ssl-no-revoke` ve Python `ssl`) çalıştırıldı.
+  - **Metinler:** "G19 uygulayıcının seçtiği kullanıcıya görünen metinler" listesinin tamamı onaylandı.
+  - **Birleştirme:** PR #7'nin `main`'e birleştirilmesi onaylandı.

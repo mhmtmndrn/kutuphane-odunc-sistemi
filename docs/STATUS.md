@@ -1,20 +1,20 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-11-01 (faz 5, PR #6 yerelde doğrulandı ve onaylandı; ADR-0059 ile kitap dosyası commit'lendi)
-- **Aşama:** eng-process **faz 5**. PR #1…#5 (G01–G16) birleşti; `main` = `8256786`. `feature/seed-load` (**G17 → G18**, PR #6) tamam, yerel Windows doğrulaması geçti. Kullanıcı metinleri ve birleştirmeyi onayladı; bu commit'ten sonra `gh pr merge 6 --merge` ile birleşir.
-- **Sıradaki adım:** PR #6 birleşince `main`'i çek. Yerel `main`'deki eski STATUS stash'i ("local STATUS handoff before G17-G18 verification") bu notla geçersiz kaldı; kullanıcı onayıyla düşür. Sonra sıradaki grup **G19** (`feature/deploy`, dağıtım dosyaları ve kullanıcı belgeleri): açılış soruları sorulur, ardından bulut oturumu istemi hazırlanır.
-- **Yerel doğrulama (2026-11-01, Windows 11, Python 3.11):** Bulutun sonuçları birebir tekrarlandı (1018 passed, `slow` 7, migration temiz, kapsam eşikleri çıkış 0). ADR-0056 gereği çekilen `seed/books_openlibrary.json`'un 300 kaydının 43'ü yabancı baskıydı. Kullanıcı kararıyla [ADR-0059](decisions/0059-demo-books-turkish-edition.md) yazıldı: kayıt eşleşen Türkçe baskıdan alınıyor, Open Library 5xx ve zaman aşımında yeniden deneniyor (TC-357, TC-358). Ardından: 300 kayıt, hepsi 978605 önekli `OL…M` baskı; `load_seed_data --profile demo` → "kitap=300, nüsha=592, üye=200, açık ödünç=150 (gecikmiş 10), kapalı ödünç=350", çıkış 0; `pytest -q` → 1022 passed; `-m slow` → 7; `makemigrations --check` temiz; kapsam `fetch_demo_books.py` %98, proje %97. Ayrıntı plan G17 kanıtı ve §11 "PR #6 yerel doğrulaması ve onaylar".
-- **`feature/seed-load` commit'leri** (her biri push edildi):
-  - **`b6e4a30` (`docs:`):** STATUS'taki bayat satırlar (`main` = `8256786`), ADR-0056…0058, plan §11 "G17–G18 — açılıştan önce verilen kararlar", G17 ve G18 bölümleri, test planına TC-340…TC-356 ve §7 izlenebilirlik.
-  - **`ef50b96` (`feat:` G17):** `scripts/fetch_demo_books.py` (ADR-0033'ün beş filtresi, sayfalama, 1 sn bekleme, `User-Agent`); `operations/seed.py` ve `load_seed_data` (demo ve yük profilleri, `random.Random(seed)` ve bugünden türetilen tarihler, tek işlemde `bulk_create`, domain fonksiyonlarıyla son tarih, ceza, barkod ve arama anahtarları, FIFO dağıtım, audit yok, "000" telefonlar, `@example.invalid` e-postalar); `catalog.domain.copy_barcode`; `seed/` ad listeleri; `README.md` ("Veri kaynakları", "Demo verisi").
-  - **`ac74da7` (`feat:` G18):** `scripts/loadtest.py` (salt okunur aday seçimi ve ayrık bölme, %40/20/20/10/10 karışım, kendi ödünçleri üzerinde zincir, yeniden seçme, `X-CSRFToken`, en yakın sıra p50/p95, çıkış kodu; ADR-0058 koruması); `pyproject.toml` `testpaths`.
-  - Son `docs:` commit'i: bu devir notu, plan §11 ve test planı.
-- **Sonuç (bulut, Linux, Python 3.11.18):** `python -m pytest -q` → 1018 passed (`slow` dahil; önceki 972); `-m slow` → 7 passed (önceki 4; TC-220, TC-317, TC-346 eklendi); `python -m pytest operations -q` → 138 passed; `python -m pytest scripts -q` → 21 passed; `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı: `*/domain.py` %100 (`--fail-under=90` çıkış 0), `accounts/permissions.py` ve `accounts/middleware.py` %100 (`--fail-under=100` çıkış 0), `operations` toplam %99 (`--fail-under=80` çıkış 0; `seed.py` ve `load_seed_data.py` %100), `scripts` %82 (`fetch_demo_books.py` %97, `loadtest.py` %76: `main()`'in iş parçacığı akışı yalnız elle duman testinde koştu; test planı §4'te hedef yok), proje toplamı %97 (önceki %99; fark `scripts/`).
-- **Elle doğrulama (bulut):** Open Library çekimi denendi: "Open Library'ye erişilemedi: Tunnel connection failed: 403 Forbidden", çıkış 1 (ADR-0056). Scratchpad'de migrate edilmiş geçici veritabanında (`LIBRARY_DB_PATH`, dev ayarları; örnek dosyanın geçici kopyası `seed/books_openlibrary.json` olarak, commit'lenmedi) `createsuperuser` → `load_seed_data --profile demo --actor demo` → "kitap=300, nüsha=606, üye=200, açık ödünç=150 (gecikmiş 10), kapalı ödünç=350" ve sentetik tamamlama satırı, çıkış 0; ikinci koşu "Veritabanı boş değil", çıkış 1. `--profile load` 14 sn. Demo verisiyle `waitress-serve` + `loadtest.py --workers 5 --duration 10` → 778 istek, hata 0, en yüksek p95 388 ms (üye arama), "Sonuç: geçti", çıkış 0 (bağlayıcı değil). Gerçek dışı e-postalı kopyada "Tohum verisi olmayan veritabanı", çıkış 1.
-- **Test planı:** 340 TC "Geçti" (308 + G17'nin 25'i + G18'in 7'si; TC-223 elle, faz 6).
-- **Plan:** [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G17 ve G18 kutuları kanıtıyla işaretli; açılış kararları, uygulama ayrıntıları ve onaya sunulan metinler §11'de ("G17–G18 — açılıştan önce verilen kararlar", "G17–G18 — uygulama ayrıntıları", "G17–G18 uygulayıcının seçtiği kullanıcıya görünen metinler").
+- **Güncelleme:** 2026-11-01 (faz 5 bitti: G19 yerel doğrulaması geçti, PR #7 onaylandı ve birleştiriliyor)
+- **Aşama:** eng-process **faz 5 tamam**. PR #1…#7 (G01–G19) birleşti; PR #7 (https://github.com/mhmtmndrn/kutuphane-odunc-sistemi/pull/7) bu commit'ten hemen sonra `main`'e birleştirildi (yeni `main` hash'i bir sonraki dalın ilk `docs:` commit'inde yazılır).
+- **Sıradaki adım:** Faz 6: test ortamına kurulum (`docs/kurulum.md`) ve elle TC'ler (TC-223, TC-225…TC-234, TC-319); sürüm etiketi (`vX.Y.Z`, küçük karar 9) kullanıcı onayıyla. Faz 6'nın açılış soruları (ortam, kim kurar, hangi platform önce) yeni bir oturumda sorulur.
+- **Yerel doğrulama (2026-11-01, Windows 11, Python 3.11.9):** 1042 passed, `slow` 7, migration temiz, dört kapsam eşiği çıkış 0, proje %97. Caddy 2.11.7 Windows ikilisi (SHA-512 `checksums.txt` ve ADR-0063 ile aynı): `caddy validate` geçerli, LF Caddyfile `fmt` farksız; `127.0.0.2`'de waitress + Caddy: `/static/css/app.css` 200, `/admin/` 404, `/giris/` 200, HTTP 308, IP SAN'lı sertifika `root.crt` ile doğrulandı, arama sorgusu Caddy loguna düşmedi. Servis kaydı yapılmadı. Dikkat: Git for Windows `curl`'ü (Schannel) yerel CA'da `--cacert` ile 000 döner; `--ssl-no-revoke` ya da `-k` gerekir. Metinler ve birleştirme onaylandı (plan §11 "PR #7 yerel doğrulaması ve onaylar").
+- **`feature/deploy` commit'leri** (her biri push edildi):
+  - **`7c69b7b` (`docs:`):** STATUS'taki bayat satırlar (`main` = `e1ba56a`), ADR-0060…0066, plan G19 ve §2, §3, §5, §7, §11 ("G19 — açılıştan önce verilen kararlar"), test planına TC-359…TC-366.
+  - **`a97ef80` (`feat:` G19):** `deploy/Caddyfile`, `deploy/winsw/library-{app,caddy}.xml` (WinSW 2.12.0), `deploy/systemd/library-{app,caddy}.service`, `deploy/library.env.example`, `docs/kurulum.md` (ortak gövde + Windows ve Linux), `docs/kullanim-kilavuzu.md`, `README.md` ("Belgeler", "Geliştirme ortamı", "Testler"), `tests/test_deploy_files.py` (TC-359…TC-366; TDD, önce 19 failed).
+  - Son `docs:` commit'i: plan G19 kanıtı ve kutusu, §11 uygulama ayrıntıları ve onaya sunulan metinler, test planı durumları, bu devir notu.
+- **Sonuç (bulut, Linux, Python 3.11.18):** `python -m pytest -q` → 1042 passed (önceki 1022); `-m slow` → 7 passed; `makemigrations --check --dry-run` → "No changes detected"; kapsam `*/domain.py` %100, `accounts` izinleri %100, `billing`/`circulation` servisleri %99, `operations` %99 (dört eşik çıkış 0), proje %97.
+- **Elle doğrulama (bulut):** Caddy 2.11.7 Linux ikilisi GitHub sürüm indirmesinden alındı (SHA-512 doğru): `caddy validate` → "Valid configuration", `caddy fmt` farksız. Prod ayarlarıyla geçici veritabanında waitress + Caddy (`127.0.0.2`): `/static/css/app.css` → 200, `/admin/` → 404, HTTP → 308 HTTPS, 80/443 yalnız bind adresinde, waitress yalnız `127.0.0.1:8000`, IP sertifikası `root.crt` ile doğrulandı, arama URI'si Caddy loguna düşmedi. `systemd-analyze verify` yalnız eksik ikilileri bildirdi. WinSW Windows'ta çalıştırılmadı.
+- **Test planı:** 348 TC "Geçti" (340 + G19'un 8 otomatik TC'si); elle TC'ler TC-223, TC-225…TC-234, TC-319 faz 6'da.
+- **Plan:** [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G19 kutusu kanıtıyla işaretli; kararlar, uygulama ayrıntıları ve onaya sunulan metinler §11'de ("G19 — açılıştan önce verilen kararlar", "G19 — uygulama ayrıntıları", "G19 uygulayıcının seçtiği kullanıcıya görünen metinler").
+- **G17–G18 (PR #6, birleşti `e1ba56a`):** 1022 test, yerel Windows doğrulaması geçti, ADR-0059; ayrıntı plan §11 ve git geçmişinde.
 - **G14–G16 (PR #5, birleşti):** 972 test, yerel Windows doğrulaması geçti; ayrıntı plan §11 ve git geçmişinde.
-- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`8256786`), `feature/foundation`, `feature/catalog-members`, `feature/circulation`, `feature/notifications` ve `feature/operations` (kapandı), `feature/seed-load` (açık).
+- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`e1ba56a`), `feature/foundation`, `feature/catalog-members`, `feature/circulation`, `feature/notifications`, `feature/operations` ve `feature/seed-load` (kapandı), `feature/deploy` (kapandı).
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
 - **Bulut oturumu:** Her grup için kullanıcı yeni bir bulut oturumu açar, Claude açılış istemini hazırlar (KL-38). Oturum kritik soruyu oturumun içinde sorar; planın vermediği metinleri seçip §11'de listeler ve PR'da onaya sunar (plan §11, 2026-11-01 kararları).
   - **Tarayıcı (önerilen):** claude.ai/code; repo `mhmtmndrn/kutuphane-odunc-sistemi`, ortam **Default** (Trusted ağ; pip için PyPI gerekir).
@@ -23,9 +23,19 @@
 
 ## Bu oturumda sorulan ve cevaplanan
 
+- **G19 açılışından önce (2026-11-01, kullanıcı onayı):** Yedi kritik karar: [ADR-0060](decisions/0060-install-doc-common-body-two-platforms.md) (kurulum belgesinin yapısı), [ADR-0061](decisions/0061-access-by-static-ip.md) (sabit IP), [ADR-0062](decisions/0062-service-account.md) (servis hesabı), [ADR-0063](decisions/0063-tool-versions-winsw-caddy.md) (WinSW 2.12.0, Caddy 2.11.7), [ADR-0064](decisions/0064-release-zip-and-update-procedure.md) (sürüm zip'i ve güncelleme), [ADR-0065](decisions/0065-caddy-no-access-log.md) (erişim logu yok), [ADR-0066](decisions/0066-deploy-files-consistency-tests.md) (tutarlılık testleri). On iki küçük karar ve yerel doğrulama kararı plan §11'de. Oturum içinde yeni kritik soru çıkmadı; sıradaki ADR 0067.
 - **G17–G18 açılışından önce (2026-11-01, kullanıcı onayı):** Üç kritik karar: [ADR-0056](decisions/0056-open-library-fetch-network-blocked.md) (Open Library'ye erişilemezse JSON olmadan devam; gerçek dosya yerel doğrulamada), [ADR-0057](decisions/0057-seed-phone-numbers.md) (tohum telefonları `000 ddd dd dd`) ve [ADR-0058](decisions/0058-loadtest-seed-only-guard.md) (yük betiği `@example.invalid` dışı e-postalı üye görürse istek atmadan çıkış 1). On iki küçük karar (README, bugüne göre tarihler, demo ve yük profilleri, domain fonksiyonları ve tek işlem, sentetik kitap, audit yok ve Allocation, çıktı, rıza, betiğin yeniden seçimi, `scripts/` paketi, duman testi) plan §11'de. Yeni davranışların testleri TC-340…TC-356. Sıradaki ADR numarası 0060 (ADR-0059 yerel doğrulamada yazıldı).
 - **G14–G16 açılışından önce (2026-11-01, kullanıcı onayı):** Üç kritik karar: [ADR-0053](decisions/0053-hourly-catch-up.md) (açılışa ek saatlik telafi; `misfire_grace_time=3600`, `coalesce=True`), [ADR-0054](decisions/0054-restore-keeps-pre-restore-copy.md) (geri yükleme mevcut veritabanını `<db>.pre-restore-YYYYMMDD-HHMMSS` olarak bırakır) ve [ADR-0055](decisions/0055-reminder-log-error-cleared-on-unlink.md) (bağ koparılırken `reminder_log.error` NULL). Dokuz küçük karar (komut argümanları ve geçersiz tarih, magic bayt, migration yok, `.tmp` + `os.replace`, tek işçili zamanlayıcı, komut sarmalayıcı ve stderr `LOGGING`, "Saklama" bağlantısı, `Member.display_name`, ilk istisnada durma) plan §11'de.
 - **G13 açılışından önce (2026-11-01):** [ADR-0052](decisions/0052-smtp-timeout.md) ve yedi küçük karar; plan §11.
+
+## G19 sapmaları ve dikkat edilecekler (ayrıntı plan §11)
+
+- **Caddyfile yeri:** Caddy yapılandırmayı uygulama klasöründen okur (`…\app\deploy\Caddyfile`, `/opt/library/app/deploy/Caddyfile`); güncelleme onu da günceller. Genel seçeneklerde `skip_install_trust` var (servis hesabı yönetici değil).
+- **Caddy veri klasörü:** `XDG_DATA_HOME`/`XDG_CONFIG_HOME` ile Windows'ta `C:\Kutuphane\caddy`, Linux'ta `/var/lib/library/caddy`; kök sertifika `<klasör>/caddy/pki/authorities/local/root.crt`.
+- **WinSW `<env>`:** Yalnız kuruma özgü ve gizli değerler `__DOLDUR__`; sabit yollar dolu. `<depend>` yalnız Caddy XML'inde.
+- **Linux yedek diski:** `/mnt/library-backup/{backups,exports}`, `ReadWritePaths=`'te `-` önekiyle (disk yokken servis başlar, yedek hata verir).
+- **Yeni ortam değişkeni eklenirse:** `tests/test_deploy_files.py` (TC-359…TC-362) ayarları, architecture §6.4'ü, `library.env.example`'ı ve iki XML'i birlikte günceller; biri eksikse test kırmızı olur.
+- **Dosya listesi dışında değişen:** Yok.
 
 ## G17–G18 sapmaları ve dikkat edilecekler (ayrıntı plan §11)
 
@@ -62,10 +72,11 @@
 
 ## Sıradaki adım
 
-1. **Birleştirme:** PR #6 bu commit'ten sonra `gh pr merge 6 --merge` ile birleşir (kullanıcı onayı 2026-11-01). Yerel doğrulama, kitap dosyası ve metin onayı tamam.
-2. **`main`'i çek:** Yerel `main`'deki eski STATUS stash'ini ("local STATUS handoff before G17-G18 verification") kullanıcı onayıyla düşür; bu not onu geçersiz kılar.
-3. **Sonraki grup:** `feature/deploy` (**G19**: dağıtım dosyaları ve kullanıcı belgeleri; README'yi genişletir). TC-234 (tohum üyelerinden örneklem) G19'da. Açılış soruları sorulur, sonra bulut oturumu istemi hazırlanır. İsteğe bağlı: faz 6'dan önce demo verisiyle `python -m waitress` + `scripts/loadtest.py --duration 10` yerelde koşulabilir.
-   - Genel sıra: G01 → G18 birleşti (G18 PR #6 ile), G19.
+1. **Yerel Windows doğrulaması (PR #7):** `main`'i ve `feature/deploy`'u çek; Python 3.11 ile `python -m pytest -q` (1042), `-m slow`, `makemigrations --check`, kapsam eşikleri. Plan §11 yerel doğrulama kararı: resmî taşınabilir Caddy 2.11.7 Windows ikilisi scratchpad'e indirilir; `caddy validate --config deploy\Caddyfile --adapter caddyfile` ve geçici portlarda waitress + Caddy ile `/static/css/app.css` → 200, `/admin/` → 404. Servis kaydı ve sisteme kurulum yapılmaz.
+2. **Onaylar:** Plan §11 "G19 uygulayıcının seçtiği kullanıcıya görünen metinler" ve `docs/kurulum.md`, `docs/kullanim-kilavuzu.md` metinleri; ardından PR #7'nin birleştirilmesi.
+3. **Faz 6:** Test ortamına `docs/kurulum.md` ile tam kurulum (ilk sürüm etiketi `vX.Y.Z` kullanıcı onayıyla atılır, ADR-0064); elle TC'ler TC-223, TC-225…TC-234, TC-319.
+   - Genel sıra: G01 → G18 birleşti, G19 PR #7'de.
+4. **Yerel `main` stash'i:** Eski STATUS stash'i ("local STATUS handoff before G17-G18 verification") geçersizdir; kullanıcı onayıyla düşürülür.
 
 ## Açık sorular ve riskler
 
@@ -80,13 +91,14 @@
 
 - **SRS:** [docs/srs.md](srs.md), onaylı. 35 FR (24 Must, 11 Should), 7 Won't, 13 NFR, 35 AC.
 - **Tasarım:** [architecture.md](architecture.md) ve [data-design.md](data-design.md).
-- **ADR'ler:** [0001–0058](decisions/), hepsi kabul edildi; özet plan §3. Sıradaki numara 0059.
+- **ADR'ler:** [0001–0066](decisions/), hepsi kabul edildi; özet plan §3. Sıradaki numara 0067.
 - **Plan:** §3 kararlar ve KL-1…KL-46; §4 görevler G01–G19; §7 izlenebilirlik; §8 tutarlılık; §11 sapmalar ve metinler.
-- **Test planı:** [docs/test-plan.md](test-plan.md): 356 TC (TC-320…TC-339 G14–G16, TC-340…TC-356 G17–G18 açılışında eklendi); 338'i "Geçti". Elle TC'ler: TC-223, TC-225…TC-234, TC-319 (faz 6).
+- **Test planı:** [docs/test-plan.md](test-plan.md): 366 TC (TC-320…TC-339 G14–G16, TC-340…TC-356 G17–G18 açılışında, TC-357…TC-358 ADR-0059 ile, TC-359…TC-366 G19 açılışında eklendi); 348'i "Geçti". Elle TC'ler: TC-223, TC-225…TC-234, TC-319 (faz 6).
 - **Araştırma:** [ISBN meta veri](research/2026-10-31-isbn-meta-veri-apileri.md), [demo veri seti](research/2026-10-31-demo-kitap-veri-seti.md).
 
 ## Geçmiş (özet)
 
+- **2026-11-01, `feature/deploy` bulut oturumu (G19):** İlk commit `docs:` (bayat STATUS satırları, ADR-0060…0066, açılış kararları, TC-359…TC-366), ardından TDD ile (testler önce kırmızı) tek `feat:` commit'i, sonra handoff `docs:`; her biri push edildi. Caddy 2.11.7 bulutta indirilebildi: `caddy validate` ve waitress + Caddy canlı denemesi geçti. Oturum içinde yeni kritik soru çıkmadı. PR #7 açıldı, birleştirilmedi.
 - **2026-11-01, `feature/seed-load` bulut oturumu:** İlk commit `docs:` (bayat STATUS satırları, ADR-0056…0058, açılış kararları, TC-340…TC-356), ardından G17 ve G18 görev başına TDD (testler önce kırmızı) ve birer `feat:` commit'i, sonra handoff `docs:`; her biri push edildi. Open Library bulut ağında engelliydi (ADR-0056). Demo verisi test istemcisiyle, yük betiği waitress'e karşı 10 saniyelik duman testiyle elle doğrulandı. Oturum içinde yeni kritik soru çıkmadı (sıradaki ADR 0059). PR açıldı, birleştirilmedi.
 - **2026-11-01, `feature/operations` bulut oturumu:** İlk commit `docs:` (bayat STATUS satırları, ADR-0053…0055, açılış kararları, TC-320…TC-339), ardından G14, G15, G16 görev başına TDD (testler önce kırmızı) ve birer `feat:` commit'i, sonra handoff `docs:`; her biri push edildi. Ekranlar Playwright ile, zamanlayıcı `waitress-serve` ile elle doğrulandı. Oturum içinde yeni kritik soru çıkmadı. PR açıldı, birleştirilmedi.
 - **2026-11-01, PR #4 (G13):** Yerel Windows doğrulaması (852 passed), metinler onaylandı, merge commit `c2e5bc8`. `feature/operations` açıldı.
@@ -111,6 +123,7 @@
 - Anonimleştirme: `python manage.py anonymize_expired [--date …]` (çıktı "anonimleştirilen üye=…, bağı koparılan ödünç=…, ertelenen üye=…").
 - Tohum veri: `python manage.py load_seed_data --profile demo|load --actor <ad> [--seed 42]` (boş veritabanında; `seed/books_openlibrary.json` gerekir). Demo kitapları: `python scripts/fetch_demo_books.py --out seed/books_openlibrary.json --limit 300`.
 - Yük testi: `python scripts/loadtest.py --base-url http://127.0.0.1:8000 --user <ad> --password-file <dosya> --db <veritabanı> --workers 5 --duration 120` (yalnız tohum verili veritabanında, ADR-0058).
+- Dağıtım dosyaları: `python -m pytest tests/test_deploy_files.py -q`; Caddyfile `caddy validate --config deploy/Caddyfile --adapter caddyfile` (`LIBRARY_HOST`, `LIBRARY_BIND`, `LIBRARY_STATIC_ROOT` tanımlıyken). Kurulum: [docs/kurulum.md](kurulum.md).
 - Zamanlayıcı: `LIBRARY_SCHEDULER_ENABLED=1 waitress-serve --listen=127.0.0.1:8000 --threads=8 library_site.wsgi:application` (dev için ayrıca `DJANGO_SETTINGS_MODULE=library_site.settings.dev`); log stderr'de.
 
 ## Tuzaklar
@@ -131,6 +144,7 @@
 - **Boş POST:** `Form(request.POST or None)` boş POST'ta formu bağlamaz; boş isteğin hata vermesi gereken formlarda `request.POST if request.method == "POST" else None` kullan (G08 seçim formları).
 - **E-posta testleri:** Test ayarı bellek backend'idir (`mail.outbox`). SMTP hatası `django.core.mail.backends.locmem.EmailBackend.send_messages` yamalanarak, eşzamanlı çalışma `notifications.services._send` yamalanarak canlandırılır. SMTP sırasında açık işlem olmadığını sınayan test `django_db(transaction=True)` ister.
 - **Bulutta yerel `main`:** Klonlanan depodaki yerel `main` dalı bayat olabilir (G13 oturumunda `1a93f2d`'deydi). Yeni dalı `git fetch origin main` ardından `origin/main`'den aç.
+- **Bulutta Caddy:** `caddyserver.com` ve GitHub API engelli; sürüm `git ls-remote --tags https://github.com/caddyserver/caddy` ile, ikili `https://github.com/caddyserver/caddy/releases/download/v<sürüm>/…` ile alınır.
 - **Kum havuzu:** pytest geçici klasörü engellenirse `PYTEST_DEBUG_TEMPROOT` yalnız kabukta scratchpad'e yönlendirilir.
 - **SQLite yedeği ve işlem:** `sqlite3.Connection.backup`, kaynak bağlantı açık bir işlemdeyse dönmeden bekler; yedeği hiçbir zaman `transaction.atomic()` içindeki Django bağlantısından alma (G14 ayrı bağlantı kullanır).
 - **`operations` testleri:** Komut testleri `ops` fixture'ıyla (`file_db` ve `django_db(transaction=True)`) dosya veritabanında koşar; scrypt maliyeti `backup.KDF_PARAMS` yamasıyla düşürülür (TC-192 gerçek değerlerle). Kilit testleri kilidi alt süreçte tutar (`operations/tests/support.py`).
