@@ -14,7 +14,7 @@ from accounts.models import Role, StaffUser
 from administration import clock
 from administration.errors import RuleViolation
 from administration.models import AuditEvent, ClosedDate, LibrarySettings, WeeklyClosedDay
-from administration.services import update_settings
+from administration.services import add_closed_date, update_settings
 from billing import services as billing
 from billing.models import EntryKind, LedgerEntry
 from catalog.models import Copy, CopyStatus
@@ -339,6 +339,17 @@ def test_tc278_weekly_days_count_single_dates_do_not(
     today(date(2026, 11, 17))
     assert services.check_in(clerk, loan.copy.barcode).fine_kurus == fine
     assert fine == days * 500
+
+
+def test_tc370_due_date_closed_after_check_out_writes_no_fine(today, clerk, admin, member) -> None:
+    """ADR-0069: the due date is closed after check-out; the next-day return is on time."""
+    copy = _shelf_copy()
+    loan = services.check_out(clerk, member.member_no, copy.barcode)
+    assert loan.due_on == date(2026, 11, 16)
+    add_closed_date(admin, date(2026, 11, 16), "Beklenmeyen kapanış")
+    today(date(2026, 11, 17))
+    assert services.check_in(clerk, copy.barcode).fine_kurus == 0
+    assert not LedgerEntry.objects.filter(kind=EntryKind.FINE).exists()
 
 
 # --- renew (FR-10) ---------------------------------------------------------------

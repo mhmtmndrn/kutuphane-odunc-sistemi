@@ -243,7 +243,8 @@ def test_removing_email_without_consent_writes_no_event(clerk) -> None:
     assert member.consent_events.count() == 0
 
 
-def test_changing_email_keeps_consent(clerk, monkeypatch) -> None:
+def test_tc371_changing_email_keeps_consent(clerk, monkeypatch) -> None:
+    """ADR-0070: consent is for e-mail reminders, not for one address."""
     member = _member(email="ayse@example.org")
     set_today(monkeypatch, date(2026, 11, 5))
     services.set_consent(clerk, member, True, date(2026, 11, 5))
