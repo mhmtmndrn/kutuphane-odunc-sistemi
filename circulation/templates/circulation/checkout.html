@@ -26,7 +26,7 @@
     <h2>Üyeler</h2>
     <ul>
       {% for m in member_results %}
-        <li><a href="{% url 'circulation:checkout' %}?uye={{ m.member_no }}">Üye {{ m.member_no }}</a> · {% if m.is_anonymized %}Anonimleştirilmiş üye{% else %}{{ m.full_name }} · {{ m.phone }}{% endif %}{% if not m.is_active %} · Pasif{% endif %}</li>
+        <li><a href="{% url 'circulation:checkout' %}?uye={{ m.member_no }}">Üye {{ m.member_no }}</a> · {{ m.display_name }}{% if not m.is_anonymized %} · {{ m.phone }}{% endif %}{% if not m.is_active %} · Pasif{% endif %}</li>
       {% endfor %}
     </ul>
   {% endif %}
@@ -34,7 +34,7 @@
   {% if status %}
     <section class="member-panel">
       <h2>Üye {{ status.member.member_no }}</h2>
-      <p>{% if status.member.is_anonymized %}Anonimleştirilmiş üye{% else %}{{ status.member.full_name }}{% endif %} · Borç: {{ status.balance_kurus|tl }}</p>
+      <p>{{ status.member.display_name }} · Borç: {{ status.balance_kurus|tl }}</p>
       {% if status.blockers %}
         <ul class="blockers">
           {% for blocker in status.blockers %}<li>{{ blocker.value }}</li>{% endfor %}

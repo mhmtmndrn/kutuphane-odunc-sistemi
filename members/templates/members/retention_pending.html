@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load money %}
+
+{% block title %}Bekleyen anonimleştirmeler · Kütüphane{% endblock %}
+
+{% block content %}
+  <h1>Bekleyen anonimleştirmeler</h1>
+  <p class="note">Saklama süresi dolduğu hâlde borcu olduğu için anonimleştirilmeyen pasif üyeler. Borç kapanınca sonraki görev çalışmasında anonimleştirilirler.</p>
+  {% if rows %}
+    <table>
+      <thead><tr><th>Üye no</th><th>Ad soyad</th><th>Pasifleşme</th><th>Süre sonu</th><th class="num">Bakiye</th><th>Durum</th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td><a href="{% url 'members:detail' row.member_no %}">{{ row.member_no }}</a></td>
+            <td>{{ row.full_name }}</td>
+            <td>{{ row.deactivated_on|date:"d.m.Y" }}</td>
+            <td>{{ row.expires_on|date:"d.m.Y" }}</td>
+            <td class="num">{{ row.balance_kurus|tl }}</td>
+            <td>borç nedeniyle bekliyor</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>Borç nedeniyle bekleyen üye yok.</p>
+  {% endif %}
+{% endblock %}

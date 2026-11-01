@@ -49,6 +49,12 @@ def open_loans(member: Member) -> list[Loan]:
     return list(_open_loans(member))
 
 
+@transaction.atomic
+def loan_total(member: Member) -> int:
+    """Linked loans plus the retention archive counter (ADR-0018, plan G15)."""
+    return Loan.objects.filter(member=member).count() + member.archived_loan_count
+
+
 def _checkout_state(member: Member, copy_status: str, today: date) -> CheckoutState:
     """S2 and S3 from the database, with the current settings."""
     settings = get_settings()
@@ -291,7 +297,7 @@ def overdue_loans(today: date) -> list[OverdueRow]:
             OverdueRow(
                 loan=loan,
                 member_no=member.member_no if member else None,
-                full_name=member.full_name if member else None,
+                full_name=member.display_name if member else None,
                 phone=member.phone if member else None,
                 title=loan.copy.book.title,
                 due_on=loan.due_on,

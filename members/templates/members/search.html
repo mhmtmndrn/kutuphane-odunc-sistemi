@@ -23,7 +23,7 @@
               <tr>
                 <td>{% if member.is_active and not member.is_anonymized %}<input type="checkbox" name="member_nos" value="{{ member.member_no }}" id="member-{{ member.member_no }}" aria-label="{{ member.member_no }}">{% endif %}</td>
                 <td><a href="{% url 'members:detail' member.member_no %}">{{ member.member_no }}</a></td>
-                <td>{% if member.is_anonymized %}Anonimleştirilmiş üye{% else %}{{ member.full_name }}{% endif %}</td>
+                <td>{{ member.display_name }}</td>
                 <td>{{ member.phone|default:"" }}</td>
                 <td>{% if member.is_active %}Aktif{% else %}Pasif{% endif %}</td>
               </tr>

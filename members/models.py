@@ -11,6 +11,10 @@ from catalog.domain import normalize_tr
 
 from .domain import phone_digits
 
+# Shown wherever an anonymized member's name would be (FR-25, G14–G16 small
+# decision 8).
+ANONYMIZED_NAME = "Anonimleştirilmiş üye"
+
 
 class Member(models.Model):
     """A library member. Only the FR-01 personal fields are kept (NFR-08)."""
@@ -54,6 +58,11 @@ class Member(models.Model):
     @property
     def is_anonymized(self) -> bool:
         return self.anonymized_at is not None
+
+    @property
+    def display_name(self) -> str:
+        """The one source of the member's name on screens."""
+        return ANONYMIZED_NAME if self.is_anonymized else (self.full_name or "")
 
 
 class ConsentAction(models.TextChoices):

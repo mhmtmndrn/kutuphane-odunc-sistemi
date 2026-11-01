@@ -17,7 +17,10 @@
           <a href="{% url 'notifications:overdue' %}">Gecikenler</a>
           <a href="{% url 'members:search' %}">Üyeler</a>
           <a href="{% url 'catalog:search' %}">Kitaplar</a>
-          {% if user.role == "ADMIN" %}<a href="{% url 'accounts:staff-list' %}">Personel</a>{% endif %}
+          {% if user.role == "ADMIN" %}
+            <a href="{% url 'members:retention' %}">Saklama</a>
+            <a href="{% url 'accounts:staff-list' %}">Personel</a>
+          {% endif %}
         </nav>
         <span class="user">{{ user.get_username }}</span>
         <a href="{% url 'accounts:password-change' %}">Parola</a>
