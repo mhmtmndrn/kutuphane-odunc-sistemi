@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from collections.abc import Hashable, Mapping
+from typing import TypeVar
+from datetime import date, datetime, time, timedelta
 
 _BACKUP = re.compile(r"^library-(\d{8})\.sqlite3$")
 _EXPORT = re.compile(r"^library-export-(\d{8})\.libx$")
@@ -96,3 +98,51 @@ def anonymize_counts_text(counts: AnonymizeCounts) -> str:
         f"anonimleştirilen üye={counts.members}, bağı koparılan ödünç={counts.loans}, "
         f"ertelenen üye={counts.deferred}"
     )
+
+
+# --- G16: catch-up (ADR-0007, ADR-0053, NFR-05) -------------------------------------
+
+# Planned local times (Europe/Istanbul, phase 3 small decision 13): job name ->
+# (weekday or None for daily, time). The scheduler's cron triggers match these.
+PLANNED: dict[str, tuple[int | None, time]] = {
+    "BACKUP": (None, time(2, 0)),
+    "ANONYMIZE": (None, time(2, 30)),
+    "REMINDERS": (None, time(9, 0)),
+    "EXPORT": (0, time(3, 0)),  # Monday
+}
+CATCH_UP_ORDER = ("BACKUP", "ANONYMIZE", "EXPORT", "REMINDERS")
+
+
+def _last_planned_on(name: str, now: datetime) -> date | None:
+    """The date of the latest planned run at or before ``now``; for a daily
+    job only today counts (plan G16)."""
+    weekday, planned = PLANNED[name]
+    today = now.date()
+    if weekday is None:
+        return today if now.time() >= planned else None
+    day = today - timedelta(days=(today.weekday() - weekday) % 7)
+    if day == today and now.time() < planned:
+        day -= timedelta(days=7)
+    return day
+
+
+K = TypeVar("K", bound=Hashable)
+
+
+def jobs_due_for_catch_up(now: datetime, last_success: Mapping[K, date | None]) -> list[K]:
+    """Jobs whose latest planned run has no successful run on or after its
+    date, in the order BACKUP, ANONYMIZE, EXPORT, REMINDERS.
+
+    ``now`` is local time (Europe/Istanbul). ``last_success`` maps each job
+    (``Job`` members, which are strings) to the ``run_on`` of its latest
+    SUCCESS; the same keys are returned.
+    """
+    due = []
+    for name in CATCH_UP_ORDER:
+        for job, last in last_success.items():
+            if job != name:
+                continue
+            planned_on = _last_planned_on(name, now)
+            if planned_on is not None and (last is None or last < planned_on):
+                due.append(job)
+    return due

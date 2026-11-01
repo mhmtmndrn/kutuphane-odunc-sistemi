@@ -164,3 +164,26 @@ LIBRARY_BACKUP_DIR = env("LIBRARY_BACKUP_DIR")
 LIBRARY_EXPORT_DIR = env("LIBRARY_EXPORT_DIR")
 LIBRARY_EXPORT_PASSPHRASE_FILE = env("LIBRARY_EXPORT_PASSPHRASE_FILE")
 LIBRARY_SCHEDULER_ENABLED = env("LIBRARY_SCHEDULER_ENABLED", "0")
+
+# Logs go to stderr, which the service manager keeps (G14–G16 small decision
+# 6; replaces "stdout" of phase 4 small decision 14). Job results are also
+# written to job_run. No propagation: waitress adds its own root handler
+# (logging.basicConfig), which would print every line twice.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "plain": {"format": "%(asctime)s %(levelname)s %(name)s %(message)s"},
+    },
+    "handlers": {
+        "stderr": {
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stderr",
+            "formatter": "plain",
+        },
+    },
+    "loggers": {
+        "operations": {"handlers": ["stderr"], "level": "INFO", "propagate": False},
+        "django": {"handlers": ["stderr"], "level": "INFO", "propagate": False},
+    },
+}

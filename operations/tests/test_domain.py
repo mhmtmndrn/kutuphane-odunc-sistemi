@@ -3,7 +3,8 @@ KL-24, TC-187 and TC-299 rules), the newest backup and the passphrase text."""
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -99,3 +100,68 @@ def test_anonymize_counts_text() -> None:
     assert domain.anonymize_counts_text(counts) == (
         "anonimleştirilen üye=1, bağı koparılan ödünç=2, ertelenen üye=3"
     )
+
+
+# --- G16: catch-up (ADR-0007, ADR-0053, NFR-05) -----------------------------------
+
+ISTANBUL = ZoneInfo("Europe/Istanbul")
+
+
+def at(day: int, hour: int, minute: int) -> datetime:
+    return datetime(2026, 11, day, hour, minute, tzinfo=ISTANBUL)
+
+
+def test_tc310_weekly_export_boundaries() -> None:
+    last = {"EXPORT": date(2026, 10, 26)}  # Monday
+    assert domain.jobs_due_for_catch_up(at(2, 2, 59), last) == []  # Monday 02:59
+    assert domain.jobs_due_for_catch_up(at(2, 3, 1), last) == ["EXPORT"]
+    assert domain.jobs_due_for_catch_up(at(4, 10, 0), {"EXPORT": date(2026, 11, 2)}) == []
+
+
+def test_weekly_export_never_run_and_exact_time() -> None:
+    assert domain.jobs_due_for_catch_up(at(4, 10, 0), {"EXPORT": None}) == ["EXPORT"]
+    assert domain.jobs_due_for_catch_up(at(2, 3, 0), {"EXPORT": date(2026, 10, 26)}) == ["EXPORT"]
+    # Sunday: the last Monday is six days back.
+    assert domain.jobs_due_for_catch_up(at(8, 23, 0), {"EXPORT": date(2026, 11, 1)}) == ["EXPORT"]
+    assert domain.jobs_due_for_catch_up(at(8, 23, 0), {"EXPORT": date(2026, 11, 2)}) == []
+
+
+def test_tc311_order_of_catch_up() -> None:
+    last = {"REMINDERS": None, "EXPORT": None, "ANONYMIZE": None, "BACKUP": None}
+    assert domain.jobs_due_for_catch_up(at(2, 10, 0), last) == [
+        "BACKUP",
+        "ANONYMIZE",
+        "EXPORT",
+        "REMINDERS",
+    ]
+
+
+def test_tc312_successful_reminders_with_failures_are_not_repeated() -> None:
+    # KL-23: the run with "başarısız=1" is still SUCCESS, so last_success is today.
+    last = {"REMINDERS": date(2026, 11, 4)}
+    assert domain.jobs_due_for_catch_up(at(4, 10, 0), last) == []
+
+
+def test_tc210_daily_boundary() -> None:
+    last = {"REMINDERS": date(2026, 11, 3)}
+    assert domain.jobs_due_for_catch_up(at(4, 8, 59), last) == []
+    assert domain.jobs_due_for_catch_up(at(4, 9, 1), last) == ["REMINDERS"]
+    assert domain.jobs_due_for_catch_up(at(4, 9, 0), last) == ["REMINDERS"]
+
+
+def test_daily_jobs_and_their_times() -> None:
+    last = {"BACKUP": date(2026, 11, 3), "ANONYMIZE": date(2026, 11, 3)}
+    assert domain.jobs_due_for_catch_up(at(4, 1, 59), last) == []
+    assert domain.jobs_due_for_catch_up(at(4, 2, 10), last) == ["BACKUP"]
+    assert domain.jobs_due_for_catch_up(at(4, 2, 30), last) == ["BACKUP", "ANONYMIZE"]
+    assert domain.jobs_due_for_catch_up(at(4, 2, 30), {"BACKUP": None}) == ["BACKUP"]
+
+
+def test_catch_up_keeps_the_given_keys() -> None:
+    """Callers pass ``Job`` members (a ``str`` enum); the same keys come back."""
+
+    class Key(str):
+        pass
+
+    backup = Key("BACKUP")
+    assert domain.jobs_due_for_catch_up(at(4, 10, 0), {backup: None})[0] is backup
