@@ -1,7 +1,7 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-11-01 (faz 5, G13 tamam; PR açık, onay bekliyor)
-- **Aşama:** eng-process **faz 5**. `feature/foundation` (G01–G04, PR #1), `feature/catalog-members` (G05–G08, PR #2) ve `feature/circulation` (G10 → G09 → G11 → G12, PR #3) birleşti; `main` = `d0c4555` (PR #3'ün merge commit'i). Grup `feature/notifications` (**G13**, geciken listesi ve hatırlatmalar) **tamam**; `main`'e PR açıldı, birleştirilmedi.
+- **Güncelleme:** 2026-11-01 (faz 5, PR #4 onaylandı)
+- **Aşama:** eng-process **faz 5**. `feature/foundation` (G01–G04, PR #1), `feature/catalog-members` (G05–G08, PR #2) ve `feature/circulation` (G10 → G09 → G11 → G12, PR #3) birleşti; `main` = `d0c4555` (PR #3'ün merge commit'i). Grup `feature/notifications` (**G13**, geciken listesi ve hatırlatmalar) **tamam**; PR #4 kullanıcı tarafından onaylandı (metinler dahil, 2026-11-01) ve merge commit'iyle `main`'e birleştirilir.
   - **`92bf48e` (`docs:`):** STATUS'taki bayat satırlar, ADR-0052, G13 açılış kararları (plan §11), G13 dosya listesine `prod.py`, plan §3'te ADR-0052 ve sıradaki numara 0053.
   - **`158d43d` (`feat:` G13):** `notifications` app'i: `ReminderLog` (son tarih başına kısmi benzersiz indeks, ADR-0039), pencere kuralları, `send_due_reminders` (S6 adayları, önce e-posta sonra kendi işleminde kayıt, benzersiz kısıt ihlali `skipped`, SMTP hatası FAILED), `send_manual_reminders` (tekrar engeli yok, `triggered_by`, denetim kaydı yok), KL-13 e-posta şablonları, `send_reminders` komutu (`run_job`, FAILED varsa çıkış 1 ve `job_run` SUCCESS), `/gecikenler/` ve `/gecikenler/hatirlat/`, menü ve ana sayfada "Gecikenler", üretimde `EMAIL_TIMEOUT = 10` (ADR-0052).
   - Sonuç (bulut, Linux, Python 3.11.18): `python -m pytest notifications -q` → 67 passed; `python -m pytest -q` → 852 passed (`slow` dahil; önceki 784); `-m slow` → 4 passed; `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı: `*/domain.py` %100 (`--fail-under=90` geçti), `accounts/permissions.py` ve `accounts/middleware.py` %100, `notifications/services.py` %98 (hedef yok, yalnız rapor; kapsanmayan tek satır ulaşılamayan üyesiz ödünç dalı), `notifications` toplam %99, proje toplamı %99.
@@ -9,8 +9,8 @@
   - `/gecikenler/` geliştirme sunucusunda Playwright ile açıldı ve gözle kontrol edildi: seçim kutuları, "rıza yok"/"e-posta yok" etiketleri, kapalı tarih düşülmüş gecikme günü, boş seçim hatası, elle hatırlatma sonrası ödünç başına mesajlar (gönderildi yeşil, diğerleri sarı).
   - Test planında 244 TC "Geçti" (224 + G13'ün 20'si).
   - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G13 kutusu kanıtıyla işaretli; uygulama ayrıntıları ve onaya sunulan metinler §11'de ("G13 — uygulama ayrıntıları", "G13 uygulayıcının seçtiği kullanıcıya görünen metinler").
-  - **Yerel Windows doğrulaması bekleniyor (R-15):** `python -m pytest -q` (852), `-m slow`, `makemigrations --check --dry-run`, kapsam komutları ve `send_reminders --date 2026-11-14` (konsol backend'i, Türkçe çıktı için UTF-8 dosyaya yaz).
-- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`d0c4555`), `feature/foundation`, `feature/catalog-members` ve `feature/circulation` (kapandı), `feature/notifications` (G13, PR açık).
+  - Yerel Windows (R-15, Python 3.11.9, 2026-11-01): `python -m pytest -q` → 852 passed (eşzamanlılık testleri dahil; geçici dosya sorunu yok); `-m slow` → 4 passed; `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı: `*/domain.py` %100 (`--fail-under=90` çıkış 0), `accounts/permissions.py` ve `accounts/middleware.py` %100 (`--fail-under=100` çıkış 0), `billing/services.py` %100, `circulation/services.py` %98, `members/services.py` %100, `notifications/services.py` %98, `notifications` toplam %99, proje toplamı %99. `send_reminders --date 2026-11-14` migrate edilmiş boş geçici veritabanında (scratchpad, `LIBRARY_DB_PATH`) iki kez → "gönderilen=0, başarısız=0, atlanan=0", çıkış 0; `--date 2026-13-40` → "CommandError: Geçersiz tarih: 2026-13-40", çıkış 1. İki e-postalı senaryo yerelde veriyle denenmedi; testler kapsıyor.
+- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`d0c4555`), `feature/foundation`, `feature/catalog-members` ve `feature/circulation` (kapandı), `feature/notifications` (PR #4 onaylandı, birleştiriliyor).
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
 - **Bulut oturumu:** Her grup için kullanıcı yeni bir bulut oturumu açar, Claude açılış istemini hazırlar (KL-38). Oturum kritik soruyu oturumun içinde sorar; planın vermediği metinleri seçip §11'de listeler ve PR'da onaya sunar (plan §11, 2026-11-01 kararları).
   - **Tarayıcı (önerilen):** claude.ai/code; repo `mhmtmndrn/kutuphane-odunc-sistemi`, ortam **Default** (Trusted ağ; pip için PyPI gerekir).
@@ -39,7 +39,7 @@
 
 ## Sıradaki adım
 
-1. **G13 PR'ı (kullanıcı):** Yerel Windows doğrulaması (R-15), §11'deki G13 metinlerinin onayı ve birleştirme kararı. Birleşince sonraki dalın ilk commit'i `main`'in yeni hash'ini bu nota yazar.
+1. **PR #4 tamam (2026-11-01):** Yerel Windows koşusu geçti, G13 metinleri değişmeden onaylandı, birleştirme onaylandı. Sonraki dalın ilk commit'i `main`'in yeni hash'ini bu nota yazar.
 2. **Sonraki grup:** `feature/operations`: **G14–G16** (yedek, şifreli dışa aktarma ve geri yükleme; saklama ve anonimleştirme; zamanlayıcı ve telafi). G16 `send_reminders`'ı zamanlayıcıdan 09:00'da tetikler (faz 3 küçük karar 13) ve telafide `last_success(Job.REMINDERS)`'ı kullanır. Açık noktalar açılış isteminden önce kullanıcıya sorulur; istem yeni bir bulut oturumunda verilir.
    - Genel sıra: G01 → G13 (tamam), G14…G16, G17…G18, G19.
 
@@ -89,7 +89,7 @@
 - **Arka plan subagent'ları:** Sonuçları yalnız onları başlatan oturuma gelir; büyük çıktılar oturum kapanmadan depoya kopyalanmalı.
 - **Kitapyurdu ISBN alanı:** Geçersiz ISBN-10'lar büyük olasılıkla "978" öneki atılmış ISBN-13'tür (ADR-0008; `6053609322` → `9786053609322`).
 - **"İade" terimi:** Yalnız kitap iadesi demektir. Para için "para iadesi", kodda `REFUND` (ADR-0027).
-- **Windows konsolu:** `python -I`, `PYTHONIOENCODING`'i yok sayar; cp1254 konsolda Türkçe çıktı bozulur. Çıktıyı UTF-8 bir dosyaya yaz.
+- **Windows konsolu:** `python -I`, `PYTHONIOENCODING`'i yok sayar; cp1254 konsolda Türkçe çıktı bozulur. Çıktıyı UTF-8 bir dosyaya yaz. `manage.py` çıktısı dosyaya yönlendirildiğinde de cp1254 yazılır (`PYTHONIOENCODING=utf-8` verilmezse); dosyayı cp1254 ile oku. Yerel `var/library.sqlite3` boştur (tablo yok); komut denemeleri için scratchpad'de `LIBRARY_DB_PATH` ile geçici bir veritabanı migrate et.
 - **Bash aracında heredoc:** Türkçe kesme işareti içeren uzun heredoc'lar "unexpected EOF" verebilir; dokümanları Write aracıyla ya da dosyaya yazılmış betikle değiştir. `pkill -f <desen>` aynı deseni içeren kabuk komutunu da öldürür.
 - **SQLite ve Django:** Tutarlar kuruş (ADR-0016). Veritabanı ağ paylaşımına konmaz (WAL). Django'nun SQLite `AutoField`'ı `AUTOINCREMENT`'tir; nüsha barkodu buna dayanır.
 - **Windows'ta zoneinfo:** `tzdata` gerekir (R-10, KL-18, TC-235).
