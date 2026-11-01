@@ -76,11 +76,7 @@ Uygulama bütün yapılandırmayı ortam değişkenlerinden okur (architecture �
 
 `LIBRARY_HOST` ve `LIBRARY_BIND` yalnız Caddy servisinde, diğerleri uygulama servisinde kullanılır; `LIBRARY_STATIC_ROOT` ikisinde de aynı olmalıdır. `LIBRARY_HOST`, `LIBRARY_BIND` ve `LIBRARY_ALLOWED_HOSTS` aynı IP adresidir.
 
-`LIBRARY_SECRET_KEY` için bir kez şu komutun çıktısını kullanın ve kimseyle paylaşmayın:
-
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(50))"
-```
+`LIBRARY_SECRET_KEY` için bir kez sanal ortamın Python'uyla üretilen rastgele bir anahtar kullanın (komut platform bölümünde, "Ortam dosyası") ve kimseyle paylaşmayın.
 
 Dışa aktarma parolası, parola dosyasının ilk satırıdır. Uzun ve tahmin edilemez bir parola seçin; aynı parolayı ayrıca kâğıda yazıp sunucudan ve USB belleklerden ayrı bir yerde, kapalı zarfta saklayın. Parola kaybolursa şifreli dışa aktarmalar açılamaz.
 
@@ -101,14 +97,14 @@ Aşağıdaki sıra iki platformda aynıdır. Her adımın komutları platform b�
 **Hazırlık:**
 
 - **Sabit IP:** Yönlendiricinin yönetim sayfasında sunucunun ağ kartı için bir DHCP rezervasyonu açın (ör. `192.168.1.10`). Bu adres `LIBRARY_HOST`, `LIBRARY_BIND` ve `LIBRARY_ALLOWED_HOSTS` değeridir ([ADR-0061](decisions/0061-access-by-static-ip.md)).
-- **Servis hesabı ve klasörler:** Platform bölümündeki "Hesap" ve "Klasörler ve izinler" adımları.
+- **Servis hesabı ve klasörler:** Platform bölümündeki "Hesap" ve "Klasörler ve izinler" adımları; dışa aktarma parola dosyası da burada oluşturulur.
 - **Kod:** Sürüm arşivini uygulama klasörüne açın (platform bölümünde "Sürüm arşivinin açılması").
-- **Ortam değişkenleri:** WinSW XML'lerini ya da `library.env`'i doldurun; dışa aktarma parola dosyasını oluşturun.
 
 **Kurulum adımları** (architecture §8):
 
 1. **Python 3.11 ve sanal ortam:** Python 3.11'i kurun, sanal ortamı oluşturun ve bağımlılıkları sabit sürümleriyle yükleyin: `python -m pip install -r requirements.txt`.
-2. **`migrate` ve `collectstatic`:** Platform bölümündeki "Komutların elle çalıştırılması" ile bir komut oturumu açın ve şunları çalıştırın:
+2. **Ortam değişkenleri:** Platform bölümündeki "Ortam dosyası" ile ortam dosyasını (Windows'ta iki WinSW XML'i, Linux'ta `library.env`) yerine koyun ve doldurun ([Ortam değişkenleri](#ortam-değişkenleri)). Sonraki adımların komut oturumu değerleri bu dosyadan okur.
+3. **`migrate` ve `collectstatic`:** Platform bölümündeki "Komutların elle çalıştırılması" ile bir komut oturumu açın ve şunları çalıştırın:
 
    ```bash
    python manage.py migrate
@@ -118,17 +114,17 @@ Aşağıdaki sıra iki platformda aynıdır. Her adımın komutları platform b�
    python manage.py collectstatic --noinput
    ```
 
-3. **İlk yönetici hesabı:** Aynı oturumda ilk yöneticiyi oluşturun. Diğer personel hesaplarını bu hesapla uygulamadaki "Personel" ekranından açın.
+4. **İlk yönetici hesabı:** Aynı oturumda ilk yöneticiyi oluşturun. Diğer personel hesaplarını bu hesapla uygulamadaki "Personel" ekranından açın.
 
    ```bash
    python manage.py createsuperuser
    ```
 
    `load_seed_data` (demo verisi) yalnız demo ve test ortamları içindir; gerçek veritabanında çalıştırmayın.
-4. **Caddy ve kök sertifika:** Caddy 2.11.7'yi indirip özetini doğrulayın ve yerine koyun. Caddy ilk kez başladığında yerel CA'yı ve kök sertifikayı (`root.crt`) üretir; kök sertifika 5. adımdan sonra [personel bilgisayarlarına](#personel-bilgisayarları) yüklenir.
-5. **Servisler:** `library-app` ve `library-caddy` servislerini kaydedin. Servisleri başlatmadan önce 6. adımı tamamlayın; zamanlayıcı ilk gece yedek klasörünü bulamazsa yedek başarısız olur.
-6. **Yedek diski ve dışa aktarma klasörü:** Harici diski bağlayın, `LIBRARY_BACKUP_DIR` ve `LIBRARY_EXPORT_DIR` klasörlerini elle açın ve servis hesabına yazma izni verin. Ardından servisleri başlatın.
-7. **NTP:** Sistem saatinin NTP ile eşitlendiğini doğrulayın. Son tarih, ceza, hatırlatma ve yedek zamanları sunucu saatine dayanır.
+5. **Caddy ve kök sertifika:** Caddy 2.11.7'yi indirip özetini doğrulayın ve yerine koyun. Caddy ilk kez başladığında yerel CA'yı ve kök sertifikayı (`root.crt`) üretir; kök sertifika 6. adımdan sonra [personel bilgisayarlarına](#personel-bilgisayarları) yüklenir.
+6. **Servisler:** `library-app` ve `library-caddy` servislerini kaydedin. Servisleri başlatmadan önce 7. adımı tamamlayın; zamanlayıcı ilk gece yedek klasörünü bulamazsa yedek başarısız olur.
+7. **Yedek diski ve dışa aktarma klasörü:** Harici diski bağlayın, `LIBRARY_BACKUP_DIR` ve `LIBRARY_EXPORT_DIR` klasörlerini elle açın ve servis hesabına yazma izni verin. Ardından servisleri başlatın.
+8. **NTP:** Sistem saatinin NTP ile eşitlendiğini doğrulayın. Son tarih, ceza, hatırlatma ve yedek zamanları sunucu saatine dayanır.
 
 **Kontrol:** Kurulumdan sonra şunları deneyin:
 
@@ -274,10 +270,21 @@ notepad C:\Kutuphane\secrets\export-passphrase.txt
 
 ### Sürüm arşivinin açılması
 
-İlk kurulumda `C:\Kutuphane\app` boştur; klasörü silip arşivi açın. Güncellemede önce eski klasörün adını değiştirin. Arşivdeki `library` klasörü `app` olur:
+Arşivdeki `library` klasörü `app` olur. İlk kurulumda `C:\Kutuphane\app` boştur; önce klasörü silin:
+
+```powershell
+Remove-Item C:\Kutuphane\app
+```
+
+Güncellemede bunun yerine eski klasörün adını değiştirin:
 
 ```powershell
 Rename-Item C:\Kutuphane\app app-old
+```
+
+Ardından arşivi açın (iki durumda da):
+
+```powershell
 Expand-Archive -Path .\library-v1.0.0.zip -DestinationPath C:\Kutuphane
 Rename-Item C:\Kutuphane\library app
 ```
@@ -296,6 +303,22 @@ C:\Kutuphane\venv\Scripts\python.exe -m pip install -r C:\Kutuphane\app\requirem
 ```
 
 `requirements.txt` Windows'ta saat dilimi verisi için gereken `tzdata`'yı da içerir.
+
+### Ortam dosyası
+
+Ortam değişkenleri iki WinSW XML'indedir. Örnekleri uygulama klasöründen WinSW klasörüne kopyalayın:
+
+```powershell
+Copy-Item C:\Kutuphane\app\deploy\winsw\library-app.xml, C:\Kutuphane\app\deploy\winsw\library-caddy.xml C:\Kutuphane\winsw\
+```
+
+`LIBRARY_SECRET_KEY`'i sanal ortamın Python'uyla üretin; çıplak `python` komutu, Python'u `PATH`'e eklemeyen bir kurulumda Microsoft Store kısayoluna düşer:
+
+```powershell
+C:\Kutuphane\venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(50))"
+```
+
+İki XML'i Not Defteri ile açın ve bütün `__DOLDUR__` değerlerini doldurun: `library-svc` parolası (`<password>`), `LIBRARY_SECRET_KEY`, IP adresi (`LIBRARY_ALLOWED_HOSTS`, `LIBRARY_HOST`, `LIBRARY_BIND`), yedek ve dışa aktarma klasörleri ve SMTP değerleri. XML'de `&`, `<` ve `"` karakterleri `&amp;`, `&lt;` ve `&quot;` olarak yazılır. Dosyaları UTF-8 olarak kaydedin.
 
 ### Caddy
 
@@ -316,17 +339,14 @@ Expand-Archive -Path .\caddy_2.11.7_windows_amd64.zip -DestinationPath C:\Kutuph
 
 ### Servisler
 
-WinSW 2.12.0'ı indirin: <https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW-x64.exe>. WinSW'de exe ile XML aynı adı taşır; exe'yi iki kez kopyalayın ve XML örneklerini yanlarına koyun:
+WinSW 2.12.0'ı indirin: <https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW-x64.exe>. WinSW'de exe ile XML aynı adı taşır; exe'yi iki kez, "Ortam dosyası"nda kopyalanan XML'lerin yanına kopyalayın:
 
 ```powershell
 Copy-Item .\WinSW-x64.exe C:\Kutuphane\winsw\library-app.exe
 Copy-Item .\WinSW-x64.exe C:\Kutuphane\winsw\library-caddy.exe
-Copy-Item C:\Kutuphane\app\deploy\winsw\library-app.xml, C:\Kutuphane\app\deploy\winsw\library-caddy.xml C:\Kutuphane\winsw\
 ```
 
-İki XML'i Not Defteri ile açın ve bütün `__DOLDUR__` değerlerini doldurun: `library-svc` parolası (`<password>`), `LIBRARY_SECRET_KEY`, IP adresi (`LIBRARY_ALLOWED_HOSTS`, `LIBRARY_HOST`, `LIBRARY_BIND`), yedek ve dışa aktarma klasörleri ve SMTP değerleri. XML'de `&`, `<` ve `"` karakterleri `&amp;`, `&lt;` ve `&quot;` olarak yazılır. Dosyaları UTF-8 olarak kaydedin.
-
-[İlk kurulum](#ilk-kurulum) 6. adımı (yedek klasörleri) tamamsa servisleri kaydedip başlatın. Caddy servisi uygulama servisine bağlı olduğu için onu başlatmak önce uygulamayı başlatır:
+[İlk kurulum](#ilk-kurulum) 7. adımı (yedek klasörleri) tamamsa servisleri kaydedip başlatın. Caddy servisi uygulama servisine bağlı olduğu için onu başlatmak önce uygulamayı başlatır:
 
 ```powershell
 C:\Kutuphane\winsw\library-app.exe install
@@ -414,24 +434,25 @@ sudo mount /mnt/library-backup
 sudo install -d -o library -g library -m 0750 /mnt/library-backup/backups /mnt/library-backup/exports
 ```
 
-Ortam dosyasını ve dışa aktarma parola dosyasını oluşturup `sudoedit` ile doldurun:
+Dışa aktarma parola dosyasını oluşturup `sudoedit` ile doldurun (ilk satır parola):
 
 ```bash
-sudo install -o root -g library -m 0640 /opt/library/app/deploy/library.env.example /etc/library/library.env
 sudo install -o root -g library -m 0640 /dev/null /etc/library/export-passphrase.txt
-sudoedit /etc/library/library.env
 sudoedit /etc/library/export-passphrase.txt
 ```
 
-`library.env`'de satırlar `AD=değer` biçimindedir; değerde boşluk kullanmayın.
-
 ### Sürüm arşivinin açılması
 
-İlk kurulumda `/opt/library/app` yoktur. Güncellemede önce eski klasörün adını değiştirin. Arşivdeki `library` klasörü `app` olur:
+Arşivdeki `library` klasörü `app` olur. İlk kurulumda `/opt/library/app` yoktur; bu adımı atlayın. Güncellemede önce eski klasörün adını değiştirin:
+
+```bash
+sudo mv /opt/library/app /opt/library/app-old
+```
+
+Ardından arşivi açın (iki durumda da):
 
 ```bash
 sudo apt install unzip
-sudo mv /opt/library/app /opt/library/app-old
 sudo unzip -q library-v1.0.0.zip -d /opt/library
 sudo mv /opt/library/library /opt/library/app
 ```
@@ -445,6 +466,18 @@ sudo apt install python3.11 python3.11-venv
 sudo python3.11 -m venv /opt/library/venv
 sudo /opt/library/venv/bin/python -m pip install -r /opt/library/app/requirements.txt
 ```
+
+### Ortam dosyası
+
+Ortam değişkenleri `/etc/library/library.env`'dedir. Örneği uygulama klasöründen kopyalayın, `LIBRARY_SECRET_KEY`'i sanal ortamın Python'uyla üretin (Debian'da çıplak `python` komutu yoktur) ve dosyayı `sudoedit` ile doldurun:
+
+```bash
+sudo install -o root -g library -m 0640 /opt/library/app/deploy/library.env.example /etc/library/library.env
+/opt/library/venv/bin/python -c "import secrets; print(secrets.token_urlsafe(50))"
+sudoedit /etc/library/library.env
+```
+
+`library.env`'de satırlar `AD=değer` biçimindedir; değerde boşluk kullanmayın.
 
 ### Caddy
 

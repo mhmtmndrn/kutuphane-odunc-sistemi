@@ -306,12 +306,13 @@ flowchart TB
 - **Servisler:** Windows'ta WinSW, Linux'ta systemd ile iki servis tanımlanır; ikisi de çökünce yeniden başlar ([ADR-0010](decisions/0010-windows-service-winsw.md)). Uygulama servisi tek süreçtir. Zamanlayıcı yalnız bu serviste `LIBRARY_SCHEDULER_ENABLED=1` ile açılır.
 - **Kurulum adımları** (faz 5'te kurulum belgesine dönüşür):
   1. Python 3.11 ve sanal ortam kurulur; bağımlılıklar sabit sürümlerle yüklenir.
-  2. `migrate` ve `collectstatic` çalıştırılır.
-  3. İlk yönetici hesabı oluşturulur.
-  4. Caddy kurulur, kök sertifikası personel bilgisayarlarına yüklenir.
-  5. Servisler kaydedilir.
-  6. Yedek diski ve dışa aktarma klasörü bağlanır.
-  7. Sistem saati NTP ile eşitlenir.
+  2. Ortam değişkenleri ortam dosyasına yazılır (Windows'ta WinSW XML'leri, Linux'ta `library.env`).
+  3. `migrate` ve `collectstatic` çalıştırılır.
+  4. İlk yönetici hesabı oluşturulur.
+  5. Caddy kurulur, kök sertifikası personel bilgisayarlarına yüklenir.
+  6. Servisler kaydedilir.
+  7. Yedek diski ve dışa aktarma klasörü bağlanır.
+  8. Sistem saati NTP ile eşitlenir.
 - **Statik dosyalar:** `collectstatic` dosyaları `LIBRARY_STATIC_ROOT` klasörüne yazar, Caddy `/static/` yolunu `file_server` ile sunar ([ADR-0029](decisions/0029-static-files-caddy.md)).
 - **Gizli değerler:** Bölüm 6.4'teki gibi verilir. Caddy'nin CA özel anahtarı ve dışa aktarma parola dosyası yalnız servis hesabının okuyabileceği izinlerle tutulur.
 - **Ortamlar:** Geliştirme ortamında `runserver`, konsol e-posta backend'i ve admin paneli açık; zamanlayıcı kapalı. Test ortamında bellek e-posta backend'i, geçici SQLite ve sabitlenmiş "bugün" kullanılır. Üretim ortamı yukarıdaki gibidir.
