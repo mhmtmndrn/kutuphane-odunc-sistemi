@@ -1,6 +1,6 @@
 # ADR-0040: Gecikme günü tek tek kapalı tarihleri saymaz
 
-- **Durum:** Kabul edildi (2026-10-31)
+- **Durum:** Kabul edildi (2026-10-31); aralığın alt sınırı [ADR-0069](0069-closed-due-date-not-a-late-day.md) ile değişti (2026-11-02): son tarih günü de düşülür
 - **Kaynak:** Faz 4, 5. tur. Kullanıcı soru penceresinden iki turda seçti. İlk turda inşa kontrolü bulgusu §8.1-4 soruldu. İkinci turda bu cevabın FR-12 ile çeliştiği söylendi ve kapsam soruldu.
 
 ## Bağlam

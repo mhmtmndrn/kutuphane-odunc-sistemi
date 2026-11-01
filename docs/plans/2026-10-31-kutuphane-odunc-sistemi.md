@@ -2,7 +2,7 @@
 
 - **Tarih:** 2026-10-31
 - **İz:** Tam
-- **Durum:** Faz 4 tamamlandı, onay kapısı geçildi. Kararlar alındı (ADR-0026…0048; küçük karar listesi onaylandı, 2026-10-31). Görevler, risk kaydı, test planı (319 TC), izlenebilirlik ve tutarlılık kontrolü yazıldı; inşa kontrolü ayıklandı (§8.1). Plan, test planı ve KL-1…KL-46 onaylandı (2026-10-31); faz 5 başladı: G01 tamam (2026-10-31); G02 kararları ADR-0049, ADR-0050 ve §11'de.
+- **Durum:** Faz 4 tamamlandı, onay kapısı geçildi. Kararlar alındı (ADR-0026…0048; küçük karar listesi onaylandı, 2026-10-31). Görevler, risk kaydı, test planı (319 TC), izlenebilirlik ve tutarlılık kontrolü yazıldı; inşa kontrolü ayıklandı (§8.1). Plan, test planı ve KL-1…KL-46 onaylandı (2026-10-31); faz 5 başladı: G01 tamam (2026-10-31); G02 kararları ADR-0049, ADR-0050 ve §11'de. Faz 5 tamamlandı (G01–G19, PR #1…#7, 2026-11-01). Faz 6 başladı (2026-11-01): ADR-0067, §12.
 
 ## 1. Süreç uyarlaması
 
@@ -29,6 +29,7 @@
 | docs/decisions/0056…0058 | Faz 5'te, G17–G18 açılışında yazıldı (2026-11-01): Open Library çekimi, tohum telefonları, yük betiği koruması |
 | docs/decisions/0059 | Faz 5'te, PR #6'nın yerel doğrulamasında yazıldı (2026-11-01): demo kitap kaydı eşleşen Türkçe baskıdan alınır; ADR-0033'ün durumu güncellendi |
 | docs/decisions/0060…0066 | Faz 5'te, G19 açılışında yazıldı (2026-11-01): kurulum belgesinin yapısı, sabit IP, servis hesabı, araç sürümleri, sürüm arşivi ve güncelleme, Caddy erişim logu yok, dağıtım dosyalarının testleri |
+| docs/decisions/0067 | Faz 6 açılışında yazıldı (2026-11-01): deneme projesi, tek Windows makinesi, `127.0.0.2`, kapsam dışı elle TC'ler, `v1.0.0-rc.1` etiketi |
 | docs/architecture.md, docs/data-design.md | Faz 4 tutarlılık düzeltmeleri (§8) |
 | docs/test-plan.md | Faz 4'te oluşturuldu (2026-10-31): 319 TC, test taslağından revize edildi; G14–G16 açılışında TC-320…TC-339, G17–G18 açılışında TC-340…TC-356, PR #6 yerel doğrulamasında TC-357…TC-358, G19 açılışında TC-359…TC-366 eklendi (2026-11-01) |
 | docs/data-design.md | I6'ya ADR-0018 istisnası yazıldı (§8 T-02) |
@@ -195,7 +196,12 @@ Kapsam içi FR sayısı 31 (23 Must, 8 Should), Won't sayısı 7.
 - [ADR-0065](../decisions/0065-caddy-no-access-log.md): Caddy erişim logu tutulmaz; Caddyfile'da `log` yönergesi yoktur (NFR-08; faz 5, G19 açılışı).
 - [ADR-0066](../decisions/0066-deploy-files-consistency-tests.md): Dağıtım dosyaları ve kullanıcı belgeleri `tests/test_deploy_files.py`'deki tutarlılık testleriyle denetlenir; elle TC'ler de kalır (faz 5, G19 açılışı).
 
-Sıradaki ADR numarası: 0067.
+- [ADR-0067](../decisions/0067-phase6-trial-project-single-windows-machine.md): Faz 6 deneme projesi olarak bu Windows 11 makinesinde, yalnız Windows, `127.0.0.2` adresiyle yapılır; kurulumu kullanıcı belgeyi izleyerek yapar; kurulum `v1.0.0-rc.1` zip'inden; TC-226, TC-227, TC-228, TC-232, TC-233 kapsam dışı, TC-229 ve TC-230 kısmi (faz 6 açılışı).
+- [ADR-0068](../decisions/0068-phase6-python-from-nuget-package.md): Faz 6 test ortamında servis Python'u resmi NuGet paketinden `C:\Program Files\Python311`'e açılır (faz 6, bulgu B1).
+- [ADR-0069](../decisions/0069-closed-due-date-not-a-late-day.md): Ödünçten sonra kapatılan son tarih de gecikme günü sayılmaz; `late_days` aralığı `[due_on, on]` (faz 6 spec incelemesi, B11; ADR-0040'ı tamamlar).
+- [ADR-0070](../decisions/0070-email-change-keeps-consent.md): E-posta adresi başka bir adresle değişince rıza korunur, olay yazılmaz (faz 6 spec incelemesi).
+
+Sıradaki ADR numarası: 0071.
 
 **Faz 4 küçük kararları (onaylandı 2026-10-31):**
 
@@ -607,7 +613,7 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
 - **Arayüzler:** sunar
   - `NoOpenDayError(RuleViolation)`: mesajı ADR-0028'deki metindir.
   - `due_date(start: date, period_days: int, is_closed: Callable[[date], bool]) -> date`. Aday tarih `start + period_days` olur. `i = 0…366` için `aday + i` kontrol edilir ve ilk açık gün döner; hiçbiri açık değilse `NoOpenDayError` fırlatılır. En kötü durum O(366).
-  - `late_days(due_on: date, on: date, closed_dates: AbstractSet[date]) -> int`: `max(0, (on − due_on).days − |{d ∈ closed_dates : due_on < d ≤ on}|)` (ADR-0040). O(c).
+  - `late_days(due_on: date, on: date, closed_dates: AbstractSet[date]) -> int`: `max(0, (on − due_on).days − |{d ∈ closed_dates : due_on ≤ d ≤ on}|)` (ADR-0040; alt sınır ADR-0069, faz 6). O(c).
   - `MemberInput` ve `classify_member_input(raw: str) -> MemberInput` (ADR-0046, KL-35).
   - `fine(late_days: int, daily_kurus: int, cap_kurus: int) -> int`: `min(late_days × daily_kurus, cap_kurus)`.
   - `Blocker(Enum)`, değeri SRS mesajıdır: `MEMBER_INACTIVE="Üye pasif"`, `LIMIT_REACHED="Ödünç limiti dolu"`, `HAS_OVERDUE="Gecikmiş ödünç var"`, `DEBT_THRESHOLD="Borç eşiği aşıldı"`, `COPY_NOT_ON_SHELF="Nüsha rafta değil"`, `ALREADY_RENEWED="Uzatma hakkı kullanıldı"`, `LOAN_OVERDUE="Ödünç gecikmiş"`, `HAS_DEBT="Ödenmemiş borç var"`.
@@ -1632,3 +1638,275 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - **Yerel doğrulama:** Plan §11'deki karar uyarınca yapıldı; kanıt G19'da. Caddy indirme komutunu auto mode sınıflandırıcısı reddettiği için hazırlanan betiği kullanıcı `!` önekiyle çalıştırdı; HTTPS kontrolleri Schannel `curl`'ün iptal denetimi yüzünden yeniden (`--ssl-no-revoke` ve Python `ssl`) çalıştırıldı.
   - **Metinler:** "G19 uygulayıcının seçtiği kullanıcıya görünen metinler" listesinin tamamı onaylandı.
   - **Birleştirme:** PR #7'nin `main`'e birleştirilmesi onaylandı.
+
+## 12. Faz 6 doğrulama
+
+- **Başlangıç:** 2026-11-01. Dal `feature/phase6-verification`. Ortam ve kapsam [ADR-0067](../decisions/0067-phase6-trial-project-single-windows-machine.md).
+- **Faz 6 küçük kararları (onaylandı 2026-11-01):**
+  1. Dal `feature/phase6-verification`; PR ile `main`'e birleşir.
+  2. Ortam ve kapsam kararları tek ADR'de (ADR-0067).
+  3. Faz 6 kaydı ayrı plan dosyası yerine bu bölümde; kabul tablosu burada.
+  4. TC durumları `docs/test-plan.md`'de "Geçti", "Kaldı" ya da "Kapsam dışı (deneme projesi)".
+  5. Yedek ve dışa aktarma klasörleri `C:\Kutuphaneackups` ve `C:\Kutuphane\exports` (makinede yalnız C: var); uygulama `C:\Kutuphanepp`.
+  6. `main` üzerine annotated `v1.0.0-rc.1`; push ayrıca onaylanır; zip ADR-0064 komutuyla.
+  7. Kurulumda takılınan her adım §12.2'de bulgu olarak kaydedilir; belge düzeltmesi `docs:` commit'iyle, kod değişirse `v1.0.0-rc.2`.
+  8. TC-223 `docs/kurulum.md` "Yük testi" notuna göre ayrı bir test veritabanında, `--profile load` ile; `127.0.0.1` `LIBRARY_ALLOWED_HOSTS`'a geçici eklenir, sonra kaldırılır.
+  9. Servisler, `library-svc`, kök sertifika, Firefox ve `C:\Program Files\Python311`'in (ADR-0068) temizliği faz 6 sonunda sorulur.
+  10. `spec-reviewer` elle TC'lerden sonra çalıştırılır.
+- **Kabul tablosu kararları (kullanıcı, 2026-11-02):**
+  11. AC tablosunun sütunları: AC | FR | Otomatik kanıt | Elle kanıt | Sonuç | Not. Otomatik kanıtta AC'yi açıkça anan TC'ler tek tek, FR'ye bağlı diğerleri sayıyla yazılır.
+  12. Sonuç değerleri: "Geçti", "Geçti (kısmi, ADR-0067)", "Kapsam dışı (ADR-0067)", "Kaldı".
+  13. NFR-01…NFR-13 ayrı bir tabloda: hedef, ölçülen değer ya da kanıt, sonuç.
+  14. G01'in "Planlandı" kalan altı TC'si (TC-01, 02, 03, 224, 235, 236) tablodan önce koşulur ve durumları test-plan'da güncellenir.
+
+### 12.1 Elle TC'ler
+
+| TC | Kapsam | Not |
+|---|---|---|
+| TC-223 | Tam | Yük testi, ayrı test veritabanı (küçük karar 8) |
+| TC-225 | Tam | Geri yükleme süresi |
+| TC-226 | Kapsam dışı | İkinci bilgisayar yok |
+| TC-227 | Kapsam dışı | USB okuyucu yok |
+| TC-228 | Kapsam dışı | Etiket kağıdı ve okuyucu yok |
+| TC-229 | Kısmi | Yalnız dinlenen portlar; LAN dışı deneme kapsam dışı |
+| TC-230 | Kısmi | `root.crt` bu makineye `docs/kurulum.md` "Personel bilgisayarları" adımlarıyla eklenir; ayrı personel bilgisayarı kapsam dışı |
+| TC-231 | Tam | Chrome, Edge, Firefox; 1366 px |
+| TC-232 | Kapsam dışı | Kurum SMTP hesabı yok |
+| TC-233 | Kapsam dışı | Çok günlük çalışma yok; telafi mantığı otomatik testlerde (ADR-0053) |
+| TC-234 | Tam | Tohum üye örneklemi |
+| TC-319 | Tam | Kılavuz ve README okuması |
+
+#### 12.1.1 Sonuçlar (kullanıcı koştu, 2026-11-01/02 kaydedildi)
+
+Sıra TC-234 → TC-225 → TC-223 → TC-231 → TC-319 (TC-225 sayımları demo verisi değişmeden alındı).
+
+- **TC-234 Geçti.** `tc234_sample.py … 25` → `members=200`, `@example.invalid` dışı e-posta 0, `000` ile başlamayan telefon 0, çıkış 0. 25 satırın hepsinde telefon `000 …`, e-posta (varsa) `uye<no>@example.invalid`. Kullanıcı notu: `seed/` ad ve soyad listelerinin rastgele birleşimi iki satırda tanınmış kişilerin ad-soyadını üretti (23, 94); telefon ve e-posta sentetik olduğu için gerçek bir kişiye ait kişisel veri yok, ölçüt karşılandı (kullanıcı kararı).
+- **TC-225 Geçti.** Sayımlar `200 592 500`; `backup_db` → `C:\Kutuphane\backups\library-20261101.sqlite3`. Servisler durduruldu, veritabanı silindi, `restore_backup … --yes` → "Geri yüklendi: üye=200, nüsha=592, ödünç=500", servisler Running. "Önceki veritabanı korundu" satırı ve pre-restore dosyası yok (silinmiş veritabanı için beklenen). Belge 8. adım kontrolleri `https://127.0.0.2/`'de: giriş 200, üye ve kitap araması 200 (50'şer satır), `/uyeler/1/` ve `/uyeler/2/` 200 (5'er açık ödünç), `/gecikenler/` 200 (10 kayıt). Süre 6,1 s (< 1 saat).
+- **TC-223 Geçti.** Ayrı veritabanı `C:\Kutuphane\loadtest\library-load.sqlite3` (küçük karar 8): 15 000 kitap (300 Open Library + 14 700 sentetik), 20 000 nüsha, 5 000 üye, 3 000 açık ödünç (300 gecikmiş), 97 000 kapalı. `explain_s1_s3.py`: S1 `sqlite_autoindex_copy_1`, S2 `loan_member_closed`, S3 `ledger_entry_member_id_482a4ddc` indeksini kullanıyor; `SCAN` yalnız skaler alt sorgu dallarında; çıkış 0. `loadtest.py --workers 5 --duration 120` (`http://127.0.0.1:8001`, TLS yok, ADR-0031): p95 kitap arama 150,2 ms, ödünç 128,7, iade 137,1, uzatma 112,5, üye arama 146,2; 9 582 istek, hata 0, "Sonuç: geçti", çıkış 0. waitress-serve durduruldu, parola dosyası silindi; test veritabanı temizliğe kadar kalıyor.
+- **TC-229 Geçti (kısmi), TC-230 Geçti (kısmi).** Yeniden koşulmadı; kanıt §12.4 adım 16–19 ve B8/B9 doğrulaması (kullanıcı kararı 2026-11-01).
+- **TC-231 Geçti (`v1.0.0-rc.2`, 2026-11-02; ilk denemede B10 ile Kaldı).** Hata sayfası kısmının yeniden denemesi aşağıda §12.2 B10 "Test ortamında doğrulama"da; aşağıdaki ilk deneme bulguları geçerli kalıyor.
+  - **İlk deneme (rc.1, Kaldı):** Chrome 156.0.8078.74, Edge 156.0.4314.58, Firefox 159.0; 1366 × 768. Giriş ve hesap, yönetim, üye, katalog, ödünç ve borç ekranlarının hepsi ile ödünç verme (son tarih 16.11.2026), uzatma (30.11.2026), iade ve ödeme alma (1,00 TL) akışları denendi. Üç tarayıcıda da yatay taşma yok (`scrollWidth == clientWidth`), işlevler hatasız, uygulama ekranlarında `lang="tr"` ve metinler Türkçe; `/admin/` → 404. Kalma nedeni: 404 gövdesi Django'nun İngilizce varsayılanı (B10). `/denetim/`'de Hedef ve Ayrıntılar sütunlarının teknik değerleri (`ledger_entry #68`, JSON) tasarımdaki gibi; bulgu değil.
+- **TC-319 Geçti.** Kılavuz: "Üyeye adını sorun" (satır 29, 102), "Geçmiş kapalı tarihleri silmeyin" (satır 129), geçmiş tarihli rıza notu ve örnek senaryo (satır 69). README: "Demo verisi"nde `migrate` → `createsuperuser` → `load_seed_data --profile demo --actor <ad>` sırası (satır 17–31); "Veri kaynakları" (satır 12–15) Open Library CC0 atfı, sabit ad listeleri, `000` önekli telefon ve `@example.invalid` açıklamasıyla.
+
+### 12.2 Kurulum bulguları
+
+- **B1 (§12.4 adım 2, 2026-11-01): Kişisel Python 3.11 kuruluyken "Install for all users" kurulamıyor.**
+  - **Gözlem:** Python 3.11 serisinin Windows yükleyicisi olan son sürüm 3.11.9'dur (3.11.10+ yalnız kaynak). Makinede 3.11.9 kullanıcı başına kurulu (`py -0p` → `AppData\Local\Programs\Python\Python311`). `python-3.11.9-amd64.exe` aynı sağlayıcı anahtarını (`CPython-3.11`) görüp Modify/Repair/Uninstall ekranını açıyor; "Customize installation" çıkmıyor, Advanced Options'ta `InstallAllUsersState = disable`, `TargetDir` kullanıcı profilinde kilitli.
+  - **Belge eksikleri:** (a) "Install for all users" kutucuğunun "Customize installation → Next → Advanced Options" ekranında olduğu yazmıyor. (b) Kişisel kurulum varsa önce kaldırılması gerektiği yazmıyor. (c) `py -3.11 -m venv`, PEP 514 gereği HKCU kaydını HKLM'ye tercih edebilir; servis hesabının okuyamadığı Python'la venv kurulur.
+  - **Kontrol listesi hatası:** §12.4 adım 2'deki "Mevcut kurulumu kaldırma" talimatı yanlıştı (iki kurulumun yan yana durabileceği varsayılmıştı).
+  - **Çözüm:** `docs/kurulum.md` Windows "Python ve sanal ortam" (a), (b), (c) için düzeltildi (`docs:`); venv komutu `& "C:\Program Files\Python311\python.exe" -m venv`. Test ortamında Python resmi NuGet paketinden kuruldu ([ADR-0068](../decisions/0068-phase6-python-from-nuget-package.md)); §12.4 adım 2 ve 9 güncellendi. Kod değişmedi.
+  - **Doğrulama (§12.4 adım 9):** `pyvenv.cfg` → `home = C:\Program Files\Python311`, `version = 3.11.9`; NuGet paketindeki `ensurepip` venv'e pip'i kurdu, `requirements.txt`'teki 16 paket hatasız yüklendi.
+- **B2 (§12.4 adım 8, 2026-11-01): "Sürüm arşivinin açılması" kod blokları yalnız güncellemeyi gösteriyor.**
+  - **Gözlem:** Windows metni "ilk kurulumda klasörü silip arşivi açın" diyor ama kod bloğunda `Remove-Item C:\Kutuphane\app` yok, yalnız güncellemenin `Rename-Item C:\Kutuphane\app app-old` satırı var. Linux'ta `/opt/library/app` ilk kurulumda hiç oluşturulmuyor; bloktaki `sudo mv /opt/library/app /opt/library/app-old` ilk kurulumda `No such file or directory` verir. Test ortamında §12.4 adım 8 doğru sırayı verdiği için kurulum takılmadı.
+  - **Çözüm:** `docs/kurulum.md` iki platformda da ilk kurulum ve güncelleme komutları ayrı bloklara bölündü (`docs:`). Kod değişmedi.
+- **B3 (B2 incelemesi, 2026-11-01): Linux'ta `library.env`, arşiv açılmadan önce arşivden kopyalanıyor.**
+  - **Gözlem:** Linux "Klasörler ve izinler" bloğu `/opt/library/app/deploy/library.env.example`'ı kopyalıyor; `/opt/library/app` ise sonraki "Sürüm arşivinin açılması"nda oluşuyor. İlk kurulumda `install: cannot stat` verir. Test ortamında Linux yok (ADR-0067); belge okumasıyla bulundu.
+- **B4 (§12.4 adım 11, 2026-11-01): `LIBRARY_SECRET_KEY` komutu çıplak `python` kullanıyor.**
+  - **Gözlem:** Ortak gövdedeki `python -c "import secrets; …"` temiz bir Windows sunucuda Microsoft Store kısayoluna (`WindowsApps\python.exe`) düşer: belgedeki "all users" kurulumunda "Add Python to environment variables" işaretlenmiyor, `C:\Kutuphane\venv\Scripts` de bu adımda `PATH`'te değil. Debian 12'de `python-is-python3` yoksa `python` komutu hiç yok. Test ortamında kişisel Python 3.11.9 kullanıcı `PATH`'inde olduğu için anahtar hatasız üretildi (öngörü (e) gerçekleşti).
+- **B5 (§12.4 adım 11–12, 2026-11-01): WinSW XML'leri kullanılmadan önce kopyalanmıyor.**
+  - **Gözlem:** "Hazırlık" XML'lerin doldurulmasını, kurulum adımı 2'deki "Komutların elle çalıştırılması" da `C:\Kutuphane\winsw\library-app.xml`'in okunmasını istiyor; XML'lerin `C:\Kutuphane\winsw\`'e kopyalandığı satır ise kurulum adımı 5'in ("Servisler") altında. Test ortamında §12.4 adım 11 kopyayı öne aldığı için takılmadı.
+- **B3–B5 ortak kök ve çözüm (kullanıcı onayı, 2026-11-01):** "Ortam değişkenleri" Hazırlık'taydı; yani Python, sanal ortam ve ortam dosyalarının yerine konmasından önce. `docs/kurulum.md` yeniden sıralandı (`docs:`): ortam değişkenleri, sanal ortamdan sonra kurulum adımı 2 oldu (eski 2–7 → 3–8). İki platform bölümüne de "Python ve sanal ortam"dan sonra "Ortam dosyası" eklendi: Windows'ta XML kopyası, `C:\Kutuphane\venv\Scripts\python.exe -c …` ve doldurma; Linux'ta `library.env` kopyası (B3, "Klasörler ve izinler"den taşındı), `/opt/library/venv/bin/python -c …` ve `sudoedit`. Windows "Servisler"de yalnız exe kopyaları kaldı. Dışa aktarma parola dosyası "Klasörler ve izinler"de kaldı. `docs/architecture.md` §8'deki adım listesi de sekiz adıma güncellendi. Kod değişmedi; `tests/test_deploy_files.py` 20 passed.
+- **B6 (§12.4 adım 11, 2026-11-01): `__DOLDUR__` kontrolü yanlış pozitif veriyor.**
+  - **Gözlem:** Belge "bütün `__DOLDUR__` değerlerini doldurun" diyor ama kontrol komutu vermiyor. Akla gelen `Select-String "__DOLDUR__" C:\Kutuphane\winsw\*.xml`, iki XML'in baştaki açıklama yorumundaki (satır 6: "`__DOLDUR__` değerlerini kurulumda doldurun.") metni de yakaladığı için bütün alanlar dolu olsa da 2 satır döndürüyor. `Select-String 'value="__DOLDUR__"|>__DOLDUR__<'` boş döndü (doğru sonuç).
+- **B7 (§12.4 adım 15, 2026-11-01): `w32tm` komutları `w32time` servisi durmuşken hata veriyor (öngörü (b) gerçekleşti).**
+  - **Gözlem:** `w32time` Manual/Stopped iken belgedeki iki komut da `The following error occurred: Hizmet başlatılmadı. (0x80070426)` verdi. `Start-Service w32time` sonrası `w32tm /resync` → "The command completed successfully."; `w32tm /query /status` → `Source: time.windows.com,0x9`, Stratum 5, son eşitleme 1.11.2026 19:50:20. Belge servisin durumunu ve başlangıç türünü ele almıyor; saat dilimi kontrolü için de komut vermiyor (`Get-TimeZone` → `Turkey Standard Time`, UTC+03:00, beklenen).
+- **B8 (§12.4 adım 16, 2026-11-01): Caddy yönetim ucu `127.0.0.1:2019`'u dinliyor; belgedeki kontrol komutu bunu göstermiyor (öngörü (d) gerçekleşti).**
+  - **Gözlem:** `netstat -ano | findstr ":2019"` → `TCP 127.0.0.1:2019 LISTENING 532` (Caddy). Belgenin ortak gövdesi "Caddy yalnız `<IP>:80` ve `<IP>:443`'ü dinler", Windows "Kontrol"ü "`127.0.0.1:8000` ve `<IP>:443`, `<IP>:80` dışında bir dinleme adresi olmamalıdır" diyor. Belgedeki `findstr ":8000 :443 :80"` `:2019`'u hiç göstermediği için kendi iddiasını doğrulayamıyor; ayrıca dinleme dışı satırları (makinenin dış `:443` bağlantıları) da eşliyor. G19'da bu uç görülmüş, "ek genel seçenek gerekmedi" denmişti (§11); belge metni güncellenmemişti. Ayrıca `UDP 127.0.0.2:443` (HTTP/3) dinleniyor; güvenlik duvarı kuralı yalnız TCP açtığı için LAN'dan HTTP/3 kapalı kalır, tarayıcılar TCP'ye düşer. Diğer dinlemeler beklendiği gibi: `127.0.0.1:8000` (PID 15024), `127.0.0.2:80` ve `127.0.0.2:443` (PID 532).
+- **B9 (§12.4 adım 17, 2026-11-01): Ortak gövdedeki `curl -k` Windows PowerShell 5.1'de çalışmıyor (öngörü (c) gerçekleşti).**
+  - **Gözlem:** `curl -k https://127.0.0.2/static/css/app.css` → `Invoke-WebRequest : A parameter cannot be found that matches parameter name 'k'.` (`curl`, `Invoke-WebRequest` takma adı). `/admin/` → 404 ve `http://` → HTTPS kontrolleri için belgede komut yok. `curl.exe` ile üç kontrol de beklendiği gibi: `/static/css/app.css` → 200, `/admin/` → 404, `http://127.0.0.2/` → `308 https://127.0.0.2/`.
+- **B6–B9 çözümü (kullanıcı onayı, 2026-11-01; dördünde de önerilen seçenek):** Yalnız `docs/kurulum.md` değişti (`docs:`); Caddyfile, XML'ler, kod ve sürüm arşivi aynı, `v1.0.0-rc.2` gerekmedi.
+  - **B6:** Windows "Ortam dosyası"na dar desenli kontrol eklendi: `Select-String 'value="__DOLDUR__"|>__DOLDUR__<' C:\Kutuphane\winsw\*.xml` boş olmalı. Depodaki örneklerde desen 12 yer tutucunun hepsini yakaladı, yalnız iki yorum satırını dışarıda bıraktı (geniş desen 14). Linux örneğinde `__DOLDUR__` yok.
+  - **B7:** Windows "NTP": `Set-Service w32time -StartupType Automatic`, `Start-Service w32time`, `w32tm /resync`, `w32tm /query /status`, `Get-TimeZone`; hata metni ve beklenen saat dilimi değerleri yazıldı. Linux `timedatectl set-ntp true` servisi zaten açtığı için değişmedi.
+  - **B8:** Caddyfile'a `admin off` eklenmedi: uç yalnız loopback'te, NFR-08 (LAN dışı erişim) ihlal edilmiyor ve kod değişikliği rc.2 gerektirirdi. Ortak gövde artık "ağa açık dinleme yalnız `<IP>:80` ve `<IP>:443`; waitress `127.0.0.1:8000`, Caddy yönetim ucu `127.0.0.1:2019`" diyor. İki platformun "Kontrol"ü Caddy'nin bütün dinlemelerini ve 80/443/8000/2019 portlarını listeleyen komuta geçti (Windows `Get-NetTCPConnection -State Listen … -or $_.OwningProcess -eq (Get-Process caddy).Id`; Linux `ss -ltnp | grep -E ':(80|443|8000|2019)\b|"caddy"'`); beklenen tam dört satır. Süreç adıyla süzülmedi: `waitress-serve.exe` yalnız başlatıcıdır, soketi alt `python` süreci tutar.
+  - **B9:** Ortak gövde yalnız beklenen sonuçları söylüyor (200, 404, 308); komutlar platform "Kontrol"üne taşındı (ADR-0060 yapısı): Windows `curl.exe … -o NUL`, Linux `curl … -o /dev/null`.
+  - **Doğrulama (bu makinede, Windows PowerShell 5.1.26100, servisler çalışırken):** Windows dinleme komutu `127.0.0.2:80`, `127.0.0.2:443`, `127.0.0.1:2019` (Caddy, PID 13520), `127.0.0.1:8000` (python, PID 12372) olmak üzere dört satır verdi; üç `curl.exe` → `200`, `404`, `308 https://127.0.0.2/`. Linux komutları çalıştırılmadı (Linux ortamı yok, ADR-0067).
+- **B10 (TC-231, 2026-11-02): Hata sayfaları İngilizce (NFR-09 "Yalnız Türkçe").**
+  - **Gözlem:** `/admin/` 404 gövdesi "Not Found / The requested resource was not found on this server." Projede `templates/400.html`, `403.html`, `404.html`, `500.html` yok; Django 5.2.18'in `django.views.defaults` sayfaları gettext'ten geçmeyen sabit İngilizce metin (`Not Found`, `403 Forbidden`, `Bad Request (400)`, `Server Error (500)`). Etki `/admin/` ile sınırlı değil: uygulama görünümlerindeki `get_object_or_404`/`Http404` (olmayan üye, kitap ya da nüsha) ve `accounts/permissions.py`'deki `PermissionDenied` (yönetici olmayan personel, yönetici yolu) aynı sayfaları gösteriyor. Otomatik testler bu sayfaların dilini sınamıyordu.
+  - **Karar (kullanıcı onayı, 2026-11-02, önerilen seçenek):** Türkçe hata şablonları, test önce (TDD); kod değiştiği için `v1.0.0-rc.2` (küçük karar 7), test ortamında güncelleme ve TC-231'in hata sayfası kısmının yeniden denenmesi. Ayrıntılar küçük karar listesiyle onaylanacak.
+  - **Küçük kararlar (onaylandı 2026-11-02, 1–9):** (1) dal `feature/phase6-verification`; (2) `tests/test_error_pages.py`, TC-367 (işleyiciler) ve TC-368 (gerçek yollar), önce kırmızı; (3) 400/403/404 `base.html`'den türer, 500 bağımsız (`extends`, `url`, `static` yok; `server_error` bağlamsız çizilir, 500 sayfasının yedeği yok); (4) metinler: 404 "Sayfa bulunamadı" / "Aradığınız sayfa ya da kayıt bulunamadı. Adresi kontrol edin." + "Ana sayfa"; 403 "Erişim izni yok" / "Bu sayfayı açma yetkiniz yok. Gerekiyorsa bir yöneticiye başvurun."; 400 "Geçersiz istek" / "İstek işlenemedi. Adresi kontrol edip yeniden deneyin."; 500 "Sunucu hatası" / "Beklenmeyen bir hata oluştu. İşlemi yeniden deneyin; sorun sürerse yöneticiye bildirin."; (5) CSRF sayfası denetlenir; (6) ADR yok; (7) `test:`, `fix:`, `docs:` commit'leri; (8) `v1.0.0-rc.2` dal HEAD'ine, etiket ve push ayrıca onaylanır; (9) test ortamı `docs/kurulum.md` "Güncelleme" ile güncellenir, TC-231'in hata sayfası kısmı üç tarayıcıda yeniden denenir.
+  - **Uygulamada çıkan iki soru (kullanıcı onayı, ikisinde de önerilen):** (a) Django'nun CSRF sayfasının gövdesi gettext ile Türkçe, ama şablonda sabit `<html lang="en">` ve `<title>403 Forbidden</title>` var → `templates/403_csrf.html` eklendi: "Form güvenlik kontrolünden geçemedi" / "Sayfayı yenileyip formu yeniden gönderin; sorun sürerse tarayıcıda çerezlerin açık olduğunu kontrol edin." (`csrf_failure` istek bağlamı vermez; menü boş kalır). (b) `accounts/tests/test_views.py`'nin dar URLconf'u `base.html`'in menü bağlantılarını (`administration:home`) çözemediği için 403 şablonu `NoReverseMatch` veriyordu → test URLconf'una `path("", include("library_site.urls"))` eklendi; test amacı değişmedi.
+  - **Çözüm ve doğrulama (2026-11-02):** `f0e1a71` (`test:`, 7 test önce kırmızı), `96ba347` (`fix:`, beş şablon). Tam koşu 1049 passed (1042 + 7); dört kapsam eşiği çıkış 0 (domain %100, yetki %100, servis %99, operations %99); proje %97; `makemigrations --check` temiz. Not: bu oturumda pytest'in varsayılan geçici kökü (`%TEMP%\pytest-of-Mehmet Emin`, Haziran 2026'dan, ACL okunamıyor) `WinError 5` verdiği için koşu `--basetemp=<scratchpad>\pytest-tmp` ile yapıldı; kodla ilgisi yok, klasöre dokunulmadı.
+  - **Sürüm (2026-11-02, kullanıcı onayı):** annotated `v1.0.0-rc.2` → `6cbd3a1` (yalnız yerel). `git archive --format=zip --prefix=library/ v1.0.0-rc.2` → `library-v1.0.0-rc.2.zip`, 617 417 bayt, SHA-256 `bc5239f34ddf85861cc9257fd407d5f7dfa69ba35ea55a9c36150426c6543ee1`. rc.1 → rc.2 farkı yalnız şablonlar, testler ve belgeler (`deploy/`, `requirements.txt`, migration aynı).
+  - **Test ortamında güncelleme (2026-11-02, kullanıcı koştu, `docs/kurulum.md` "Güncelleme" 1–9):** `library-app` ve `library-caddy` Stopped; `backup_db` → "Yedek alındı: C:\Kutuphane\backups\library-20261102.sqlite3", "Silinen eski yedek: 0"; zip'in `Get-FileHash` değeri beklenenle aynı (`BC5239F3…6543EE1`); `app` → `app-old`, arşiv açılıp `library` → `app`; `pip install -r requirements.txt` hepsi "Requirement already satisfied"; `migrate` "No migrations to apply"; `collectstatic --noinput` "2 static files copied to 'C:\Kutuphane\static'" (depodaki iki statik dosyanın ikisi; `git diff v1.0.0-rc.1 v1.0.0-rc.2 -- static` boş, `git archive` dosya zamanını commit zamanı yaptığı için yeniden kopyalandılar); adım 7 atlandı (`deploy/` aynı); iki servis Running; `curl.exe` → `200`, `404`, `308 https://127.0.0.2/`. Belgeden tek sapma Claude'un eklediği iki `Set-Location` (`C:\Kutuphane` ve `C:\Kutuphane\app`, "klasör kullanımda" hatasını önlemek için); komutlar onlarla koşuldu ve hata çıkmadı, belge değişmedi.
+  - **Test ortamında doğrulama (TC-231 hata sayfası kısmı, 2026-11-02, kullanıcı koştu):** Önce `admin` ile `/personel/yeni/`'den yönetici olmayan görevli (CLERK) personel hesabı `gorevli` açıldı, ilk giriş parola değişimi yapıldı. Kontroller gerçek tarayıcı motorlarında otomasyonla yapıldı: Chrome 156 ve Edge 156 CDP, Firefox 159.0 Marionette; her sayfada `<title>`, `<h1>`, `document.documentElement.lang`, personel menüsü ve Çıkış düğmesi ile İngilizce metin araması okundu. Üç tarayıcıda da aynı sonuç: (1) anonim `/admin/` → 404, "Sayfa bulunamadı" / "Sayfa bulunamadı · Kütüphane", menü yok; (2) `admin` ile `/uyeler/999999/` → 404, "Sayfa bulunamadı", menü ve Çıkış var; (3) `gorevli` ile `/personel/` → 403, "Erişim izni yok" / "Erişim izni yok · Kütüphane", menü ve Çıkış var. Hepsinde `lang` = `"tr"`, İngilizce metin yok. 400, 500 ve CSRF sayfaları elle denenmedi; TC-367 ve TC-368 otomatik sınıyor. B10 kapandı, TC-231 Geçti.
+- **Spec incelemesi (faz 6 adım 4, 2026-11-02, küçük karar 10):** `spec-reviewer` alt ajanı SRS, tasarım belgeleri, test planı, plan ve ADR'lere karşı uygulamanın tamamını ve testleri okudu. Bulgu çıkmadı, dört soru çıktı; Claude dördünü de kodda doğruladı. Kullanıcı dördünde de önerilen seçeneği seçti:
+  1. **AC-25 ile ADR-0018 çelişiyordu:** AC-25 borç hareketlerinin "üye bağı" kaldırılır diyordu. Kod ADR-0018'i ve data-design I6'yı izliyor (yalnız `loan_id` boşalır). AC-25 metni ADR'ye uyduruldu (`docs:`), kod değişmedi.
+  2. **Kapalı son tarih (B11, aşağıda).**
+  3. **E-posta değişince rıza:** Rıza GIVEN kalıyor, yeni olay yazılmıyor. Davranış [ADR-0070](../decisions/0070-email-change-keeps-consent.md) ile kayda geçti. Davranışı sınayan mevcut adsız test TC-371 olarak numaralandı. Kod değişmedi.
+  4. **KL-46 hata tablosu boştu:** B1–B9'un hepsi belge kusuruydu ("Kod değişmedi"), kod hatası olanlar yalnız B10 ve B11. Test-plan §8'e HT-01 (B10, Düşük) ve HT-02 (B11, Kritik: para hesabı) "Kapandı" olarak yazıldı.
+- **B11 (spec incelemesi, 2026-11-02): Ödünçten sonra kapatılan son tarih gecikme günü sayılıyor (FR-12, ADR-0040).**
+  - **Gözlem:** `late_days` kapalı tarihleri `(due_on, on]` aralığında düşüyordu. FR-07 son tarihi ödünç verilirken açık güne kaydırdığı için son tarih ancak sonradan kapatılırsa kapalı olabilir. Örnek: son tarih 11-16, sonradan 11-16 kapatılıyor, 11-17'de iade → 1 gün, 5,00 TL ceza. TC-277 bu sınırı "son tarih düşülmez" diye sınıyordu.
+  - **Karar (kullanıcı onayı, 2026-11-02, önerilen seçenek):** Düzeltme ve yeni ADR. TC-277'nin bu satırı sınadığı söylenince kullanıcı "Düzelt, TC-277 değişsin" ile kararını onayladı. [ADR-0069](../decisions/0069-closed-due-date-not-a-late-day.md): aralık `[due_on, on]`. Haftalık kapalı günler, OVERDUE_1 penceresi ve uzatmadaki gecikme kontrolü ADR-0040'taki gibi kalıyor.
+  - **Küçük kararlar (onaylandı 2026-11-02, 1–9):**
+    - (1) Dal `feature/phase6-verification`.
+    - (2) ADR-0069 ve ADR-0070.
+    - (3) TC-277'nin ilk satırı 3; TC-369 (birim), TC-370 (servis, `add_closed_date` ile), TC-371.
+    - (4) TC-371'in TDD sapması (aşağıdaki sapma nedeniyle oluşmadı).
+    - (5) Dosya yerleri.
+    - (6) Belgeler: SRS AC-25 ve sözlük, test-plan, plan, STATUS. FR-12'nin metni zaten doğru olduğu için değişmedi.
+    - (7) `test:`, `fix:`, `docs:` commit'leri.
+    - (8) Dal HEAD'ine yerel `v1.0.0-rc.3`. Gecikme gününü sınayan elle TC olmadığı için test ortamı güncellenmiyor; kurulu sürüm rc.2 kalıyor.
+    - (9) Tam koşu, kapsam eşikleri ve `makemigrations --check`.
+  - **Uygulamadaki sapma:** `members/tests/test_services.py`'deki `test_changing_email_keeps_consent` TC-371'in davranışını zaten sınıyordu. İkinci bir test yazılmadı; bu test `test_tc371_…` adıyla numaralandı. Kullanım kılavuzunun gecikme günü paragrafına ve `docs/architecture.md`'nin karmaşıklık tablosuna ADR-0069 eklendi.
+  - **Çözüm ve doğrulama (2026-11-02):** `ca0ee78` (`test:`; TC-277[closed0], TC-369, TC-370 önce kırmızı: TC-370'te `fine_kurus` 500), `29febed` (`fix:`, `circulation/domain.py`'de tek koşul). Tam koşu 1051 passed (1049 + TC-369 + TC-370); kapsam ve migration sonuçları §12.3.1'de.
+- **Bulgu olmayan gözlem (§12.4 adım 18):** Firefox 159'da `security.enterprise_roots.enabled` ilk değeri `true`; Caddy CA'sı `certutil` ile Windows deposuna eklenince Firefox uyarısız açtı. Belgenin koşullu Firefox adımı ("kullanmıyorsa") doğru; değiştirilmedi.
+
+### 12.4 Kurulum kontrol listesi (2026-11-01)
+
+Ana kaynak `docs/kurulum.md`'dir; bu liste yalnız sırayı ve ADR-0067'nin getirdiği sapmaları gösterir.
+Her adımda **belgeyi oku, komutu belgeden al**. Belgede takıldığın, belirsiz bulduğun ya da hata veren her yeri not et ve Claude'a yaz: bunlar §12.2'ye bulgu olarak girer.
+
+Sabit değerler:
+
+| Ne | Değer |
+|---|---|
+| IP (`LIBRARY_HOST`, `LIBRARY_BIND`, `LIBRARY_ALLOWED_HOSTS`) | `127.0.0.2` |
+| Yedek klasörü (`LIBRARY_BACKUP_DIR`) | `C:\Kutuphane\backups` |
+| Dışa aktarma klasörü (`LIBRARY_EXPORT_DIR`) | `C:\Kutuphane\exports` |
+| Sürüm arşivi | `library-v1.0.0-rc.1.zip` (`git archive --format=zip --prefix=library/ v1.0.0-rc.1 -o library-v1.0.0-rc.1.zip`, depo klasöründe) |
+
+#### A. Hazırlık (normal kullanıcı)
+
+1. Bir indirme klasörü aç, ör. `C:\Users\Mehmet Emin\Downloads\kutuphane-kurulum`, ve sürüm arşivini buraya kopyala.
+2. **Python 3.11.9, NuGet paketinden** ([ADR-0068](../decisions/0068-phase6-python-from-nuget-package.md), bulgu B1). Bu makinedeki 3.11.9 yalnız kullanıcı başına kurulu ve python.org yükleyicisi kaldırmadan "all users" kurmuyor; kişisel kurulumu kaldırma, ona dokunma. Yönetici PowerShell'de, indirme klasöründe:
+   ```powershell
+   Invoke-WebRequest -UseBasicParsing https://www.nuget.org/api/v2/package/python/3.11.9 -OutFile python.3.11.9.zip
+   (Get-FileHash python.3.11.9.zip -Algorithm SHA512).Hash
+   # Beklenen: E353A7EFD159EF98AB9CE1011854A30D5D778F59D96FC9BB11B07CED2990B355F030486B0707F798C73C4420173AB111876A96EAD5981718B604C4CDD71C558D
+   Expand-Archive python.3.11.9.zip .\python-nuget
+   New-Item -ItemType Directory "C:\Program Files\Python311"
+   Copy-Item .\python-nuget\tools\* "C:\Program Files\Python311" -Recurse
+   & "C:\Program Files\Python311\python.exe" -c "import sys; print(sys.version)"
+   ```
+3. Caddy 2.11.7 Windows zip'ini ve WinSW 2.12.0 `WinSW-x64.exe`'yi belgedeki bağlantılardan indirme klasörüne indir.
+4. Firefox'u mozilla.org'dan kur (TC-231, TC-230).
+
+#### B. Kurulum (Yönetici olarak açılmış PowerShell, indirme klasöründe)
+
+Belgenin "İlk kurulum" sırası, komutlar "Windows" bölümünden:
+
+5. **Sabit IP:** Atla (ADR-0067).
+6. **Hesap:** Belgedeki gibi. Parolayı bir yere not et; XML'lere yazılacak.
+7. **Klasörler ve izinler:** İlk `New-Item` ve dört `icacls` satırı belgedeki gibi.
+   **Sapma (harici disk yok):** `E:` komutları yerine:
+   ```powershell
+   New-Item -ItemType Directory -Force C:\Kutuphane\backups, C:\Kutuphane\exports
+   icacls C:\Kutuphane\backups /grant "library-svc:(OI)(CI)M"
+   icacls C:\Kutuphane\exports /grant "library-svc:(OI)(CI)M"
+   ```
+   Parola dosyası belgedeki gibi (`notepad ...`, ilk satır parola, UTF-8).
+8. **Sürüm arşivi:** "İlk kurulumda klasörü silip arşivi açın": `Remove-Item C:\Kutuphane\app`, sonra `Expand-Archive` ve `Rename-Item` (zip adı `library-v1.0.0-rc.1.zip`).
+9. **Python ve sanal ortam:** Belgedeki iki komut (venv komutu B1 düzeltmesiyle `& "C:\Program Files\Python311\python.exe" -m venv C:\Kutuphane\venv`). Ardından şunu çalıştır ve çıktıyı bana yaz:
+   ```powershell
+   Get-Content C:\Kutuphane\venv\pyvenv.cfg
+   ```
+   `home` satırı `C:\Program Files\Python311` göstermeli. `AppData` gösteriyorsa bu bir bulgudur; durup bana yaz.
+10. **Caddy:** Özeti karşılaştır, zip'i aç (belge "Caddy").
+11. **Servis dosyaları:** WinSW kopyaları ve XML'ler (belge "Servisler", ilk blok). XML'leri doldur:
+    - `<password>` (iki XML): `library-svc` parolası
+    - `LIBRARY_SECRET_KEY`: belgedeki `python -c ...` komutunun çıktısı
+    - `LIBRARY_ALLOWED_HOSTS`, `LIBRARY_HOST`, `LIBRARY_BIND`: `127.0.0.2`
+    - `LIBRARY_BACKUP_DIR`: `C:\Kutuphane\backups`; `LIBRARY_EXPORT_DIR`: `C:\Kutuphane\exports`
+    - **SMTP (kurum hesabı yok, TC-232 kapsam dışı):** `LIBRARY_EMAIL_HOST` = `127.0.0.1`, `LIBRARY_EMAIL_USER` = `test`, `LIBRARY_EMAIL_PASSWORD` = `test`, `LIBRARY_EMAIL_FROM` = `kutuphane@example.invalid`. 09.00 hatırlatma görevi bağlanamayıp hata kaydı yazabilir; beklenen.
+12. **migrate, collectstatic, ilk yönetici:** "Komutların elle çalıştırılması" bloğuyla bir oturum aç, sonra `migrate`, `collectstatic --noinput`, `createsuperuser`.
+    **Test ortamı olduğu için** aynı oturumda demo verisini yükle (TC-231, TC-234 için):
+    ```powershell
+    python manage.py load_seed_data --profile demo --actor <createsuperuser'da verdiğin ad>
+    ```
+13. **Servisler:** Yedek klasörleri hazır; belgedeki `install`, `install`, `Start-Service library-caddy`, `Get-Service`. İki servis "Running" olmalı. Değilse `C:\Kutuphane\winsw\logs` içindeki son logları bana yaz.
+14. **Güvenlik duvarı:** Atla (ADR-0067).
+15. **NTP:** Belgedeki iki `w32tm` komutu; çıktıyı bana yaz. (Not: bu makinede `w32time` servisi şu an durmuş görünüyor; belgenin bu durumu karşılayıp karşılamadığına bakacağız.)
+
+#### C. Kontrol (belge "İlk kurulum → Kontrol" ve "Windows → Kontrol")
+
+16. `netstat` komutu (belge "Kontrol"); çıktıyı bana yaz. `<IP>` yerine `127.0.0.2`.
+17. Belgedeki `curl -k https://<IP>/static/css/app.css` ve `/admin/` kontrolleri, IP `127.0.0.2`. Komutu **belgede yazdığı gibi** dene; PowerShell'de hata verirse bana yaz.
+18. **Personel bilgisayarı adımları bu makinede** (belge "Personel bilgisayarları"): `root.crt`'yi `certutil -addstore -f Root root.crt` ile ekle (Yönetici komut istemi), Firefox adımı, kısayol isteğe bağlı.
+19. Chrome, Edge ve Firefox'ta `https://127.0.0.2/` sertifika uyarısı olmadan açılmalı; `http://127.0.0.2/` HTTPS'e yönlenmeli.
+
+Bitince ya da bir yerde takılınca bana yaz: hangi adım, ne çıktı. Kalan TC'leri (TC-223, TC-225, TC-231, TC-234, TC-319, TC-229 ve TC-230'un kalanı) ondan sonra birlikte yaparız.
+
+### 12.3 Kabul tablosu
+
+Biçim küçük kararlar 11–14'te. 2026-11-02'de dolduruldu.
+
+#### 12.3.1 Test koşusu
+
+- **Tam koşu (2026-11-02, `29febed`, B11 sonrası):** `python -m coverage run --branch -m pytest -q --basetemp=<scratchpad>` → `1051 passed`, çıkış 0 (1049 + TC-369, TC-370; TC-371 mevcut testin numaralanması). Kapsam eşiklerinin dördü de çıkış 0: domain %100 (383 satır, 110 dal), iki servis %99 (411 satır; 4 satır, 2 kısmi dal eksik), yetki %100, operations %99; `pdf/sheets.py` %100; proje %97. `makemigrations --check --dry-run` → "No changes detected". Aşağıdaki tablo ve önceki koşu değişmedi; ölçümler aynı.
+- **Tam koşu (2026-11-02, `78b2d7d`):** Kod `96ba347` ve `v1.0.0-rc.2` ile aynı; sonraki commit'ler yalnız `docs/`. `python -m coverage run --branch -m pytest -q --basetemp=<scratchpad>` → `1049 passed`, çıkış 0 (`slow` dahil); proje toplam kapsamı %97. `python manage.py makemigrations --check --dry-run` → "No changes detected", çıkış 0. `--basetemp`'in nedeni: yereldeki `%TEMP%\pytest-of-Mehmet Emin` klasörüne erişim engelli (`WinError 5`); testlerin kendisiyle ilgisi yok (STATUS "Kum havuzu").
+- **G01'in altı TC'si (küçük karar 14):** `python -m pytest tests/test_prod_settings.py -k "tc01 or tc02 or tc03 or tc235 or tc236" -v` → `19 passed` (TC-236 her zorunlu değişken için ayrı parametre). TC-224 aşağıdaki kapsam ölçümü. Altısı test-plan'da "Geçti (faz 6)".
+- **Kapsam hedefleri (test-plan §4), aynı koşudan; her biri `coverage report --include=… --fail-under=…` çıkış 0:**
+
+| Bileşen | Ölçüt | Hedef | Ölçülen |
+|---|---|---|---|
+| `*/domain.py` (TC-224, NFR-13) | Dal | ≥ %90 | %100 (383 satır, 110 dal, eksik 0) |
+| `billing/services.py`, `circulation/services.py` | Dal | ≥ %85 | %99 (411 satır, 74 dal; 4 satır, 2 kısmi dal eksik) |
+| `accounts/permissions.py`, `accounts/middleware.py` | Dal | %100 | %100 (46 satır, 10 dal) |
+| `operations/*` | Dal | ≥ %80 | %99 (831 satır, 138 dal; 8 satır, 3 kısmi dal eksik) |
+| `pdf/sheets.py` | Satır | ≥ %80 | %100 (111 satır) |
+
+#### 12.3.2 Kabul ölçütleri (SRS §6)
+
+"Otomatik kanıt" sütunundaki bütün TC'ler test-plan'da "Geçti" ve 12.3.1'deki tam koşuda geçiyor; "FR'ye bağlı n TC daha", Gereksinim sütununda FR'yi anıp AC'yi anmayan otomatik TC'lerin sayısıdır. Elle sonuçlar §12.1.1'de; kapsam dışı TC'ler [ADR-0067](../decisions/0067-phase6-trial-project-single-windows-machine.md)'de.
+
+| AC | FR | Otomatik kanıt | Elle kanıt | Sonuç | Not |
+|---|---|---|---|---|---|
+| AC-01 | FR-01 | TC-44, TC-47; FR'ye bağlı 10 TC daha | — | Geçti | — |
+| AC-02 | FR-02 | TC-115, TC-126, TC-286; 4 TC daha | — | Geçti | — |
+| AC-03 | FR-03 | TC-57, TC-177, TC-254, TC-255, TC-371; 7 TC daha | TC-319 Geçti (kılavuzda geçmiş tarihli rıza notu) | Geçti | — |
+| AC-04 | FR-04 | TC-39, TC-62, TC-66; 14 TC daha | — | Geçti | — |
+| AC-05 | FR-05 | TC-64; 11 TC daha | — | Geçti | — |
+| AC-06 | FR-06 | TC-71 (30 etiketli PDF, barkodlar çözücüyle okunuyor); 7 TC daha | TC-228 Kapsam dışı | Geçti (kısmi, ADR-0067) | Basılı etiketin gerçek okuyucuyla okunması denenmedi: etiket kağıdı ve okuyucu yok |
+| AC-07 | FR-07 | TC-105; 8 TC daha | TC-231 akışında son tarih 16.11.2026 (2026-11-02 + 14 gün) | Geçti | — |
+| AC-08 | FR-08 | TC-116…TC-119, TC-126, TC-127, TC-284; 7 TC daha | — | Geçti | — |
+| AC-09 | FR-09 | TC-111, TC-135; 4 TC daha | TC-231 akışında iade, üç tarayıcıda | Geçti | — |
+| AC-10 | FR-10 | TC-121, TC-123, TC-141, TC-142; 9 TC daha | TC-231 akışında uzatma (30.11.2026) | Geçti | — |
+| AC-11 | FR-11 | TC-128 (`autofocus`, form sırası, 303 akışı), TC-281; 5 TC daha | TC-227 Kapsam dışı; TC-319 Geçti ("üyeye adını sorun") | Geçti (kısmi, ADR-0067) | "Fare yok, okuyucuyla" kısmı gerçek okuyucu olmadan denenmedi; ikinci senaryo (nüsha barkodu uyarısı) otomatik |
+| AC-12 | FR-12 | TC-110, TC-112, TC-134, TC-136, TC-276, TC-283, TC-369, TC-370; 11 TC daha | TC-319 Geçti ("geçmiş kapalı tarihleri silmeyin") | Geçti | B11 (HT-02) kapandı: kapalı son tarih de düşülür (ADR-0069) |
+| AC-13 | FR-13 | TC-80; 11 TC daha | TC-231 akışında ödeme alma (1,00 TL) | Geçti | — |
+| AC-14 | FR-14 | TC-86, TC-87; 3 TC daha | — | Geçti | — |
+| AC-15 | FR-15 | TC-150; 6 TC daha | — | Geçti | — |
+| AC-16 | FR-16 | TC-153, TC-155, TC-272, TC-273, TC-292; 18 TC daha | — | Geçti | — |
+| AC-17 | FR-17 | TC-76, TC-98; 4 TC daha | — | Geçti | — |
+| AC-18 | FR-18 | TC-174, TC-175, TC-182 (bellek e-posta backend'i); 10 TC daha | TC-232 Kapsam dışı | Geçti | Üç senaryo da otomatik kanıtlı. Kurum SMTP'siyle gelen kutusuna teslim (TC-232) FR-18'in teslim edilebilirlik kısmı, AC senaryolarında yok |
+| AC-19 | FR-19 | TC-183; 3 TC daha | — | Geçti | — |
+| AC-20 | FR-20 | TC-171; 3 TC daha | TC-225 8. adımda `/gecikenler/` 200 (10 kayıt) | Geçti | — |
+| AC-21 | FR-21 | TC-28; 5 TC daha | — | Geçti | — |
+| AC-22 | FR-22 | TC-21; 6 TC daha (TC-01 dahil, Geçti (faz 6)) | — | Geçti | — |
+| AC-23 | FR-23 | TC-131; 4 TC daha | — | Geçti | — |
+| AC-24 | FR-24 | TC-23, TC-106; 3 TC daha | — | Geçti | — |
+| AC-25 | FR-25 | TC-201…TC-203, TC-305; 15 TC daha | — | Geçti | 2. senaryonun metni ADR-0018'e uyduruldu (spec incelemesi): borç hareketlerinde yalnız ödünç bağı kalkar |
+| AC-26 | FR-26 | TC-91; 11 TC daha | — | Geçti | — |
+| AC-27 | FR-27 | TC-06, TC-07, TC-09; 7 TC daha | — | Geçti | — |
+| AC-28 | FR-28 | TC-191, TC-320, TC-366; 18 TC daha | TC-225 Geçti: sayılar `200 592 500` aynen geldi, 6,1 s | Geçti | Silinen veritabanı belgedeki adımlarla geri yüklendi |
+| AC-29 | FR-29 | TC-217, TC-342, TC-352; 20 TC daha | TC-234 Geçti (25 üyelik örneklem) | Geçti | Rastgele ad birleşimi iki satırda tanınmış kişilerin adını üretti; telefon ve e-posta sentetik, kullanıcı kararıyla ölçüt karşılandı (§12.1.1) |
+| AC-30 | FR-37 | TC-25 (8 günde uyarı), TC-193 (doğru parolayla boş ortama geri yükleme, sayılar aynı), TC-194 (yanlış parola reddedilir, veritabanı değişmez); 19 TC daha (şifreli biçim TC-192 dahil) | TC-226 Kapsam dışı | Geçti (kısmi, ADR-0067) | Dosyanın ikinci bilgisayara USB ile taşınıp orada geri yüklenmesi denenmedi: ikinci bilgisayar ve USB disk yok |
+| AC-31 | FR-38 | TC-74 (3 kartlı PDF, barkod çözücüyle okunuyor, ad yok); 5 TC daha | TC-228 Kapsam dışı | Geçti (kısmi, ADR-0067) | Basılı kartın gerçek okuyucuyla okunması denenmedi |
+| AC-32 | FR-39 | TC-159, TC-161; 2 TC daha | — | Geçti | — |
+| AC-33 | FR-40 | TC-259, TC-260, TC-285 | — | Geçti | — |
+| AC-34 | FR-41 | TC-248, TC-249; 2 TC daha | — | Geçti | — |
+| AC-35 | FR-42 | TC-242, TC-243; 2 TC daha | — | Geçti | — |
+
+**Özet:** 35 AC'nin 31'i Geçti, 4'ü Geçti (kısmi, ADR-0067): AC-06, AC-11, AC-30, AC-31. Kaldı yok. Kısmi kalan kısımların hepsi bu makinede bulunmayan donanıma bağlı (okuyucu, etiket kağıdı, ikinci bilgisayar).
+
+#### 12.3.3 İşlevsel olmayan gereksinimler (SRS §5)
+
+| NFR | Hedef | Ölçülen / kanıt | Sonuç |
+|---|---|---|---|
+| NFR-01 | p95 < 500 ms, tasarım ölçeğinde, 5 eşzamanlı personel | TC-223: p95 kitap arama 150,2 ms, ödünç 128,7, iade 137,1, uzatma 112,5, üye arama 146,2; 9 582 istek, hata 0 (`--workers 5 --duration 120`; TLS hariç, ADR-0031). Betik mantığı TC-221, TC-222, TC-318, TC-353…TC-356 | Geçti |
+| NFR-02 | 20 000 nüsha, 5 000 üye, 100 000 ödünç ile NFR-01 | TC-223 yük veritabanı: 20 000 nüsha, 5 000 üye, 100 000 ödünç (3 000 açık, 97 000 kapalı); S1–S3 `EXPLAIN` indeks kullanıyor. Profil sayıları TC-220, TC-317, TC-346 | Geçti |
+| NFR-03 | RPO ≤ 24 saat | Günlük 02:00 yedek tetikleyicisi TC-208, yazma sırasında tutarlı yedek TC-190, kaçırılan yedeğin telafisi TC-336; birkaç günlük gerçek çalışma (TC-233) Kapsam dışı | Geçti (kısmi, ADR-0067) |
+| NFR-04 | RTO ≤ 1 saat, test ortamında denenmiş | TC-225: 6,1 s; TC-320, TC-366 | Geçti |
+| NFR-05 | Kaçırılan günlük görevler sonraki çalışmada, tekrar gönderimsiz | TC-178, TC-179, TC-209…TC-213, TC-310…TC-314, TC-335…TC-339, TC-361, TC-362, TC-364 (ADR-0053); servisin bir gece kapalı kaldığı gerçek çalışma (TC-233) Kapsam dışı | Geçti (kısmi, ADR-0067) |
+| NFR-06 | Tuzlu, yavaş tek yönlü özet; düz parola yok | TC-03 Geçti (faz 6): parola `argon2$argon2id$` önekiyle saklanıyor. Test-plan'ın bu NFR'ye bağladığı HTTPS kanıtları: Caddyfile `tls internal` TC-363, sertifika zinciri TC-230 Geçti (kısmi: bu makine) | Geçti |
+| NFR-07 | Her yönetici uç noktasına görevliyle 403, otomatik | TC-11, TC-31…TC-33, TC-368 | Geçti |
+| NFR-08 | Yalnız FR-01 alanları; LAN dışından erişim yok | Veri minimizasyonu TC-52, TC-206, TC-330, TC-331, TC-342, TC-359…TC-364. TC-229 Geçti (kısmi): yalnız `127.0.0.2:80/443`, `127.0.0.1:8000`, `127.0.0.1:2019` dinleniyor (B8); LAN dışından gerçek deneme yapılmadı | Geçti (kısmi, ADR-0067) |
+| NFR-09 | Yalnız Türkçe; güncel Chrome, Edge, Firefox; ≥ 1366 px | TC-231 Geçti (rc.2): Chrome 156, Edge 156, Firefox 159, 1366 × 768, taşma yok; TC-235 Geçti (faz 6); hata sayfaları TC-367, TC-368 (B10) | Geçti |
+| NFR-10 | "istanbul", "İSTANBUL", "İstanbul" aynı sonuç | TC-34, TC-36, TC-47, TC-67 | Geçti |
+| NFR-11 | Fare olmadan en fazla 3 etkileşim | TC-128 (odak ve form akışı); gerçek okuyucuyla deneme (TC-227) Kapsam dışı | Geçti (kısmi, ADR-0067) |
+| NFR-12 | Kuruş hassasiyeti, kayan nokta hatası yok | TC-14…TC-17, TC-102, TC-238…TC-240 | Geçti |
+| NFR-13 | İş kuralı modüllerinde dal kapsamı ≥ %90 | TC-224 Geçti (faz 6): `*/domain.py` %100 (12.3.1) | Geçti |
+
+**Özet:** 13 NFR'nin 9'u Geçti, 4'ü Geçti (kısmi, ADR-0067): NFR-03, NFR-05, NFR-08, NFR-11. Kaldı yok.
+
+**Test-plan §7 faz 6 çıkışı:** Must FR'lerin TC'leri geçiyor; her AC'nin kanıtı var; §4 kapsam hedefleri tutuyor; elle TC'ler yapıldı ya da ADR-0067 ile kapsam dışı; §8 hata tablosunda açık hata yok (HT-01 ve HT-02 kapandı). `spec-reviewer` 2026-11-02'de çalıştı: bulgu yok, dört soru (§12.2).

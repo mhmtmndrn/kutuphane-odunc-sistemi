@@ -117,7 +117,7 @@ Oklar "kullanır" anlamına gelir; döngü yoktur. `billing.LedgerEntry → circ
 |---|---|---|---|
 | `due_date` | O(k), en kötü O(366) | O(1) | k = aday tarihten sonraki ardışık kapalı gün sayısı. Kapalı tarihler küme olarak verildiği için her kontrol O(1). Ayarlar en az bir haftalık açık günü zorunlu kılar (FR-24), bu yüzden tipik olarak k ≤ 7 + (ardışık tek tarihli kapalı gün sayısı). Her durumda en fazla 366 gün ileri bakılır; açık gün yoksa `NoOpenDayError` ([ADR-0028](decisions/0028-open-weekday-rule-shift-bound.md)). |
 | `fine` | O(1) | O(1) | |
-| `late_days` | O(c) | O(1) | c = kapalı tarih sayısı (yılda onlarca); aralıktaki tek tek kapalı tarihler sayılıp takvim günü farkından düşülür ([ADR-0040](decisions/0040-late-days-skip-closed-dates.md)) |
+| `late_days` | O(c) | O(1) | c = kapalı tarih sayısı (yılda onlarca); son tarih dahil aralıktaki tek tek kapalı tarihler sayılıp takvim günü farkından düşülür ([ADR-0040](decisions/0040-late-days-skip-closed-dates.md), [ADR-0069](decisions/0069-closed-due-date-not-a-late-day.md)) |
 | `checkout_blockers` | O(1) | O(1) | Sayımlar ve bakiye girdi olarak gelir |
 | `allocate_fifo` | O(k) | O(k) | k = açık kalem sayısı; girdi zaten sıralı gelir (S4) |
 | `parse_isbn` | O(1) | O(1) | En fazla 13 hane |
@@ -306,12 +306,13 @@ flowchart TB
 - **Servisler:** Windows'ta WinSW, Linux'ta systemd ile iki servis tanımlanır; ikisi de çökünce yeniden başlar ([ADR-0010](decisions/0010-windows-service-winsw.md)). Uygulama servisi tek süreçtir. Zamanlayıcı yalnız bu serviste `LIBRARY_SCHEDULER_ENABLED=1` ile açılır.
 - **Kurulum adımları** (faz 5'te kurulum belgesine dönüşür):
   1. Python 3.11 ve sanal ortam kurulur; bağımlılıklar sabit sürümlerle yüklenir.
-  2. `migrate` ve `collectstatic` çalıştırılır.
-  3. İlk yönetici hesabı oluşturulur.
-  4. Caddy kurulur, kök sertifikası personel bilgisayarlarına yüklenir.
-  5. Servisler kaydedilir.
-  6. Yedek diski ve dışa aktarma klasörü bağlanır.
-  7. Sistem saati NTP ile eşitlenir.
+  2. Ortam değişkenleri ortam dosyasına yazılır (Windows'ta WinSW XML'leri, Linux'ta `library.env`).
+  3. `migrate` ve `collectstatic` çalıştırılır.
+  4. İlk yönetici hesabı oluşturulur.
+  5. Caddy kurulur, kök sertifikası personel bilgisayarlarına yüklenir.
+  6. Servisler kaydedilir.
+  7. Yedek diski ve dışa aktarma klasörü bağlanır.
+  8. Sistem saati NTP ile eşitlenir.
 - **Statik dosyalar:** `collectstatic` dosyaları `LIBRARY_STATIC_ROOT` klasörüne yazar, Caddy `/static/` yolunu `file_server` ile sunar ([ADR-0029](decisions/0029-static-files-caddy.md)).
 - **Gizli değerler:** Bölüm 6.4'teki gibi verilir. Caddy'nin CA özel anahtarı ve dışa aktarma parola dosyası yalnız servis hesabının okuyabileceği izinlerle tutulur.
 - **Ortamlar:** Geliştirme ortamında `runserver`, konsol e-posta backend'i ve admin paneli açık; zamanlayıcı kapalı. Test ortamında bellek e-posta backend'i, geçici SQLite ve sabitlenmiş "bugün" kullanılır. Üretim ortamı yukarıdaki gibidir.

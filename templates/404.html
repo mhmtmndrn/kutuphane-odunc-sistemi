@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Sayfa bulunamadı · Kütüphane{% endblock %}
+
+{% block content %}
+  <h1>Sayfa bulunamadı</h1>
+  <p>Aradığınız sayfa ya da kayıt bulunamadı. Adresi kontrol edin.</p>
+  <p><a href="{% url 'administration:home' %}">Ana sayfa</a></p>
+{% endblock %}

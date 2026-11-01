@@ -76,11 +76,7 @@ Uygulama bütün yapılandırmayı ortam değişkenlerinden okur (architecture �
 
 `LIBRARY_HOST` ve `LIBRARY_BIND` yalnız Caddy servisinde, diğerleri uygulama servisinde kullanılır; `LIBRARY_STATIC_ROOT` ikisinde de aynı olmalıdır. `LIBRARY_HOST`, `LIBRARY_BIND` ve `LIBRARY_ALLOWED_HOSTS` aynı IP adresidir.
 
-`LIBRARY_SECRET_KEY` için bir kez şu komutun çıktısını kullanın ve kimseyle paylaşmayın:
-
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(50))"
-```
+`LIBRARY_SECRET_KEY` için bir kez sanal ortamın Python'uyla üretilen rastgele bir anahtar kullanın (komut platform bölümünde, "Ortam dosyası") ve kimseyle paylaşmayın.
 
 Dışa aktarma parolası, parola dosyasının ilk satırıdır. Uzun ve tahmin edilemez bir parola seçin; aynı parolayı ayrıca kâğıda yazıp sunucudan ve USB belleklerden ayrı bir yerde, kapalı zarfta saklayın. Parola kaybolursa şifreli dışa aktarmalar açılamaz.
 
@@ -101,14 +97,14 @@ Aşağıdaki sıra iki platformda aynıdır. Her adımın komutları platform b�
 **Hazırlık:**
 
 - **Sabit IP:** Yönlendiricinin yönetim sayfasında sunucunun ağ kartı için bir DHCP rezervasyonu açın (ör. `192.168.1.10`). Bu adres `LIBRARY_HOST`, `LIBRARY_BIND` ve `LIBRARY_ALLOWED_HOSTS` değeridir ([ADR-0061](decisions/0061-access-by-static-ip.md)).
-- **Servis hesabı ve klasörler:** Platform bölümündeki "Hesap" ve "Klasörler ve izinler" adımları.
+- **Servis hesabı ve klasörler:** Platform bölümündeki "Hesap" ve "Klasörler ve izinler" adımları; dışa aktarma parola dosyası da burada oluşturulur.
 - **Kod:** Sürüm arşivini uygulama klasörüne açın (platform bölümünde "Sürüm arşivinin açılması").
-- **Ortam değişkenleri:** WinSW XML'lerini ya da `library.env`'i doldurun; dışa aktarma parola dosyasını oluşturun.
 
 **Kurulum adımları** (architecture §8):
 
 1. **Python 3.11 ve sanal ortam:** Python 3.11'i kurun, sanal ortamı oluşturun ve bağımlılıkları sabit sürümleriyle yükleyin: `python -m pip install -r requirements.txt`.
-2. **`migrate` ve `collectstatic`:** Platform bölümündeki "Komutların elle çalıştırılması" ile bir komut oturumu açın ve şunları çalıştırın:
+2. **Ortam değişkenleri:** Platform bölümündeki "Ortam dosyası" ile ortam dosyasını (Windows'ta iki WinSW XML'i, Linux'ta `library.env`) yerine koyun ve doldurun ([Ortam değişkenleri](#ortam-değişkenleri)). Sonraki adımların komut oturumu değerleri bu dosyadan okur.
+3. **`migrate` ve `collectstatic`:** Platform bölümündeki "Komutların elle çalıştırılması" ile bir komut oturumu açın ve şunları çalıştırın:
 
    ```bash
    python manage.py migrate
@@ -118,24 +114,23 @@ Aşağıdaki sıra iki platformda aynıdır. Her adımın komutları platform b�
    python manage.py collectstatic --noinput
    ```
 
-3. **İlk yönetici hesabı:** Aynı oturumda ilk yöneticiyi oluşturun. Diğer personel hesaplarını bu hesapla uygulamadaki "Personel" ekranından açın.
+4. **İlk yönetici hesabı:** Aynı oturumda ilk yöneticiyi oluşturun. Diğer personel hesaplarını bu hesapla uygulamadaki "Personel" ekranından açın.
 
    ```bash
    python manage.py createsuperuser
    ```
 
    `load_seed_data` (demo verisi) yalnız demo ve test ortamları içindir; gerçek veritabanında çalıştırmayın.
-4. **Caddy ve kök sertifika:** Caddy 2.11.7'yi indirip özetini doğrulayın ve yerine koyun. Caddy ilk kez başladığında yerel CA'yı ve kök sertifikayı (`root.crt`) üretir; kök sertifika 5. adımdan sonra [personel bilgisayarlarına](#personel-bilgisayarları) yüklenir.
-5. **Servisler:** `library-app` ve `library-caddy` servislerini kaydedin. Servisleri başlatmadan önce 6. adımı tamamlayın; zamanlayıcı ilk gece yedek klasörünü bulamazsa yedek başarısız olur.
-6. **Yedek diski ve dışa aktarma klasörü:** Harici diski bağlayın, `LIBRARY_BACKUP_DIR` ve `LIBRARY_EXPORT_DIR` klasörlerini elle açın ve servis hesabına yazma izni verin. Ardından servisleri başlatın.
-7. **NTP:** Sistem saatinin NTP ile eşitlendiğini doğrulayın. Son tarih, ceza, hatırlatma ve yedek zamanları sunucu saatine dayanır.
+5. **Caddy ve kök sertifika:** Caddy 2.11.7'yi indirip özetini doğrulayın ve yerine koyun. Caddy ilk kez başladığında yerel CA'yı ve kök sertifikayı (`root.crt`) üretir; kök sertifika 6. adımdan sonra [personel bilgisayarlarına](#personel-bilgisayarları) yüklenir.
+6. **Servisler:** `library-app` ve `library-caddy` servislerini kaydedin. Servisleri başlatmadan önce 7. adımı tamamlayın; zamanlayıcı ilk gece yedek klasörünü bulamazsa yedek başarısız olur.
+7. **Yedek diski ve dışa aktarma klasörü:** Harici diski bağlayın, `LIBRARY_BACKUP_DIR` ve `LIBRARY_EXPORT_DIR` klasörlerini elle açın ve servis hesabına yazma izni verin. Ardından servisleri başlatın.
+8. **NTP:** Sistem saatinin NTP ile eşitlendiğini doğrulayın. Son tarih, ceza, hatırlatma ve yedek zamanları sunucu saatine dayanır.
 
 **Kontrol:** Kurulumdan sonra şunları deneyin:
 
 - Bir personel bilgisayarında `https://<IP>/` giriş ekranını sertifika uyarısı olmadan açar; `http://<IP>/` HTTPS'e yönlendirilir.
-- `curl -k https://<IP>/static/css/app.css` → 200.
-- `https://<IP>/admin/` → 404 (yönetim paneli üretimde yoktur).
-- Sunucuda waitress yalnız `127.0.0.1:8000`'i, Caddy yalnız `<IP>:80` ve `<IP>:443`'ü dinler (platform bölümünde "Kontrol").
+- Sunucuda `https://<IP>/static/css/app.css` → 200, `https://<IP>/admin/` → 404 (yönetim paneli üretimde yoktur), `http://<IP>/` → 308 ile `https://<IP>/` (komutlar platform bölümünde, "Kontrol").
+- Ağa açık dinleme yalnız Caddy'nin `<IP>:80` ve `<IP>:443`'üdür. Waitress `127.0.0.1:8000`'i, Caddy'nin yönetim ucu `127.0.0.1:2019`'u dinler; ikisine yalnız sunucunun kendisinden erişilir (platform bölümünde "Kontrol").
 - LAN dışından (ör. cep telefonunun mobil verisiyle) sunucuya ulaşılamaz.
 - Ertesi sabah yöneticinin ana sayfasında yedek uyarısı yoktur ve yedek klasöründe `library-YYYYMMDD.sqlite3` dosyası vardır.
 
@@ -274,24 +269,61 @@ notepad C:\Kutuphane\secrets\export-passphrase.txt
 
 ### Sürüm arşivinin açılması
 
-İlk kurulumda `C:\Kutuphane\app` boştur; klasörü silip arşivi açın. Güncellemede önce eski klasörün adını değiştirin. Arşivdeki `library` klasörü `app` olur:
+Arşivdeki `library` klasörü `app` olur. İlk kurulumda `C:\Kutuphane\app` boştur; önce klasörü silin:
+
+```powershell
+Remove-Item C:\Kutuphane\app
+```
+
+Güncellemede bunun yerine eski klasörün adını değiştirin:
 
 ```powershell
 Rename-Item C:\Kutuphane\app app-old
+```
+
+Ardından arşivi açın (iki durumda da):
+
+```powershell
 Expand-Archive -Path .\library-v1.0.0.zip -DestinationPath C:\Kutuphane
 Rename-Item C:\Kutuphane\library app
 ```
 
 ### Python ve sanal ortam
 
-[python.org](https://www.python.org/downloads/windows/)'dan Python 3.11'in 64 bit Windows yükleyicisini indirin. Kurulumda "Install for all users" seçin (varsayılan yol `C:\Program Files\Python311`). Ardından:
+[python.org](https://www.python.org/downloads/windows/)'dan Python 3.11'in 64 bit Windows yükleyicisini indirin. Yükleyicinin ilk ekranında "Customize installation" → "Next" ile "Advanced Options" ekranına geçin ve "Install for all users" kutucuğunu işaretleyin; hedef yol `C:\Program Files\Python311` olur. Servis hesabı kullanıcı profilindeki bir Python'u okuyamaz.
+
+Python 3.11 bu bilgisayarda yalnız bir kullanıcı için kuruluysa (`C:\Users\<ad>\AppData\Local\Programs\Python\Python311`), önce onu "Ayarlar → Uygulamalar"dan kaldırın: yükleyici kurulu 3.11'i görünce kurulum yerine değiştirme ekranını açar ve "Install for all users" kutucuğu pasif kalır.
+
+Sanal ortamı tam yolla oluşturun; `py -3.11` kullanıcı başına bir kurulumu tercih edebilir. Python'u başka bir klasöre kurduysanız yolu ona göre değiştirin:
 
 ```powershell
-py -3.11 -m venv C:\Kutuphane\venv
+& "C:\Program Files\Python311\python.exe" -m venv C:\Kutuphane\venv
 C:\Kutuphane\venv\Scripts\python.exe -m pip install -r C:\Kutuphane\app\requirements.txt
 ```
 
 `requirements.txt` Windows'ta saat dilimi verisi için gereken `tzdata`'yı da içerir.
+
+### Ortam dosyası
+
+Ortam değişkenleri iki WinSW XML'indedir. Örnekleri uygulama klasöründen WinSW klasörüne kopyalayın:
+
+```powershell
+Copy-Item C:\Kutuphane\app\deploy\winsw\library-app.xml, C:\Kutuphane\app\deploy\winsw\library-caddy.xml C:\Kutuphane\winsw\
+```
+
+`LIBRARY_SECRET_KEY`'i sanal ortamın Python'uyla üretin; çıplak `python` komutu, Python'u `PATH`'e eklemeyen bir kurulumda Microsoft Store kısayoluna düşer:
+
+```powershell
+C:\Kutuphane\venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(50))"
+```
+
+İki XML'i Not Defteri ile açın ve bütün `__DOLDUR__` değerlerini doldurun: `library-svc` parolası (`<password>`), `LIBRARY_SECRET_KEY`, IP adresi (`LIBRARY_ALLOWED_HOSTS`, `LIBRARY_HOST`, `LIBRARY_BIND`), yedek ve dışa aktarma klasörleri ve SMTP değerleri. XML'de `&`, `<` ve `"` karakterleri `&amp;`, `&lt;` ve `&quot;` olarak yazılır. Dosyaları UTF-8 olarak kaydedin.
+
+Doldurulmamış değer kalmadığını kontrol edin; çıktı boş olmalıdır. Desen yalnız değerleri arar, XML'lerin baştaki açıklamasındaki `__DOLDUR__` sözcüğünü değil:
+
+```powershell
+Select-String 'value="__DOLDUR__"|>__DOLDUR__<' C:\Kutuphane\winsw\*.xml
+```
 
 ### Caddy
 
@@ -312,17 +344,14 @@ Expand-Archive -Path .\caddy_2.11.7_windows_amd64.zip -DestinationPath C:\Kutuph
 
 ### Servisler
 
-WinSW 2.12.0'ı indirin: <https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW-x64.exe>. WinSW'de exe ile XML aynı adı taşır; exe'yi iki kez kopyalayın ve XML örneklerini yanlarına koyun:
+WinSW 2.12.0'ı indirin: <https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW-x64.exe>. WinSW'de exe ile XML aynı adı taşır; exe'yi iki kez, "Ortam dosyası"nda kopyalanan XML'lerin yanına kopyalayın:
 
 ```powershell
 Copy-Item .\WinSW-x64.exe C:\Kutuphane\winsw\library-app.exe
 Copy-Item .\WinSW-x64.exe C:\Kutuphane\winsw\library-caddy.exe
-Copy-Item C:\Kutuphane\app\deploy\winsw\library-app.xml, C:\Kutuphane\app\deploy\winsw\library-caddy.xml C:\Kutuphane\winsw\
 ```
 
-İki XML'i Not Defteri ile açın ve bütün `__DOLDUR__` değerlerini doldurun: `library-svc` parolası (`<password>`), `LIBRARY_SECRET_KEY`, IP adresi (`LIBRARY_ALLOWED_HOSTS`, `LIBRARY_HOST`, `LIBRARY_BIND`), yedek ve dışa aktarma klasörleri ve SMTP değerleri. XML'de `&`, `<` ve `"` karakterleri `&amp;`, `&lt;` ve `&quot;` olarak yazılır. Dosyaları UTF-8 olarak kaydedin.
-
-[İlk kurulum](#ilk-kurulum) 6. adımı (yedek klasörleri) tamamsa servisleri kaydedip başlatın. Caddy servisi uygulama servisine bağlı olduğu için onu başlatmak önce uygulamayı başlatır:
+[İlk kurulum](#ilk-kurulum) 7. adımı (yedek klasörleri) tamamsa servisleri kaydedip başlatın. Caddy servisi uygulama servisine bağlı olduğu için onu başlatmak önce uygulamayı başlatır:
 
 ```powershell
 C:\Kutuphane\winsw\library-app.exe install
@@ -348,12 +377,17 @@ Profil "Ortak" (Public) görünüyorsa `Set-NetConnectionProfile -InterfaceAlias
 
 ### NTP
 
+Windows Saati servisi (`w32time`) etki alanına bağlı olmayan bilgisayarlarda çoğu zaman "El ile" başlar ve durur; durmuşken `w32tm` komutları "Hizmet başlatılmadı. (0x80070426)" hatası verir. Servisi otomatik başlatmaya alıp başlatın, sonra eşitleyin:
+
 ```powershell
-w32tm /query /status
+Set-Service w32time -StartupType Automatic
+Start-Service w32time
 w32tm /resync
+w32tm /query /status
+Get-TimeZone
 ```
 
-"Kaynak" (Source) satırı bir zaman sunucusu göstermelidir (ör. `time.windows.com`). "Local CMOS Clock" görünüyorsa Ayarlar → Saat ve dil → Tarih ve saat'te "Saati otomatik olarak ayarla"yı açın ve `w32tm /resync` çalıştırın. Saat dilimi (UTC+03:00) İstanbul olmalıdır.
+"Kaynak" (Source) satırı bir zaman sunucusu göstermelidir (ör. `time.windows.com`). "Local CMOS Clock" görünüyorsa Ayarlar → Saat ve dil → Tarih ve saat'te "Saati otomatik olarak ayarla"yı açın ve `w32tm /resync` çalıştırın. `Get-TimeZone` çıktısında `Id` `Turkey Standard Time`, `BaseUtcOffset` `03:00:00` olmalıdır.
 
 ### Komutların elle çalıştırılması
 
@@ -373,11 +407,23 @@ Ardından ör. `python manage.py backup_db`. Uygulama servisi açıkken geri yü
 
 ### Kontrol
 
+Dinlenen adresler (Caddy'nin bütün dinlemeleri ve 80, 443, 8000, 2019 portları):
+
 ```powershell
-netstat -ano | findstr ":8000 :443 :80"
+Get-NetTCPConnection -State Listen | Where-Object { $_.LocalPort -in 80, 443, 8000, 2019 -or $_.OwningProcess -eq (Get-Process caddy).Id } | Sort-Object LocalPort | Select-Object LocalAddress, LocalPort, OwningProcess
 ```
 
-`127.0.0.1:8000` ve `<IP>:443`, `<IP>:80` dışında bir dinleme adresi olmamalıdır.
+Tam olarak dört satır çıkmalıdır: `<IP>:80`, `<IP>:443`, `127.0.0.1:2019` (Caddy) ve `127.0.0.1:8000` (waitress). `0.0.0.0` ya da başka bir adres görünürse `LIBRARY_BIND` değerini kontrol edin.
+
+İstekler (Windows PowerShell'de `curl`, `Invoke-WebRequest`'in takma adıdır; `curl.exe` yazın):
+
+```powershell
+curl.exe -k -s -o NUL -w "%{http_code}\n" https://<IP>/static/css/app.css
+curl.exe -k -s -o NUL -w "%{http_code}\n" https://<IP>/admin/
+curl.exe -s -o NUL -w "%{http_code} %{redirect_url}\n" http://<IP>/
+```
+
+Beklenen: `200`, `404`, `308 https://<IP>/`.
 
 ## Linux
 
@@ -410,24 +456,25 @@ sudo mount /mnt/library-backup
 sudo install -d -o library -g library -m 0750 /mnt/library-backup/backups /mnt/library-backup/exports
 ```
 
-Ortam dosyasını ve dışa aktarma parola dosyasını oluşturup `sudoedit` ile doldurun:
+Dışa aktarma parola dosyasını oluşturup `sudoedit` ile doldurun (ilk satır parola):
 
 ```bash
-sudo install -o root -g library -m 0640 /opt/library/app/deploy/library.env.example /etc/library/library.env
 sudo install -o root -g library -m 0640 /dev/null /etc/library/export-passphrase.txt
-sudoedit /etc/library/library.env
 sudoedit /etc/library/export-passphrase.txt
 ```
 
-`library.env`'de satırlar `AD=değer` biçimindedir; değerde boşluk kullanmayın.
-
 ### Sürüm arşivinin açılması
 
-İlk kurulumda `/opt/library/app` yoktur. Güncellemede önce eski klasörün adını değiştirin. Arşivdeki `library` klasörü `app` olur:
+Arşivdeki `library` klasörü `app` olur. İlk kurulumda `/opt/library/app` yoktur; bu adımı atlayın. Güncellemede önce eski klasörün adını değiştirin:
+
+```bash
+sudo mv /opt/library/app /opt/library/app-old
+```
+
+Ardından arşivi açın (iki durumda da):
 
 ```bash
 sudo apt install unzip
-sudo mv /opt/library/app /opt/library/app-old
 sudo unzip -q library-v1.0.0.zip -d /opt/library
 sudo mv /opt/library/library /opt/library/app
 ```
@@ -441,6 +488,18 @@ sudo apt install python3.11 python3.11-venv
 sudo python3.11 -m venv /opt/library/venv
 sudo /opt/library/venv/bin/python -m pip install -r /opt/library/app/requirements.txt
 ```
+
+### Ortam dosyası
+
+Ortam değişkenleri `/etc/library/library.env`'dedir. Örneği uygulama klasöründen kopyalayın, `LIBRARY_SECRET_KEY`'i sanal ortamın Python'uyla üretin (Debian'da çıplak `python` komutu yoktur) ve dosyayı `sudoedit` ile doldurun:
+
+```bash
+sudo install -o root -g library -m 0640 /opt/library/app/deploy/library.env.example /etc/library/library.env
+/opt/library/venv/bin/python -c "import secrets; print(secrets.token_urlsafe(50))"
+sudoedit /etc/library/library.env
+```
+
+`library.env`'de satırlar `AD=değer` biçimindedir; değerde boşluk kullanmayın.
 
 ### Caddy
 
@@ -512,11 +571,23 @@ Ardından ör. `python manage.py backup_db`. Bu oturumda `pip install` çalışm
 
 ### Kontrol
 
+Dinlenen adresler (Caddy'nin bütün dinlemeleri ve 80, 443, 8000, 2019 portları):
+
 ```bash
-sudo ss -ltnp | grep -E ':(80|443|8000)\b'
+sudo ss -ltnp | grep -E ':(80|443|8000|2019)\b|"caddy"'
 ```
 
-`127.0.0.1:8000` ve `<IP>:443`, `<IP>:80` dışında bir dinleme adresi olmamalıdır.
+Tam olarak dört satır çıkmalıdır: `<IP>:80`, `<IP>:443`, `127.0.0.1:2019` (Caddy) ve `127.0.0.1:8000` (waitress). `0.0.0.0` ya da başka bir adres görünürse `LIBRARY_BIND` değerini kontrol edin.
+
+İstekler:
+
+```bash
+curl -k -s -o /dev/null -w "%{http_code}\n" https://<IP>/static/css/app.css
+curl -k -s -o /dev/null -w "%{http_code}\n" https://<IP>/admin/
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://<IP>/
+```
+
+Beklenen: `200`, `404`, `308 https://<IP>/`.
 
 ## Sorun giderme
 

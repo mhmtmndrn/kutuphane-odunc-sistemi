@@ -1,6 +1,6 @@
 """Unit tests for the circulation domain (G10).
 
-TC-104…TC-123, TC-276, TC-277, TC-279, TC-280; plus the copy state machine
+TC-104…TC-123, TC-276, TC-277, TC-279, TC-280, TC-369; plus the copy state machine
 of architecture §5.1 (``COPY_TRANSITIONS``, ``check_transition``), which G12
 exercises through the services (TC-163…TC-167).
 """
@@ -149,7 +149,7 @@ def test_tc276_closed_date_inside_the_range_is_not_counted() -> None:
 @pytest.mark.parametrize(
     ("closed", "expected"),
     [
-        ({date(2026, 11, 16)}, 4),  # the due date itself is not subtracted
+        ({date(2026, 11, 16)}, 3),  # the due date itself is subtracted (ADR-0069)
         ({date(2026, 11, 20)}, 3),  # the return day is subtracted
         ({date(2026, 11, 15), date(2026, 11, 21)}, 4),  # outside the range
     ],
@@ -160,6 +160,13 @@ def test_tc277_closed_date_range_bounds(closed: set[date], expected: int) -> Non
 
 def test_tc277_late_days_never_negative() -> None:
     assert late_days(date(2026, 11, 16), date(2026, 11, 17), {date(2026, 11, 17)}) == 0
+
+
+def test_tc369_closed_due_date_returned_next_day_is_not_late() -> None:
+    """ADR-0069: a due date closed after check-out is not a late day."""
+    assert late_days(date(2026, 11, 16), date(2026, 11, 17), {date(2026, 11, 16)}) == 0
+    assert late_days(date(2026, 11, 16), date(2026, 11, 18), {date(2026, 11, 16)}) == 1
+    assert late_days(date(2026, 11, 16), date(2026, 11, 16), {date(2026, 11, 16)}) == 0
 
 
 # --- checkout_blockers (FR-02, FR-08, KL-6) ---------------------------------------

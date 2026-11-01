@@ -64,16 +64,18 @@ def renewed_due_date(current_due: date, period_days: int, is_closed: Callable[[d
     return due_date(current_due, period_days, is_closed)
 
 
-# --- Late days and fines (FR-12, ADR-0023, ADR-0040) -----------------------------
+# --- Late days and fines (FR-12, ADR-0023, ADR-0040, ADR-0069) --------------------
 
 
 def late_days(due_on: date, on: date, closed_dates: AbstractSet[date]) -> int:
     """Calendar days after ``due_on`` up to ``on``, minus the single closed
-    dates in ``(due_on, on]``; never negative. O(c), c = len(closed_dates)."""
+    dates in ``[due_on, on]``; never negative. A closed due date can only come
+    from a closure added after check-out (FR-07 shifts it at check-out), so it
+    is subtracted too (ADR-0069). O(c), c = len(closed_dates)."""
     calendar_days = (on - due_on).days
     if calendar_days <= 0:
         return 0
-    closed = sum(1 for day in closed_dates if due_on < day <= on)
+    closed = sum(1 for day in closed_dates if due_on <= day <= on)
     return max(0, calendar_days - closed)
 
 
