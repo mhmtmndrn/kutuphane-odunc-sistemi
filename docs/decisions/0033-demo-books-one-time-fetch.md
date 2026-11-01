@@ -1,6 +1,6 @@
 # ADR-0033: Demo kitapları bir kez çekilir, filtrelenir ve depoda JSON olarak tutulur (300 kayıt)
 
-- **Durum:** Kabul edildi (2026-10-31)
+- **Durum:** Kabul edildi (2026-10-31); kısmen değişti: [ADR-0059](0059-demo-books-turkish-edition.md) (2026-11-01; kayıt eserden değil eşleşen Türkçe baskıdan alınır, beş kural o baskıya uygulanır)
 - **Kaynak:** Faz 4, 3. tur. Kullanıcı soru penceresinden iki ayrı soruyla seçti. R-06'nın açık noktaları bu ADR'yle kapandı.
 
 ## Bağlam

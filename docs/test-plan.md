@@ -1,8 +1,8 @@
 # Test planı: Kütüphane ödünç sistemi
 
-- **Güncelleme:** 2026-11-01 (TC-340…TC-356: G17–G18 açılış kararları, ADR-0056…0058; G17 ve G18 TC'leri "Geçti")
+- **Güncelleme:** 2026-11-01 (TC-340…TC-356: G17–G18 açılış kararları, ADR-0056…0058; G17 ve G18 TC'leri "Geçti"; TC-357…TC-358: PR #6 yerel doğrulamasında ADR-0059)
 - **Test yaklaşımı:** TDD (faz 0 kararı, AGENTS.md). Her görevde §6'daki TC'lerin testi önce yazılır ve kırmızı görülür, sonra kod yazılır (plan §4.0).
-- **Kaynak:** Faz 4 test tasarımı taslağı (TC-01…TC-234) ADR-0036…0047 ve KL-1…46'ya göre revize edildi; TC-235…TC-319 eklendi. TC-320…TC-339, G14–G16 açılışında kullanıcının onayladığı kararların (ADR-0053…0055, plan §11) yeni davranışları için eklendi (2026-11-01); TC-340…TC-356, G17–G18 açılışında onaylanan kararların (ADR-0056…0058, plan §11) yeni davranışları için eklendi (2026-11-01). Taslak, içeriği buraya alındıktan sonra kullanıcı kararıyla silindi (2026-10-31); açık soruları plan §8.2'de.
+- **Kaynak:** Faz 4 test tasarımı taslağı (TC-01…TC-234) ADR-0036…0047 ve KL-1…46'ya göre revize edildi; TC-235…TC-319 eklendi. TC-320…TC-339, G14–G16 açılışında kullanıcının onayladığı kararların (ADR-0053…0055, plan §11) yeni davranışları için eklendi (2026-11-01); TC-340…TC-356, G17–G18 açılışında onaylanan kararların (ADR-0056…0058, plan §11) yeni davranışları için eklendi (2026-11-01); TC-357…TC-358, PR #6'nın yerel doğrulamasında onaylanan ADR-0059 için eklendi (2026-11-01). Taslak, içeriği buraya alındıktan sonra kullanıcı kararıyla silindi (2026-10-31); açık soruları plan §8.2'de.
 
 ## 1. Kapsam
 
@@ -54,7 +54,7 @@ Görev tablosundaki "Seviye" sütunu bu satırlardan birini gösterir.
 | Hatırlatma aday koşulu (S6) | Koşul başına elle MC/DC: her koşulun sonucu tek başına değiştirdiği bir case | TC-173…TC-176, TC-179 |
 | Telafi ve görev kaydı | Sınır değer (saat), durum geçişi (RUNNING → SUCCESS/FAILED; saatlik telafi) | TC-210…TC-213, TC-310…TC-312, TC-336 |
 | Yedek, dışa aktarma, geri yükleme | Hata tahmini (bozuk dosya, yanlış parola, kilit, yol, yarıda kalan yazım), sınır değer (saklama günleri), senaryo (koruma kopyası) | TC-186…TC-200, TC-299…TC-304, TC-320…TC-329 |
-| Tohum veri | Denklik sınıfı (profil sayıları), değişmez kontrolü (defter, nüsha durumu), metamorfik ilişki (aynı tohum ve gün; bir gün sonrası), hata tahmini (eksik dosya, yarıda kalan yazım) | TC-214…TC-220, TC-315…TC-317, TC-340…TC-352 |
+| Tohum veri | Denklik sınıfı (profil sayıları), değişmez kontrolü (defter, nüsha durumu), metamorfik ilişki (aynı tohum ve gün; bir gün sonrası), hata tahmini (eksik dosya, yarıda kalan yazım) | TC-214…TC-220, TC-315…TC-317, TC-340…TC-352, TC-357…TC-358 |
 | Yük betiği | Sınır değer (p95 499/500 ms), denklik sınıfı (karışım, yüzdelik), durum geçişi (iş parçacığının ödünç havuzu), karar tablosu (koruma) | TC-221…TC-222, TC-318, TC-353…TC-356 |
 | Eşzamanlılık | Hata tahmini: iki iş parçacığı aynı kaynağa | TC-103, TC-145…TC-148 |
 
@@ -445,6 +445,8 @@ Sütunlar: Görev, TC'nin yazıldığı görev (plan §4); Seviye, §2'deki sat�
 | TC-354 | NFR-01 (küçük karar 10) | G18 | birim | Durum geçişi | Sahte istemciyle iş parçacığı: açık ödünç yokken seçilen iade ve uzatma; ödünç sonrası uzatma ve iade | Ödünçsüz iade ve uzatma istek atmadan yeniden seçilir ve raporda sayılmaz; uzatılan ödünç bir daha uzatılmaz ama iade edilebilir; iade edilen nüsha raf havuzuna döner | Geçti |
 | TC-355 | NFR-01 (küçük karar 11) | G18 | birim | Denklik sınıfı | Yeni bir yorumlayıcıda `scripts.loadtest` import edilir; `pyproject.toml` okunur | `sys.modules`'ta `django` yok; `testpaths` `scripts`'i ve bütün app klasörlerini içerir | Geçti |
 | TC-356 | NFR-01 (KL-17) | G18 | birim | Senaryo | Yerel sahte HTTP sunucusu: GET `/giris/` `csrftoken` çerezi verir; POST `/giris/` 302 ile `Secure` işaretli `sessionid` ve yeni `csrftoken` verir | Giriş POST'unda `X-CSRFToken` çerezdeki jetona eşit; sonraki isteklerde `sessionid` düz HTTP'de de gönderilir ve POST'larda yeni jeton kullanılır; 303 yönlendirmesi izlenmez | Geçti |
+| TC-357 | FR-29 (ADR-0059) | G17 | birim | Denklik sınıfı | Özgün başlıklı eser ve eşleşen Türkçe baskısı; baskısız eser; `editions` alanı boş eser; önce Türkçe olmayan, sonra Türkçe baskılı eser; dili boş baskı; Türkçe harfi yalnız eser başlığında olan kayıt; istek alanları | Başlık, ISBN ve `ol_id` (`OL…M`) ilk Türkçe baskıdan, yazar ve yıl eserden gelir; Türkçe baskısı olmayan kayıt atılır; beş kural baskıya uygulanır; istek `editions.key`, `editions.title`, `editions.isbn`, `editions.language` alanlarını ister; `FILTER_VERSION` 2 | Geçti |
+| TC-358 | FR-29 (ADR-0059) | G17 | birim | Durum geçişi | Sahte açıcı: sayfa 1'de 500, zaman aşımı, zaman aşımlı `URLError`, sonra kayıt; sayfa 2'de 503, sonra kayıt; ayrı koşularda dört kez 500, bir kez 404 ve `main` ile dört kez 502 | Aynı sayfa yeniden istenir; bekleme 2, 4, 8 sn (sayfa başına sıfırlanır), sayfalar arası 1 sn; dört 500'den sonra hata yükselir; 404 yeniden denenmez; `main` "Open Library'ye erişilemedi" ile çıkış 1 verir ve dosya yazmaz | Geçti |
 
 ## 7. Giriş ve çıkış ölçütleri
 
