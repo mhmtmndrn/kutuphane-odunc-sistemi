@@ -14,6 +14,7 @@
           <a href="{% url 'administration:home' %}">Ana sayfa</a>
           <a href="{% url 'circulation:checkout' %}">Ödünç</a>
           <a href="{% url 'circulation:checkin' %}">İade</a>
+          <a href="{% url 'notifications:overdue' %}">Gecikenler</a>
           <a href="{% url 'members:search' %}">Üyeler</a>
           <a href="{% url 'catalog:search' %}">Kitaplar</a>
           {% if user.role == "ADMIN" %}<a href="{% url 'accounts:staff-list' %}">Personel</a>{% endif %}

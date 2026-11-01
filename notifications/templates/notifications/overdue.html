@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load money %}
+
+{% block title %}Gecikenler · Kütüphane{% endblock %}
+
+{% block content %}
+  <h1>Gecikenler</h1>
+  {% for error in errors %}<p class="error">{{ error }}</p>{% endfor %}
+  {% if entries %}
+    <form method="post" action="{% url 'notifications:remind' %}">
+      {% csrf_token %}
+      <table>
+        <thead>
+          <tr>
+            <th>Seç</th><th>Üye</th><th>Telefon</th><th>Kitap</th><th>Son tarih</th>
+            <th>Gecikme (gün)</th><th>Birikmiş ceza</th><th>Hatırlatma</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in entries %}
+            {% with row=entry.row %}
+              <tr id="loan-{{ row.loan.pk }}">
+                <td><input type="checkbox" name="loan_ids" value="{{ row.loan.pk }}" id="id_loan_{{ row.loan.pk }}" aria-label="Seç: {{ row.title }}"></td>
+                <td>{% if row.member_no %}<a href="{% url 'members:detail' row.member_no %}">{{ row.member_no }}</a> {{ row.full_name|default:"" }}{% else %}—{% endif %}</td>
+                <td>{{ row.phone|default:"—" }}</td>
+                <td>{{ row.title }}</td>
+                <td>{{ row.due_on|date:"d.m.Y" }}</td>
+                <td class="num">{{ row.late_days }}</td>
+                <td class="num">{{ row.accrued_fine|tl }}</td>
+                <td>{% if entry.block == "no_email" %}<span class="tag">e-posta yok</span>{% elif entry.block == "no_consent" %}<span class="tag">rıza yok</span>{% endif %}</td>
+              </tr>
+            {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+      <p><button type="submit">Hatırlatma gönder</button></p>
+    </form>
+  {% else %}
+    <p>Geciken ödünç yok.</p>
+  {% endif %}
+{% endblock %}

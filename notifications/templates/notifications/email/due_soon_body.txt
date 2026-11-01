@@ -1,0 +1,8 @@
+{# KL-13. Plain text: autoescape is off. #}{% load money %}{% autoescape off %}Merhaba,
+
+"{{ title }}" kitabının son iade tarihi {{ due_on|date:"d.m.Y" }}. Bu tarihe kadar iade ederseniz gecikme cezası oluşmaz.
+
+Bu e-postayı hatırlatma almaya onay verdiğiniz için alıyorsunuz. Onayınızı kütüphane masasında geri alabilirsiniz.
+
+{{ library_name }}
+{% endautoescape %}

@@ -162,3 +162,15 @@ def test_tc236_scheduler_flag_defaults_to_zero(tmp_path: Path) -> None:
     result = _run_python(code, _prod_env(tmp_path, drop=("LIBRARY_SCHEDULER_ENABLED",)))
     assert result.returncode == 0, result.stderr
     assert "SCHEDULER '0'" in result.stdout
+
+
+def test_adr0052_production_smtp_timeout_is_ten_seconds(tmp_path: Path) -> None:
+    code = (
+        "import django\n"
+        "django.setup()\n"
+        "from django.conf import settings\n"
+        "print('TIMEOUT', repr(settings.EMAIL_TIMEOUT))\n"
+    )
+    result = _run_python(code, _prod_env(tmp_path))
+    assert result.returncode == 0, result.stderr
+    assert "TIMEOUT 10" in result.stdout
