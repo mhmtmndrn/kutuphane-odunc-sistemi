@@ -1,7 +1,7 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-11-01 (faz 5, PR #5 onaylandı)
-- **Aşama:** eng-process **faz 5**. `feature/foundation` (G01–G04, PR #1), `feature/catalog-members` (G05–G08, PR #2), `feature/circulation` (G10 → G09 → G11 → G12, PR #3) ve `feature/notifications` (G13, PR #4) birleşti; `main` = `c2e5bc8` (PR #4'ün merge commit'i). Grup `feature/operations` (**G14 → G15 → G16**: yedek, şifreli dışa aktarma ve geri yükleme; saklama ve anonimleştirme; zamanlayıcı ve telafi) **tamam**; PR #5 kullanıcı tarafından onaylandı (metinler dahil, 2026-11-01) ve merge commit'iyle `main`'e birleştirilir.
+- **Güncelleme:** 2026-11-01 (faz 5, PR #5 birleşti; `feature/seed-load` açıldı)
+- **Aşama:** eng-process **faz 5**. `feature/foundation` (G01–G04, PR #1), `feature/catalog-members` (G05–G08, PR #2), `feature/circulation` (G10 → G09 → G11 → G12, PR #3) ve `feature/notifications` (G13, PR #4) ve `feature/operations` (G14 → G15 → G16, PR #5) birleşti; `main` = `8256786` (PR #5'in merge commit'i). Grup `feature/seed-load` (**G17 → G18**: tohum veri ve yük testi betiği) bu dalda sürüyor; açılış kararları ADR-0056…0058 ve plan §11'de.
 - **`feature/operations` commit'leri** (her biri push edildi):
   - **`992d59c` (`docs:`):** STATUS'taki bayat satırlar, ADR-0053…0055, plan §11 "G14–G16 — açılıştan önce verilen kararlar", G14–G16 ve G19 bölümlerine dosya ve arayüz ekleri, architecture §3'e `operations → notifications` oku, test planına TC-320…TC-339 ve §7 izlenebilirlik.
   - **`08866de` (`feat:` G14):** `operations` app'i; `backup_db`, `export_backup`, `restore_backup`; `.libx` (scrypt + AES-256-GCM, başlık AAD); `.tmp` + `os.replace`; uygulama kilidi (`fcntl`/`msvcrt`); geri yüklemede `LIBX` magic baytı, doğrulama, koruma kopyası (ADR-0054), migration yok.
@@ -14,7 +14,7 @@
 - **Yerel Windows (R-15, Python 3.11.9, 2026-11-01):** TC-302 ve TC-313 (`msvcrt`) → 3 passed; `python -m pytest -q` → 972 passed; `-m slow` → 4 passed; `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı: `*/domain.py` %100 (`--fail-under=90` çıkış 0), `accounts/permissions.py` ve `accounts/middleware.py` %100 (`--fail-under=100` çıkış 0), `operations` toplam %98 (`--fail-under=80` çıkış 0; buluttaki %99'dan fark `applock.py` 29–35, Windows'ta koşmayan `fcntl` dalı), proje toplamı %99. Migrate edilmiş boş geçici veritabanında (scratchpad, `LIBRARY_DB_PATH`) `backup_db` → `export_backup` → `restore_backup <libx> --yes` çıkış 0, koruma kopyası yeniden adlandırmayla oluştu (ADR-0054); `.libx`/SQLite olmayan dosyada "Geçerli bir veritabanı yedeği değil: …", çıkış 1. `python -m waitress` + `LIBRARY_SCHEDULER_ENABLED=1` (prod ayarları; tüm `LIBRARY_*` env'leri gerekir): beş tetikleyici, dört telafi satırı ve görev sonuçları birer kez loglandı; ikinci süreç `AppLockError` ile çıkış 1.
 - **Plan:** [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G14, G15 ve G16 kutuları kanıtıyla işaretli; açılış kararları, uygulama ayrıntıları ve onaya sunulan metinler §11'de ("G14–G16 — açılıştan önce verilen kararlar", "G14–G16 — uygulama ayrıntıları", "G14–G16 uygulayıcının seçtiği kullanıcıya görünen metinler").
 - **G13 (PR #4, birleşti):** 852 test, yerel Windows doğrulaması geçti; ayrıntı plan §11 ve git geçmişinde.
-- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`c2e5bc8`), `feature/foundation`, `feature/catalog-members`, `feature/circulation` ve `feature/notifications` (kapandı), `feature/operations` (PR #5 onaylandı, birleştiriliyor).
+- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`8256786`), `feature/foundation`, `feature/catalog-members`, `feature/circulation`, `feature/notifications` ve `feature/operations` (kapandı), `feature/seed-load` (açık).
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
 - **Bulut oturumu:** Her grup için kullanıcı yeni bir bulut oturumu açar, Claude açılış istemini hazırlar (KL-38). Oturum kritik soruyu oturumun içinde sorar; planın vermediği metinleri seçip §11'de listeler ve PR'da onaya sunar (plan §11, 2026-11-01 kararları).
   - **Tarayıcı (önerilen):** claude.ai/code; repo `mhmtmndrn/kutuphane-odunc-sistemi`, ortam **Default** (Trusted ağ; pip için PyPI gerekir).
@@ -23,7 +23,8 @@
 
 ## Bu oturumda sorulan ve cevaplanan
 
-- **G14–G16 açılışından önce (2026-11-01, kullanıcı onayı):** Üç kritik karar: [ADR-0053](decisions/0053-hourly-catch-up.md) (açılışa ek saatlik telafi; `misfire_grace_time=3600`, `coalesce=True`), [ADR-0054](decisions/0054-restore-keeps-pre-restore-copy.md) (geri yükleme mevcut veritabanını `<db>.pre-restore-YYYYMMDD-HHMMSS` olarak bırakır) ve [ADR-0055](decisions/0055-reminder-log-error-cleared-on-unlink.md) (bağ koparılırken `reminder_log.error` NULL). Dokuz küçük karar (komut argümanları ve geçersiz tarih, magic bayt, migration yok, `.tmp` + `os.replace`, tek işçili zamanlayıcı, komut sarmalayıcı ve stderr `LOGGING`, "Saklama" bağlantısı, `Member.display_name`, ilk istisnada durma) plan §11'de. Sıradaki ADR numarası 0056.
+- **G17–G18 açılışından önce (2026-11-01, kullanıcı onayı):** Üç kritik karar: [ADR-0056](decisions/0056-open-library-fetch-network-blocked.md) (Open Library'ye erişilemezse JSON olmadan devam; gerçek dosya yerel doğrulamada), [ADR-0057](decisions/0057-seed-phone-numbers.md) (tohum telefonları `000 ddd dd dd`) ve [ADR-0058](decisions/0058-loadtest-seed-only-guard.md) (yük betiği `@example.invalid` dışı e-postalı üye görürse istek atmadan çıkış 1). On iki küçük karar (README, bugüne göre tarihler, demo ve yük profilleri, domain fonksiyonları ve tek işlem, sentetik kitap, audit yok ve Allocation, çıktı, rıza, betiğin yeniden seçimi, `scripts/` paketi, duman testi) plan §11'de. Yeni davranışların testleri TC-340…TC-356. Sıradaki ADR numarası 0059.
+- **G14–G16 açılışından önce (2026-11-01, kullanıcı onayı):** Üç kritik karar: [ADR-0053](decisions/0053-hourly-catch-up.md) (açılışa ek saatlik telafi; `misfire_grace_time=3600`, `coalesce=True`), [ADR-0054](decisions/0054-restore-keeps-pre-restore-copy.md) (geri yükleme mevcut veritabanını `<db>.pre-restore-YYYYMMDD-HHMMSS` olarak bırakır) ve [ADR-0055](decisions/0055-reminder-log-error-cleared-on-unlink.md) (bağ koparılırken `reminder_log.error` NULL). Dokuz küçük karar (komut argümanları ve geçersiz tarih, magic bayt, migration yok, `.tmp` + `os.replace`, tek işçili zamanlayıcı, komut sarmalayıcı ve stderr `LOGGING`, "Saklama" bağlantısı, `Member.display_name`, ilk istisnada durma) plan §11'de.
 - **G13 açılışından önce (2026-11-01):** [ADR-0052](decisions/0052-smtp-timeout.md) ve yedi küçük karar; plan §11.
 
 ## G14–G16 sapmaları ve dikkat edilecekler (ayrıntı plan §11)
@@ -51,9 +52,10 @@
 
 ## Sıradaki adım
 
-1. **PR #5 tamam (2026-11-01):** Yerel Windows koşusu geçti (TC-302 ve TC-313 dahil), G14–G16 metinleri değişmeden onaylandı, birleştirme onaylandı. Sonraki dalın ilk commit'i `main`'in yeni hash'ini bu nota yazar.
-2. **Sonraki grup:** `feature/seed-load` (**G17–G18**: tohum veri ve yük testi betiği). G17'nin `load_seed_data` komutu `operations` app'ine eklenir (`operations/seed.py`). Açık noktalar açılış isteminden önce kullanıcıya sorulur; istem yeni bir bulut oturumunda verilir.
-   - Genel sıra: G01 → G16 (tamam), G17…G18, G19.
+1. **PR #5 birleşti (2026-11-01):** merge commit `8256786`; yerel Windows koşusu geçti, G14–G16 metinleri değişmeden onaylandı.
+2. **Bu grup:** `feature/seed-load` (**G17 → G18**). Bulut oturumu G17 ve G18'i uygular, PR'ı açar ama birleştirmez.
+3. **Yerel doğrulamada yapılacak (ADR-0056):** Bulutta Open Library'ye erişilemezse `seed/books_openlibrary.json` dala girmez. Kullanıcı yerelde `python scripts/fetch_demo_books.py --out seed/books_openlibrary.json --limit 300` çalıştırır, `_meta` alanını ve kayıt sayısını kontrol eder ve dosyayı `feature/seed-load` dalına commit'ler. PR bu commit gelmeden birleştirilmez.
+   - Genel sıra: G01 → G16 (tamam), G17…G18 (bu dal), G19.
 
 ## Açık sorular ve riskler
 
@@ -68,14 +70,14 @@
 
 - **SRS:** [docs/srs.md](srs.md), onaylı. 35 FR (24 Must, 11 Should), 7 Won't, 13 NFR, 35 AC.
 - **Tasarım:** [architecture.md](architecture.md) ve [data-design.md](data-design.md).
-- **ADR'ler:** [0001–0055](decisions/), hepsi kabul edildi; özet plan §3. Sıradaki numara 0056.
+- **ADR'ler:** [0001–0058](decisions/), hepsi kabul edildi; özet plan §3. Sıradaki numara 0059.
 - **Plan:** §3 kararlar ve KL-1…KL-46; §4 görevler G01–G19; §7 izlenebilirlik; §8 tutarlılık; §11 sapmalar ve metinler.
-- **Test planı:** [docs/test-plan.md](test-plan.md): 339 TC (TC-320…TC-339 G14–G16 açılışında eklendi); 308'i "Geçti". Elle TC'ler: TC-223, TC-225…TC-234, TC-319 (faz 6).
+- **Test planı:** [docs/test-plan.md](test-plan.md): 356 TC (TC-320…TC-339 G14–G16, TC-340…TC-356 G17–G18 açılışında eklendi); 308'i "Geçti". Elle TC'ler: TC-223, TC-225…TC-234, TC-319 (faz 6).
 - **Araştırma:** [ISBN meta veri](research/2026-10-31-isbn-meta-veri-apileri.md), [demo veri seti](research/2026-10-31-demo-kitap-veri-seti.md).
 
 ## Geçmiş (özet)
 
-- **2026-11-01, `feature/operations` bulut oturumu:** İlk commit `docs:` (bayat STATUS satırları, ADR-0053…0055, açılış kararları, TC-320…TC-339), ardından G14, G15, G16 görev başına TDD (testler önce kırmızı) ve birer `feat:` commit'i, sonra handoff `docs:`; her biri push edildi. Ekranlar Playwright ile, zamanlayıcı `waitress-serve` ile elle doğrulandı. Oturum içinde yeni kritik soru çıkmadı (sıradaki ADR 0056). PR açıldı, birleştirilmedi.
+- **2026-11-01, `feature/operations` bulut oturumu:** İlk commit `docs:` (bayat STATUS satırları, ADR-0053…0055, açılış kararları, TC-320…TC-339), ardından G14, G15, G16 görev başına TDD (testler önce kırmızı) ve birer `feat:` commit'i, sonra handoff `docs:`; her biri push edildi. Ekranlar Playwright ile, zamanlayıcı `waitress-serve` ile elle doğrulandı. Oturum içinde yeni kritik soru çıkmadı. PR açıldı, birleştirilmedi.
 - **2026-11-01, PR #4 (G13):** Yerel Windows doğrulaması (852 passed), metinler onaylandı, merge commit `c2e5bc8`. `feature/operations` açıldı.
 - **2026-11-01, `feature/notifications` bulut oturumu:** İlk commit `docs:` (bayat STATUS satırları, ADR-0052, G13 açılış kararları), ardından G13 TDD ile (20 TC önce kırmızı) tek `feat:` commit'i, sonra `docs:` (test planı, plan kutusu, §11, STATUS); her biri push edildi. Ekran Playwright ile göz kontrolünden geçti. PR açıldı, birleştirilmedi.
 - **2026-11-01, PR #3 (G09–G12):** Yerel Windows doğrulaması (784 passed), metinler onaylandı, merge commit `d0c4555`.

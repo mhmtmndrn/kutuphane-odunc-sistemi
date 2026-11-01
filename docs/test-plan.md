@@ -1,8 +1,8 @@
 # Test planı: Kütüphane ödünç sistemi
 
-- **Güncelleme:** 2026-11-01 (TC-320…TC-339: G14–G16 açılış kararları, ADR-0053…0055)
+- **Güncelleme:** 2026-11-01 (TC-340…TC-356: G17–G18 açılış kararları, ADR-0056…0058)
 - **Test yaklaşımı:** TDD (faz 0 kararı, AGENTS.md). Her görevde §6'daki TC'lerin testi önce yazılır ve kırmızı görülür, sonra kod yazılır (plan §4.0).
-- **Kaynak:** Faz 4 test tasarımı taslağı (TC-01…TC-234) ADR-0036…0047 ve KL-1…46'ya göre revize edildi; TC-235…TC-319 eklendi. TC-320…TC-339, G14–G16 açılışında kullanıcının onayladığı kararların (ADR-0053…0055, plan §11) yeni davranışları için eklendi (2026-11-01). Taslak, içeriği buraya alındıktan sonra kullanıcı kararıyla silindi (2026-10-31); açık soruları plan §8.2'de.
+- **Kaynak:** Faz 4 test tasarımı taslağı (TC-01…TC-234) ADR-0036…0047 ve KL-1…46'ya göre revize edildi; TC-235…TC-319 eklendi. TC-320…TC-339, G14–G16 açılışında kullanıcının onayladığı kararların (ADR-0053…0055, plan §11) yeni davranışları için eklendi (2026-11-01); TC-340…TC-356, G17–G18 açılışında onaylanan kararların (ADR-0056…0058, plan §11) yeni davranışları için eklendi (2026-11-01). Taslak, içeriği buraya alındıktan sonra kullanıcı kararıyla silindi (2026-10-31); açık soruları plan §8.2'de.
 
 ## 1. Kapsam
 
@@ -22,7 +22,7 @@
   - NFR-11, AC-11: `autofocus`, form sırası ve 303 akışı otomatik (TC-128); "fare yok, en fazla 3 etkileşim" gerçek okuyucuyla (TC-227).
   - AC-06, AC-31: Çözücüyle okunabilirlik otomatik (TC-71, TC-74); baskı, hiza ve okuyucu elle (TC-228).
   - FR-18 (teslim edilebilirlik): Bellek backend'iyle otomatik; kurum SMTP'si elle (TC-232).
-  - AC-29: Adların `seed/` listelerinden geldiği otomatik (TC-217); gerçek kişiye denk gelmeme örneklem incelemesiyle (TC-234).
+  - AC-29: Adların `seed/` listelerinden geldiği, telefonların "000" önekli sahte numara (ADR-0057) ve e-postaların `@example.invalid` olduğu otomatik (TC-217, TC-342, TC-351); gerçek kişiye denk gelmeme örneklem incelemesiyle (TC-234).
   - FR-37 (bina dışı yedek): Şifreleme ve geri yükleme otomatik; USB ile taşıma elle (TC-226).
   - Kullanıcı belgelerinin içeriği gözden geçirmeyle (TC-319).
 
@@ -54,6 +54,8 @@ Görev tablosundaki "Seviye" sütunu bu satırlardan birini gösterir.
 | Hatırlatma aday koşulu (S6) | Koşul başına elle MC/DC: her koşulun sonucu tek başına değiştirdiği bir case | TC-173…TC-176, TC-179 |
 | Telafi ve görev kaydı | Sınır değer (saat), durum geçişi (RUNNING → SUCCESS/FAILED; saatlik telafi) | TC-210…TC-213, TC-310…TC-312, TC-336 |
 | Yedek, dışa aktarma, geri yükleme | Hata tahmini (bozuk dosya, yanlış parola, kilit, yol, yarıda kalan yazım), sınır değer (saklama günleri), senaryo (koruma kopyası) | TC-186…TC-200, TC-299…TC-304, TC-320…TC-329 |
+| Tohum veri | Denklik sınıfı (profil sayıları), değişmez kontrolü (defter, nüsha durumu), metamorfik ilişki (aynı tohum ve gün; bir gün sonrası), hata tahmini (eksik dosya, yarıda kalan yazım) | TC-214…TC-220, TC-315…TC-317, TC-340…TC-352 |
+| Yük betiği | Sınır değer (p95 499/500 ms), denklik sınıfı (karışım, yüzdelik), durum geçişi (iş parçacığının ödünç havuzu), karar tablosu (koruma) | TC-221…TC-222, TC-318, TC-353…TC-356 |
 | Eşzamanlılık | Hata tahmini: iki iş parçacığı aynı kaynağa | TC-103, TC-145…TC-148 |
 
 ## 4. Kapsam hedefleri
@@ -426,6 +428,23 @@ Sütunlar: Görev, TC'nin yazıldığı görev (plan §4); Seviye, §2'deki sat�
 | TC-337 | NFR-05 (küçük karar 5) | G16 | servis | Senaryo | Dört görevin telafisi gerekiyor; zamanlayıcı gerçekten çalışır (komutlar yamalı ve yavaş) | Komutlar BACKUP, ANONYMIZE, EXPORT, REMINDERS sırasıyla ve çakışmadan (aynı anda en fazla bir tane) çalışır | Geçti |
 | TC-338 | NFR-05 (küçük karar 6, KL-23) | G16 | servis | Hata tahmini | Sarmalayıcı `send_reminders`'ı çalıştırır, bir hatırlatma FAILED olur; ayrı testte komut `RuntimeError` fırlatır | İkisi de `operations.scheduler` logger'ıyla ERROR olarak loglanır ve sarmalayıcıdan dışarı çıkmaz; ilkinde `job_run` SUCCESS | Geçti |
 | TC-339 | NFR-05 (küçük karar 6) | G16 | birim | Denklik sınıfı | `base.py`'deki `LOGGING` | stderr'e yazan bir `StreamHandler`; `operations` ve `django` logger'ları INFO; biçim `%(asctime)s %(levelname)s %(name)s %(message)s` | Geçti |
+| TC-340 | FR-29 (ADR-0033, ADR-0056) | G17 | birim | Senaryo | `fetch_books` sahte bir HTTP açıcıyla: ilk sayfa 2 kayıt, ikinci sayfa 1 kayıt, üçüncü sayfa boş; `--limit 2` ile ayrı koşu | Sorgu `language:tur isbn:978605*`; her istekte proje adını taşıyan `User-Agent`; iki istek arasında en az 1 sn bekleme (bekleme yamalı); boş sayfada durur; `--limit 2`'de ikinci sayfa istenmez; çıktı dosyası `_meta` ve kayıtlarla yazılır | Planlandı |
+| TC-341 | FR-29 (ADR-0056) | G17 | komut | Hata tahmini | Kitap dosyası yok; `load_seed_data --actor demo` | "Kitap dosyası bulunamadı: <yol>" ve çıkış 1; hiçbir tabloya satır yazılmaz; ağ çağrısı yapılmaz | Planlandı |
+| TC-342 | FR-01, FR-29, AC-29, NFR-08 (ADR-0057) | G17 | komut | Denklik sınıfı | TC-217'nin veritabanı | Her üyenin telefonu `000 ddd dd dd` biçiminde; `phone_digits` "000" ile başlayan 10 rakam; telefonlar birbirinden farklı | Planlandı |
+| TC-343 | FR-29 (küçük karar 2, 3) | G17 | komut | Senaryo (metamorfik) | Bugün 2026-11-16 ve (ayrı koşuda) 2026-11-17; ikisinde de `--seed 42`, kapalı gün yok | 350 kapalı ödüncün `loaned_on` ve `closed_on` değerleri [bugün − 180, bugün − 1] aralığında; açık ödünçlerin `loaned_on` ≤ bugün; gecikmiş 10'unda `due_on` < bugün, diğerlerinde ≥ bugün; aynı nüshanın ödünçleri çakışmaz; ikinci koşuda bütün tarihler bir gün sonradır, diğer alanlar aynıdır | Planlandı |
+| TC-344 | FR-29, FR-17 (küçük karar 3) | G17 | komut | Denklik sınıfı | TC-217'nin veritabanı | Bakiyesi pozitif tam 5 üye var; her birinin borcu, `closed_on` > `due_on` olan bir iadenin ödenmemiş FINE'ıdır; diğer her FINE'ın aynı üyede aynı tutarlı bir PAYMENT'ı var | Planlandı |
+| TC-345 | FR-29, FR-13 (küçük karar 7) | G17 | komut | Değişmez kontrolü | TC-217'nin veritabanı | `audit_event` boş; her PAYMENT'ın Allocation toplamı tutarına eşit ve aynı üyenin FINE'larına gider; hiçbir FINE fazla dağıtılmamış (I4); her üyede `member_balance` = ödenmemiş FINE toplamı | Planlandı |
+| TC-346 | NFR-02, FR-25 (küçük karar 4) | G17 | komut (slow) | Sınır değer | TC-220'nin veritabanı; ardından `anonymize_expired` servisi aynı gün | Bütün ödünçlerin `loaned_on` ≥ bugün − 365; anonimleştirme 0 üye ve 0 ödünç işler | Planlandı |
+| TC-347 | FR-29, FR-07, FR-12 (küçük karar 5) | G17 | komut | Denklik sınıfı | Ayarlar: süre 21 gün, günlük ceza 2,00 TL, üst sınır 30,00 TL; pazar haftalık kapalı; bir kapalı tarih; `--profile demo` | Her ödünçte `due_on` = `due_date(loaned_on, 21, …)` ve kapalı güne düşmez; `daily_fine_kurus` 200, `fine_cap_kurus` 3000; her FINE = `fine(late_days(due_on, closed_on, kapalı tarihler), 200, 3000)`; barkod `f"{id:08d}"`; `search_key` = `normalize_tr`; `phone_digits` domain fonksiyonuyla aynı | Planlandı |
+| TC-348 | FR-29 (küçük karar 5) | G17 | komut | Hata tahmini | Ödünç yazımı sırasında istisna (yama) | "Tohum verisi yüklenemedi: <tür>: <metin>" ve çıkış 1; kitap, nüsha, üye, rıza, ödünç ve defter tabloları boş | Planlandı |
+| TC-349 | FR-29 (küçük karar 6, ADR-0033) | G17 | komut | Denklik sınıfı | Örnek dosyada 12 kayıt; `--profile demo` | 288 sentetik kitap: başlık 2–4 sözcük, her sözcük örnek dosyanın başlıklarından; yazar "<ad> <soyad>" ve ikisi de `seed/` listelerinden; `isbn13`, `publisher`, `source_ol_id` boş | Planlandı |
+| TC-350 | FR-29 (küçük karar 8) | G17 | komut | Denklik sınıfı | 300 kayıtlı dosya ve (ayrı koşuda) 12 kayıtlı dosya | İlk satır "kitap=300, nüsha=<n>, üye=200, açık ödünç=150 (gecikmiş 10), kapalı ödünç=350"; 300 kayıtta ikinci satır yok; 12 kayıtta ikinci satır sentetik tamamlamayı (12 kayıt, 288 sentetik kitap) bildirir | Planlandı |
+| TC-351 | FR-29, FR-03 (küçük karar 9) | G17 | komut | Denklik sınıfı | TC-217'nin veritabanı | E-postalı her üyede e-posta `uye<no>@example.invalid`, `has_email_consent` True ve tek bir `GIVEN` olayı; `effective_on` [bugün − 364, bugün] aralığında, `recorded_by` aktör; e-postasız üyede olay yok ve rıza False | Planlandı |
+| TC-352 | FR-29, AC-29 (küçük karar 1, KL-21, KL-27) | G17 | birim | Gözden geçirme (otomatik) | `README.md` | "Veri kaynakları" bölümünde Open Library ve CC0 atfı; "Demo verisi" bölümünde `migrate`, `createsuperuser` ve `load_seed_data --profile demo --actor <ad>` bu sırayla | Planlandı |
+| TC-353 | NFR-01 (ADR-0058) | G18 | birim | Karar tablosu | `--db` içinde bir üyenin e-postası `ali@ornek.com`; ayrı testte üyelerin e-postası boş ya da `@example.invalid` ile bitiyor | İlkinde stderr'de "Tohum verisi olmayan veritabanı", çıkış 1 ve hiçbir HTTP isteği yok; ikincisinde koruma geçer | Planlandı |
+| TC-354 | NFR-01 (küçük karar 10) | G18 | birim | Durum geçişi | Sahte istemciyle iş parçacığı: açık ödünç yokken seçilen iade ve uzatma; ödünç sonrası uzatma ve iade | Ödünçsüz iade ve uzatma istek atmadan yeniden seçilir ve raporda sayılmaz; uzatılan ödünç bir daha uzatılmaz ama iade edilebilir; iade edilen nüsha raf havuzuna döner | Planlandı |
+| TC-355 | NFR-01 (küçük karar 11) | G18 | birim | Denklik sınıfı | Yeni bir yorumlayıcıda `scripts.loadtest` import edilir; `pyproject.toml` okunur | `sys.modules`'ta `django` yok; `testpaths` `scripts`'i ve bütün app klasörlerini içerir | Planlandı |
+| TC-356 | NFR-01 (KL-17) | G18 | birim | Senaryo | Yerel sahte HTTP sunucusu: GET `/giris/` `csrftoken` çerezi verir; POST `/giris/` 302 ile `Secure` işaretli `sessionid` ve yeni `csrftoken` verir | Giriş POST'unda `X-CSRFToken` çerezdeki jetona eşit; sonraki isteklerde `sessionid` düz HTTP'de de gönderilir ve POST'larda yeni jeton kullanılır; 303 yönlendirmesi izlenmez | Planlandı |
 
 ## 7. Giriş ve çıkış ölçütleri
 
