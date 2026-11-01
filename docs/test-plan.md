@@ -91,9 +91,9 @@ Sütunlar: Görev, TC'nin yazıldığı görev (plan §4); Seviye, §2'deki sat�
 
 | ID | Gereksinim | Görev | Seviye | Teknik | Girdi veya koşul | Beklenen | Durum |
 |---|---|---|---|---|---|---|---|
-| TC-01 | FR-22 (ADR-0024) | G01 | view | Denklik sınıfı | `settings.prod` ile GET `/admin/` | 404 | Planlandı |
-| TC-02 | Mimari §6.4, KL-43 | G01 | birim | Hata tahmini | `settings.prod`, `LIBRARY_SECRET_KEY` tanımsız; ayarlar ayrı süreçte yüklenir | Süreç `ImproperlyConfigured("Eksik ortam değişkeni: LIBRARY_SECRET_KEY")` ile durur | Planlandı |
-| TC-03 | NFR-06 | G01 | servis | Denklik sınıfı | Personel parolası kaydedilir | `password` `argon2$argon2id$` önekiyle başlar; düz parola veritabanında geçmez | Planlandı |
+| TC-01 | FR-22 (ADR-0024) | G01 | view | Denklik sınıfı | `settings.prod` ile GET `/admin/` | 404 | Geçti (faz 6) |
+| TC-02 | Mimari §6.4, KL-43 | G01 | birim | Hata tahmini | `settings.prod`, `LIBRARY_SECRET_KEY` tanımsız; ayarlar ayrı süreçte yüklenir | Süreç `ImproperlyConfigured("Eksik ortam değişkeni: LIBRARY_SECRET_KEY")` ile durur | Geçti (faz 6) |
+| TC-03 | NFR-06 | G01 | servis | Denklik sınıfı | Personel parolası kaydedilir | `password` `argon2$argon2id$` önekiyle başlar; düz parola veritabanında geçmez | Geçti (faz 6) |
 | TC-04 | FR-27 | G02 | view | Denklik sınıfı | Oturumsuz GET `/odunc/` | 302 → `/giris/?next=/odunc/` | Geçti |
 | TC-05 | FR-27 | G02 | view | Senaryo | Doğru bilgilerle giriş, POST `/cikis/`, ardından GET `/odunc/` | Giriş başarılı; çıkıştan sonra `/giris/`e yönlendirilir | Geçti |
 | TC-06 | FR-27, AC-27 | G02 | view | Sınır değer (iki değerli) | "ali": 4 yanlış parola, sonra doğru; ardından yine 4 yanlış ve doğru | İki giriş de başarılı (başarılı girişte sayaç sıfırlanır) | Geçti |
@@ -314,7 +314,7 @@ Sütunlar: Görev, TC'nin yazıldığı görev (plan §4); Seviye, §2'deki sat�
 | TC-221 | NFR-01 (ADR-0031) | G18 | birim | Sınır değer (iki değerli) | Rapor mantığı: bir türde p95 499 ms ve 500 ms; hata sayısı 0 ve 1; ayrıca istek yapılmamış bir tür | 499 ms ve 0 hata: çıkış 0; 500 ms, 1 hata ya da istek yapılmamış tür: çıkış 1; rapor `istek, p50, p95, hata` sütunlarını ve sonuç satırını içerir | Geçti |
 | TC-222 | NFR-01 | G18 | birim | Denklik sınıfı | Bir türde 96 × 100 ms ve 4 × 900 ms | p95 = 100 ms; istek sayısı 100 | Geçti |
 | TC-223 | NFR-01, NFR-02 | G18 | elle | Senaryo | Faz 6: sunucuda `--profile load`, ardından `scripts/loadtest.py --workers 5 --duration 120` | Bütün türlerde p95 < 500 ms, hata 0, çıkış 0; `EXPLAIN QUERY PLAN` S1–S3'te indeks kullanır | Geçti (faz 6, plan §12.1) |
-| TC-224 | NFR-13 | G01 (her görevde) | komut | Denklik sınıfı | `coverage run --branch -m pytest`, ardından `coverage report --include="*/domain.py" --fail-under=90` | Çıkış 0; dal kapsamı ≥ %90 | Planlandı |
+| TC-224 | NFR-13 | G01 (her görevde) | komut | Denklik sınıfı | `coverage run --branch -m pytest`, ardından `coverage report --include="*/domain.py" --fail-under=90` | Çıkış 0; dal kapsamı ≥ %90 | Geçti (faz 6) |
 | TC-225 | FR-28, NFR-04, AC-28 | G19 | elle | Senaryo | Faz 6 test ortamı: veritabanı silinir, kurulum belgesindeki adımlarla son yedek geri yüklenir; süre ölçülür | Sayılar aynı; toplam süre < 1 saat | Geçti (faz 6, plan §12.1) |
 | TC-226 | FR-37, AC-30 | G19 | elle | Senaryo | `.libx` USB ile başka makineye taşınır ve belgeye göre geri yüklenir | Sayılar aynı; parola olmadan açılmaz | Kapsam dışı (deneme projesi, ADR-0067) |
 | TC-227 | FR-11, AC-11, NFR-11 | G19 | elle | Senaryo | Gerçek USB okuyucuyla üye kartı ve nüsha etiketi okutulur, Enter'a basılır | Ödünç kaydedilir; en fazla 3 etkileşim; fare kullanılmaz | Kapsam dışı (deneme projesi, ADR-0067) |
@@ -325,8 +325,8 @@ Sütunlar: Görev, TC'nin yazıldığı görev (plan §4); Seviye, §2'deki sat�
 | TC-232 | FR-18 | G19 | elle | Senaryo | Kurum SMTP hesabıyla test üyesine gerçek hatırlatma gönderilir | E-posta gelen kutusuna ulaşır; Türkçe karakterler doğru | Kapsam dışı (deneme projesi, ADR-0067) |
 | TC-233 | NFR-03, NFR-05 | G19 | elle | Senaryo | Hazırlık ortamı birkaç gün çalışır; bir gece servis durdurulur | Her gün için bir yedek var; servisin kapalı kaldığı gecenin ertesindeki açılışta telafi job_run'ı var | Kapsam dışı (deneme projesi, ADR-0067) |
 | TC-234 | FR-29, AC-29 | G19 | elle | Senaryo | Tohum üyelerden örneklem alınır (ad, telefon, e-posta) | Gerçek bir kişiyi gösteren kayıt yok | Geçti (faz 6, plan §12.1) |
-| TC-235 | NFR-09, R-10 | G01 | birim | Sınır değer (iki değerli) | `settings.base` yüklü; `zoneinfo.ZoneInfo("Europe/Istanbul")`; an 2026-11-16T20:59:59Z ve 21:00:00Z iken `timezone.localdate()`; `requirements.txt` okunur | `ZoneInfoNotFoundError` yok; 2026-11-16 ve 2026-11-17; `tzdata==` satırı var | Planlandı |
-| TC-236 | Mimari §6.4, KL-43 | G01 | birim | Denklik sınıfı | `settings.prod`; KL-43'teki her zorunlu değişken için ayrı süreçte o değişken silinir; ayrıca yalnız `LIBRARY_SCHEDULER_ENABLED` silinir | Her zorunlu değişkende adını taşıyan `ImproperlyConfigured`; `LIBRARY_SCHEDULER_ENABLED` eksikken ayarlar yüklenir ve değeri "0" olur | Planlandı |
+| TC-235 | NFR-09, R-10 | G01 | birim | Sınır değer (iki değerli) | `settings.base` yüklü; `zoneinfo.ZoneInfo("Europe/Istanbul")`; an 2026-11-16T20:59:59Z ve 21:00:00Z iken `timezone.localdate()`; `requirements.txt` okunur | `ZoneInfoNotFoundError` yok; 2026-11-16 ve 2026-11-17; `tzdata==` satırı var | Geçti (faz 6) |
+| TC-236 | Mimari §6.4, KL-43 | G01 | birim | Denklik sınıfı | `settings.prod`; KL-43'teki her zorunlu değişken için ayrı süreçte o değişken silinir; ayrıca yalnız `LIBRARY_SCHEDULER_ENABLED` silinir | Her zorunlu değişkende adını taşıyan `ImproperlyConfigured`; `LIBRARY_SCHEDULER_ENABLED` eksikken ayarlar yüklenir ve değeri "0" olur | Geçti (faz 6) |
 | TC-237 | FR-21, FR-27 (KL-45) | G04 | view | Durum geçişi | "ali" oturum açmış; yönetici ali'yi pasifleştirir; ali aynı oturumla GET `/odunc/` | 302 → `/giris/?next=/odunc/` | Geçti |
 | TC-238 | NFR-12 (KL-3) | G03 | birim | Denklik sınıfı | `parse_tl`: "15", "15,5", "15,50", "1.250,00", "1250" | 1500, 1550, 1550, 125000, 125000 | Geçti |
 | TC-239 | NFR-12 (KL-3) | G03 | birim | Denklik sınıfı | `format_tl`: 125000, 100000000, 5; şablonda `{{ 125000\|tl }}` | "1.250,00 TL", "1.000.000,00 TL", "0,05 TL"; şablon çıktısı "1.250,00 TL" | Geçti |

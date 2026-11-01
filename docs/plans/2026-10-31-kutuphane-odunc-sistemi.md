@@ -1650,6 +1650,11 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   8. TC-223 `docs/kurulum.md` "Yük testi" notuna göre ayrı bir test veritabanında, `--profile load` ile; `127.0.0.1` `LIBRARY_ALLOWED_HOSTS`'a geçici eklenir, sonra kaldırılır.
   9. Servisler, `library-svc`, kök sertifika, Firefox ve `C:\Program Files\Python311`'in (ADR-0068) temizliği faz 6 sonunda sorulur.
   10. `spec-reviewer` elle TC'lerden sonra çalıştırılır.
+- **Kabul tablosu kararları (kullanıcı, 2026-11-02):**
+  11. AC tablosunun sütunları: AC | FR | Otomatik kanıt | Elle kanıt | Sonuç | Not. Otomatik kanıtta AC'yi açıkça anan TC'ler tek tek, FR'ye bağlı diğerleri sayıyla yazılır.
+  12. Sonuç değerleri: "Geçti", "Geçti (kısmi, ADR-0067)", "Kapsam dışı (ADR-0067)", "Kaldı".
+  13. NFR-01…NFR-13 ayrı bir tabloda: hedef, ölçülen değer ya da kanıt, sonuç.
+  14. G01'in "Planlandı" kalan altı TC'si (TC-01, 02, 03, 224, 235, 236) tablodan önce koşulur ve durumları test-plan'da güncellenir.
 
 ### 12.1 Elle TC'ler
 
@@ -1800,4 +1805,84 @@ Bitince ya da bir yerde takılınca bana yaz: hangi adım, ne çıktı. Kalan TC
 
 ### 12.3 Kabul tablosu
 
-Elle TC'ler ve tam test koşusu bittikten sonra doldurulur.
+Biçim küçük kararlar 11–14'te. 2026-11-02'de dolduruldu.
+
+#### 12.3.1 Test koşusu
+
+- **Tam koşu (2026-11-02, `78b2d7d`):** Kod `96ba347` ve `v1.0.0-rc.2` ile aynı; sonraki commit'ler yalnız `docs/`. `python -m coverage run --branch -m pytest -q --basetemp=<scratchpad>` → `1049 passed`, çıkış 0 (`slow` dahil); proje toplam kapsamı %97. `python manage.py makemigrations --check --dry-run` → "No changes detected", çıkış 0. `--basetemp`'in nedeni: yereldeki `%TEMP%\pytest-of-Mehmet Emin` klasörüne erişim engelli (`WinError 5`); testlerin kendisiyle ilgisi yok (STATUS "Kum havuzu").
+- **G01'in altı TC'si (küçük karar 14):** `python -m pytest tests/test_prod_settings.py -k "tc01 or tc02 or tc03 or tc235 or tc236" -v` → `19 passed` (TC-236 her zorunlu değişken için ayrı parametre). TC-224 aşağıdaki kapsam ölçümü. Altısı test-plan'da "Geçti (faz 6)".
+- **Kapsam hedefleri (test-plan §4), aynı koşudan; her biri `coverage report --include=… --fail-under=…` çıkış 0:**
+
+| Bileşen | Ölçüt | Hedef | Ölçülen |
+|---|---|---|---|
+| `*/domain.py` (TC-224, NFR-13) | Dal | ≥ %90 | %100 (383 satır, 110 dal, eksik 0) |
+| `billing/services.py`, `circulation/services.py` | Dal | ≥ %85 | %99 (411 satır, 74 dal; 4 satır, 2 kısmi dal eksik) |
+| `accounts/permissions.py`, `accounts/middleware.py` | Dal | %100 | %100 (46 satır, 10 dal) |
+| `operations/*` | Dal | ≥ %80 | %99 (831 satır, 138 dal; 8 satır, 3 kısmi dal eksik) |
+| `pdf/sheets.py` | Satır | ≥ %80 | %100 (111 satır) |
+
+#### 12.3.2 Kabul ölçütleri (SRS §6)
+
+"Otomatik kanıt" sütunundaki bütün TC'ler test-plan'da "Geçti" ve 12.3.1'deki tam koşuda geçiyor; "FR'ye bağlı n TC daha", Gereksinim sütununda FR'yi anıp AC'yi anmayan otomatik TC'lerin sayısıdır. Elle sonuçlar §12.1.1'de; kapsam dışı TC'ler [ADR-0067](../decisions/0067-phase6-trial-project-single-windows-machine.md)'de.
+
+| AC | FR | Otomatik kanıt | Elle kanıt | Sonuç | Not |
+|---|---|---|---|---|---|
+| AC-01 | FR-01 | TC-44, TC-47; FR'ye bağlı 10 TC daha | — | Geçti | — |
+| AC-02 | FR-02 | TC-115, TC-126, TC-286; 4 TC daha | — | Geçti | — |
+| AC-03 | FR-03 | TC-57, TC-177, TC-254, TC-255; 7 TC daha | TC-319 Geçti (kılavuzda geçmiş tarihli rıza notu) | Geçti | — |
+| AC-04 | FR-04 | TC-39, TC-62, TC-66; 14 TC daha | — | Geçti | — |
+| AC-05 | FR-05 | TC-64; 11 TC daha | — | Geçti | — |
+| AC-06 | FR-06 | TC-71 (30 etiketli PDF, barkodlar çözücüyle okunuyor); 7 TC daha | TC-228 Kapsam dışı | Geçti (kısmi, ADR-0067) | Basılı etiketin gerçek okuyucuyla okunması denenmedi: etiket kağıdı ve okuyucu yok |
+| AC-07 | FR-07 | TC-105; 8 TC daha | TC-231 akışında son tarih 16.11.2026 (2026-11-02 + 14 gün) | Geçti | — |
+| AC-08 | FR-08 | TC-116…TC-119, TC-126, TC-127, TC-284; 7 TC daha | — | Geçti | — |
+| AC-09 | FR-09 | TC-111, TC-135; 4 TC daha | TC-231 akışında iade, üç tarayıcıda | Geçti | — |
+| AC-10 | FR-10 | TC-121, TC-123, TC-141, TC-142; 9 TC daha | TC-231 akışında uzatma (30.11.2026) | Geçti | — |
+| AC-11 | FR-11 | TC-128 (`autofocus`, form sırası, 303 akışı), TC-281; 5 TC daha | TC-227 Kapsam dışı; TC-319 Geçti ("üyeye adını sorun") | Geçti (kısmi, ADR-0067) | "Fare yok, okuyucuyla" kısmı gerçek okuyucu olmadan denenmedi; ikinci senaryo (nüsha barkodu uyarısı) otomatik |
+| AC-12 | FR-12 | TC-110, TC-112, TC-134, TC-136, TC-276, TC-283; 11 TC daha | TC-319 Geçti ("geçmiş kapalı tarihleri silmeyin") | Geçti | — |
+| AC-13 | FR-13 | TC-80; 11 TC daha | TC-231 akışında ödeme alma (1,00 TL) | Geçti | — |
+| AC-14 | FR-14 | TC-86, TC-87; 3 TC daha | — | Geçti | — |
+| AC-15 | FR-15 | TC-150; 6 TC daha | — | Geçti | — |
+| AC-16 | FR-16 | TC-153, TC-155, TC-272, TC-273, TC-292; 18 TC daha | — | Geçti | — |
+| AC-17 | FR-17 | TC-76, TC-98; 4 TC daha | — | Geçti | — |
+| AC-18 | FR-18 | TC-174, TC-175, TC-182 (bellek e-posta backend'i); 10 TC daha | TC-232 Kapsam dışı | Geçti | Üç senaryo da otomatik kanıtlı. Kurum SMTP'siyle gelen kutusuna teslim (TC-232) FR-18'in teslim edilebilirlik kısmı, AC senaryolarında yok |
+| AC-19 | FR-19 | TC-183; 3 TC daha | — | Geçti | — |
+| AC-20 | FR-20 | TC-171; 3 TC daha | TC-225 8. adımda `/gecikenler/` 200 (10 kayıt) | Geçti | — |
+| AC-21 | FR-21 | TC-28; 5 TC daha | — | Geçti | — |
+| AC-22 | FR-22 | TC-21; 6 TC daha (TC-01 dahil, Geçti (faz 6)) | — | Geçti | — |
+| AC-23 | FR-23 | TC-131; 4 TC daha | — | Geçti | — |
+| AC-24 | FR-24 | TC-23, TC-106; 3 TC daha | — | Geçti | — |
+| AC-25 | FR-25 | TC-201…TC-203, TC-305; 15 TC daha | — | Geçti | — |
+| AC-26 | FR-26 | TC-91; 11 TC daha | — | Geçti | — |
+| AC-27 | FR-27 | TC-06, TC-07, TC-09; 7 TC daha | — | Geçti | — |
+| AC-28 | FR-28 | TC-191, TC-320, TC-366; 18 TC daha | TC-225 Geçti: sayılar `200 592 500` aynen geldi, 6,1 s | Geçti | Silinen veritabanı belgedeki adımlarla geri yüklendi |
+| AC-29 | FR-29 | TC-217, TC-342, TC-352; 20 TC daha | TC-234 Geçti (25 üyelik örneklem) | Geçti | Rastgele ad birleşimi iki satırda tanınmış kişilerin adını üretti; telefon ve e-posta sentetik, kullanıcı kararıyla ölçüt karşılandı (§12.1.1) |
+| AC-30 | FR-37 | TC-25 (8 günde uyarı), TC-193 (doğru parolayla boş ortama geri yükleme, sayılar aynı), TC-194 (yanlış parola reddedilir, veritabanı değişmez); 19 TC daha (şifreli biçim TC-192 dahil) | TC-226 Kapsam dışı | Geçti (kısmi, ADR-0067) | Dosyanın ikinci bilgisayara USB ile taşınıp orada geri yüklenmesi denenmedi: ikinci bilgisayar ve USB disk yok |
+| AC-31 | FR-38 | TC-74 (3 kartlı PDF, barkod çözücüyle okunuyor, ad yok); 5 TC daha | TC-228 Kapsam dışı | Geçti (kısmi, ADR-0067) | Basılı kartın gerçek okuyucuyla okunması denenmedi |
+| AC-32 | FR-39 | TC-159, TC-161; 2 TC daha | — | Geçti | — |
+| AC-33 | FR-40 | TC-259, TC-260, TC-285 | — | Geçti | — |
+| AC-34 | FR-41 | TC-248, TC-249; 2 TC daha | — | Geçti | — |
+| AC-35 | FR-42 | TC-242, TC-243; 2 TC daha | — | Geçti | — |
+
+**Özet:** 35 AC'nin 31'i Geçti, 4'ü Geçti (kısmi, ADR-0067): AC-06, AC-11, AC-30, AC-31. Kaldı yok. Kısmi kalan kısımların hepsi bu makinede bulunmayan donanıma bağlı (okuyucu, etiket kağıdı, ikinci bilgisayar).
+
+#### 12.3.3 İşlevsel olmayan gereksinimler (SRS §5)
+
+| NFR | Hedef | Ölçülen / kanıt | Sonuç |
+|---|---|---|---|
+| NFR-01 | p95 < 500 ms, tasarım ölçeğinde, 5 eşzamanlı personel | TC-223: p95 kitap arama 150,2 ms, ödünç 128,7, iade 137,1, uzatma 112,5, üye arama 146,2; 9 582 istek, hata 0 (`--workers 5 --duration 120`; TLS hariç, ADR-0031). Betik mantığı TC-221, TC-222, TC-318, TC-353…TC-356 | Geçti |
+| NFR-02 | 20 000 nüsha, 5 000 üye, 100 000 ödünç ile NFR-01 | TC-223 yük veritabanı: 20 000 nüsha, 5 000 üye, 100 000 ödünç (3 000 açık, 97 000 kapalı); S1–S3 `EXPLAIN` indeks kullanıyor. Profil sayıları TC-220, TC-317, TC-346 | Geçti |
+| NFR-03 | RPO ≤ 24 saat | Günlük 02:00 yedek tetikleyicisi TC-208, yazma sırasında tutarlı yedek TC-190, kaçırılan yedeğin telafisi TC-336; birkaç günlük gerçek çalışma (TC-233) Kapsam dışı | Geçti (kısmi, ADR-0067) |
+| NFR-04 | RTO ≤ 1 saat, test ortamında denenmiş | TC-225: 6,1 s; TC-320, TC-366 | Geçti |
+| NFR-05 | Kaçırılan günlük görevler sonraki çalışmada, tekrar gönderimsiz | TC-178, TC-179, TC-209…TC-213, TC-310…TC-314, TC-335…TC-339, TC-361, TC-362, TC-364 (ADR-0053); servisin bir gece kapalı kaldığı gerçek çalışma (TC-233) Kapsam dışı | Geçti (kısmi, ADR-0067) |
+| NFR-06 | Tuzlu, yavaş tek yönlü özet; düz parola yok | TC-03 Geçti (faz 6): parola `argon2$argon2id$` önekiyle saklanıyor. Test-plan'ın bu NFR'ye bağladığı HTTPS kanıtları: Caddyfile `tls internal` TC-363, sertifika zinciri TC-230 Geçti (kısmi: bu makine) | Geçti |
+| NFR-07 | Her yönetici uç noktasına görevliyle 403, otomatik | TC-11, TC-31…TC-33, TC-368 | Geçti |
+| NFR-08 | Yalnız FR-01 alanları; LAN dışından erişim yok | Veri minimizasyonu TC-52, TC-206, TC-330, TC-331, TC-342, TC-359…TC-364. TC-229 Geçti (kısmi): yalnız `127.0.0.2:80/443`, `127.0.0.1:8000`, `127.0.0.1:2019` dinleniyor (B8); LAN dışından gerçek deneme yapılmadı | Geçti (kısmi, ADR-0067) |
+| NFR-09 | Yalnız Türkçe; güncel Chrome, Edge, Firefox; ≥ 1366 px | TC-231 Geçti (rc.2): Chrome 156, Edge 156, Firefox 159, 1366 × 768, taşma yok; TC-235 Geçti (faz 6); hata sayfaları TC-367, TC-368 (B10) | Geçti |
+| NFR-10 | "istanbul", "İSTANBUL", "İstanbul" aynı sonuç | TC-34, TC-36, TC-47, TC-67 | Geçti |
+| NFR-11 | Fare olmadan en fazla 3 etkileşim | TC-128 (odak ve form akışı); gerçek okuyucuyla deneme (TC-227) Kapsam dışı | Geçti (kısmi, ADR-0067) |
+| NFR-12 | Kuruş hassasiyeti, kayan nokta hatası yok | TC-14…TC-17, TC-102, TC-238…TC-240 | Geçti |
+| NFR-13 | İş kuralı modüllerinde dal kapsamı ≥ %90 | TC-224 Geçti (faz 6): `*/domain.py` %100 (12.3.1) | Geçti |
+
+**Özet:** 13 NFR'nin 9'u Geçti, 4'ü Geçti (kısmi, ADR-0067): NFR-03, NFR-05, NFR-08, NFR-11. Kaldı yok.
+
+**Test-plan §7 faz 6 çıkışı:** Must FR'lerin TC'leri geçiyor; her AC'nin kanıtı var; §4 kapsam hedefleri tutuyor; elle TC'ler yapıldı ya da ADR-0067 ile kapsam dışı; §8 hata tablosunda açık hata yok. Kalan adım `spec-reviewer` (küçük karar 10).
