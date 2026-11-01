@@ -1,17 +1,20 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-11-01 (faz 5, `feature/operations` açıldı)
-- **Aşama:** eng-process **faz 5**. `feature/foundation` (G01–G04, PR #1), `feature/catalog-members` (G05–G08, PR #2), `feature/circulation` (G10 → G09 → G11 → G12, PR #3) ve `feature/notifications` (G13, PR #4) birleşti; `main` = `c2e5bc8` (PR #4'ün merge commit'i). `feature/notifications` kapandı. Şu an `feature/operations` (**G14 → G15 → G16**: yedek, şifreli dışa aktarma ve geri yükleme; saklama ve anonimleştirme; zamanlayıcı ve telafi) açık; ilk `docs:` commit'i açılış kararlarını yazdı (ADR-0053…0055, plan §11 "G14–G16 — açılıştan önce verilen kararlar", TC-320…TC-339).
-- **G13 (PR #4, birleşti) özeti:**
-  - **`92bf48e` (`docs:`):** STATUS'taki bayat satırlar, ADR-0052, G13 açılış kararları (plan §11), G13 dosya listesine `prod.py`, plan §3'te ADR-0052 ve sıradaki numara 0053.
-  - **`158d43d` (`feat:` G13):** `notifications` app'i: `ReminderLog` (son tarih başına kısmi benzersiz indeks, ADR-0039), pencere kuralları, `send_due_reminders` (S6 adayları, önce e-posta sonra kendi işleminde kayıt, benzersiz kısıt ihlali `skipped`, SMTP hatası FAILED), `send_manual_reminders` (tekrar engeli yok, `triggered_by`, denetim kaydı yok), KL-13 e-posta şablonları, `send_reminders` komutu (`run_job`, FAILED varsa çıkış 1 ve `job_run` SUCCESS), `/gecikenler/` ve `/gecikenler/hatirlat/`, menü ve ana sayfada "Gecikenler", üretimde `EMAIL_TIMEOUT = 10` (ADR-0052).
-  - Sonuç (bulut, Linux, Python 3.11.18): `python -m pytest notifications -q` → 67 passed; `python -m pytest -q` → 852 passed (`slow` dahil; önceki 784); `-m slow` → 4 passed; `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı: `*/domain.py` %100 (`--fail-under=90` geçti), `accounts/permissions.py` ve `accounts/middleware.py` %100, `notifications/services.py` %98 (hedef yok, yalnız rapor; kapsanmayan tek satır ulaşılamayan üyesiz ödünç dalı), `notifications` toplam %99, proje toplamı %99.
-  - Dev ayarlarıyla `python manage.py send_reminders --date 2026-11-14` → "gönderilen=2, başarısız=0, atlanan=0", çıkış 0 (konsolda iki e-posta: DUE_SOON ve OVERDUE_1); ikinci koşu "gönderilen=0, başarısız=0, atlanan=0", çıkış 0.
-  - `/gecikenler/` geliştirme sunucusunda Playwright ile açıldı ve gözle kontrol edildi: seçim kutuları, "rıza yok"/"e-posta yok" etiketleri, kapalı tarih düşülmüş gecikme günü, boş seçim hatası, elle hatırlatma sonrası ödünç başına mesajlar (gönderildi yeşil, diğerleri sarı).
-  - Test planında 244 TC "Geçti" (224 + G13'ün 20'si).
-  - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G13 kutusu kanıtıyla işaretli; uygulama ayrıntıları ve onaya sunulan metinler §11'de ("G13 — uygulama ayrıntıları", "G13 uygulayıcının seçtiği kullanıcıya görünen metinler").
-  - Yerel Windows (R-15, Python 3.11.9, 2026-11-01): `python -m pytest -q` → 852 passed (eşzamanlılık testleri dahil; geçici dosya sorunu yok); `-m slow` → 4 passed; `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı: `*/domain.py` %100 (`--fail-under=90` çıkış 0), `accounts/permissions.py` ve `accounts/middleware.py` %100 (`--fail-under=100` çıkış 0), `billing/services.py` %100, `circulation/services.py` %98, `members/services.py` %100, `notifications/services.py` %98, `notifications` toplam %99, proje toplamı %99. `send_reminders --date 2026-11-14` migrate edilmiş boş geçici veritabanında (scratchpad, `LIBRARY_DB_PATH`) iki kez → "gönderilen=0, başarısız=0, atlanan=0", çıkış 0; `--date 2026-13-40` → "CommandError: Geçersiz tarih: 2026-13-40", çıkış 1. İki e-postalı senaryo yerelde veriyle denenmedi; testler kapsıyor.
-- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`c2e5bc8`), `feature/foundation`, `feature/catalog-members`, `feature/circulation` ve `feature/notifications` (kapandı), `feature/operations` (açık).
+- **Güncelleme:** 2026-11-01 (faz 5, `feature/operations` G14–G16 tamam, PR açıldı)
+- **Aşama:** eng-process **faz 5**. `feature/foundation` (G01–G04, PR #1), `feature/catalog-members` (G05–G08, PR #2), `feature/circulation` (G10 → G09 → G11 → G12, PR #3) ve `feature/notifications` (G13, PR #4) birleşti; `main` = `c2e5bc8` (PR #4'ün merge commit'i). Grup `feature/operations` (**G14 → G15 → G16**: yedek, şifreli dışa aktarma ve geri yükleme; saklama ve anonimleştirme; zamanlayıcı ve telafi) **tamam**; `main`'e PR açıldı, birleştirilmedi (birleştirme kullanıcı onayıyla yerel oturumda).
+- **`feature/operations` commit'leri** (her biri push edildi):
+  - **`992d59c` (`docs:`):** STATUS'taki bayat satırlar, ADR-0053…0055, plan §11 "G14–G16 — açılıştan önce verilen kararlar", G14–G16 ve G19 bölümlerine dosya ve arayüz ekleri, architecture §3'e `operations → notifications` oku, test planına TC-320…TC-339 ve §7 izlenebilirlik.
+  - **`08866de` (`feat:` G14):** `operations` app'i; `backup_db`, `export_backup`, `restore_backup`; `.libx` (scrypt + AES-256-GCM, başlık AAD); `.tmp` + `os.replace`; uygulama kilidi (`fcntl`/`msvcrt`); geri yüklemede `LIBX` magic baytı, doğrulama, koruma kopyası (ADR-0054), migration yok.
+  - **`96e0161` (`feat:` G15):** `anonymize_expired` (kayıt başına işlem; bağ koparma, arşiv sayacı, defter bağı ve `reminder_log.error` temizliği, ADR-0055; borçlu üye ertelenir, ADR-0045; ilk istisnada durur), `/uyeler/saklama/` ve yöneticiye "Saklama" bağlantısı, `Member.display_name`, üye ayrıntısında "Toplam ödünç"; TC-32 artık yönetici yollarının plan listesine tam eşitliğini ister.
+  - **`832344f` (`feat:` G16):** `operations/scheduler.py` (dört cron görevi, tek işçili yürütücü, açılışta ve saatlik telafi, ADR-0053; komut sarmalayıcı), `wsgi.py`'de uygulama kilidi ve `LIBRARY_SCHEDULER_ENABLED`, `base.py`'de stderr `LOGGING`.
+  - Son `docs:` commit'i: bu devir notu, plan §11 ve test planı.
+- **Sonuç (bulut, Linux, Python 3.11.18):** `python -m pytest operations -q` → 113 passed; `python -m pytest -q` → 972 passed (`slow` dahil; önceki 852); `-m slow` → 4 passed; `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı: `*/domain.py` %100 (`--fail-under=90` çıkış 0), `accounts/permissions.py` ve `accounts/middleware.py` %100 (`--fail-under=100` çıkış 0), `operations` toplam %99 (test planı §4 hedefi ≥ %80; `scheduler.py`, `domain.py`, `libx.py`, `applock.py`, `cli.py` ve komutlar %100, `backup.py` %99, `services.py` %95), proje toplamı %99.
+- **Elle doğrulama (bulut):** G14: dev veritabanında `backup_db` → `export_backup` → `restore_backup <libx> --yes`, sayımlar önce ve sonra 5/7/3, koruma kopyası `var/library.sqlite3.pre-restore-20261101-142040`. G15: `anonymize_expired` → "anonimleştirilen üye=1, bağı koparılan ödünç=2, ertelenen üye=2"; `/uyeler/saklama/`, anonim üyenin ayrıntısı ve aramadaki anonim satır Playwright ile göz kontrolünden geçti. G16: `LIBRARY_SCHEDULER_ENABLED=1 waitress-serve` → logda beş tetikleyicinin sonraki çalışma zamanı, telafi satırları ve görev sonuçları; aynı veritabanında ikinci süreç `AppLockError` ile durdu, uygulama açıkken `restore_backup` reddedildi.
+- **Test planı:** 308 TC "Geçti" (244 + G14'ün 31'i + G15'in 17'si + G16'nın 16'sı).
+- **Yerel Windows doğrulamasında kalanlar (R-15):** Kilit testleri TC-302 (`operations/tests/test_applock.py`) ve TC-313 (`operations/tests/test_scheduler.py::test_tc313_second_process_refused`) bulutta yalnız Linux'ta (`fcntl`) koştu; Windows (`msvcrt`) koşusu yerelde yapılmalı. Ayrıca yerelde `python -m pytest -q`, `-m slow`, `makemigrations --check --dry-run` ve kapsam komutları; isteğe bağlı olarak `waitress-serve` ile `LIBRARY_SCHEDULER_ENABLED=1` log kontrolü.
+- **Plan:** [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G14, G15 ve G16 kutuları kanıtıyla işaretli; açılış kararları, uygulama ayrıntıları ve onaya sunulan metinler §11'de ("G14–G16 — açılıştan önce verilen kararlar", "G14–G16 — uygulama ayrıntıları", "G14–G16 uygulayıcının seçtiği kullanıcıya görünen metinler").
+- **G13 (PR #4, birleşti):** 852 test, yerel Windows doğrulaması geçti; ayrıntı plan §11 ve git geçmişinde.
+- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`c2e5bc8`), `feature/foundation`, `feature/catalog-members`, `feature/circulation` ve `feature/notifications` (kapandı), `feature/operations` (PR açık, birleştirilmedi).
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
 - **Bulut oturumu:** Her grup için kullanıcı yeni bir bulut oturumu açar, Claude açılış istemini hazırlar (KL-38). Oturum kritik soruyu oturumun içinde sorar; planın vermediği metinleri seçip §11'de listeler ve PR'da onaya sunar (plan §11, 2026-11-01 kararları).
   - **Tarayıcı (önerilen):** claude.ai/code; repo `mhmtmndrn/kutuphane-odunc-sistemi`, ortam **Default** (Trusted ağ; pip için PyPI gerekir).
@@ -23,14 +26,22 @@
 - **G14–G16 açılışından önce (2026-11-01, kullanıcı onayı):** Üç kritik karar: [ADR-0053](decisions/0053-hourly-catch-up.md) (açılışa ek saatlik telafi; `misfire_grace_time=3600`, `coalesce=True`), [ADR-0054](decisions/0054-restore-keeps-pre-restore-copy.md) (geri yükleme mevcut veritabanını `<db>.pre-restore-YYYYMMDD-HHMMSS` olarak bırakır) ve [ADR-0055](decisions/0055-reminder-log-error-cleared-on-unlink.md) (bağ koparılırken `reminder_log.error` NULL). Dokuz küçük karar (komut argümanları ve geçersiz tarih, magic bayt, migration yok, `.tmp` + `os.replace`, tek işçili zamanlayıcı, komut sarmalayıcı ve stderr `LOGGING`, "Saklama" bağlantısı, `Member.display_name`, ilk istisnada durma) plan §11'de. Sıradaki ADR numarası 0056.
 - **G13 açılışından önce (2026-11-01):** [ADR-0052](decisions/0052-smtp-timeout.md) ve yedi küçük karar; plan §11.
 
-## G13 sapmaları ve dikkat edilecekler (ayrıntı plan §11)
+## G14–G16 sapmaları ve dikkat edilecekler (ayrıntı plan §11)
 
-- Plana ek arayüzler: `notifications.services.overdue_list` (`OverdueEntry(row, block)`), `ManualResult`'a `member_no`, `full_name`, `title`; domain `due_ranges`, `contact_block`, `OUTCOME_LABELS`, `counts_text`, `error_text`.
-- Elle hatırlatmada bilinmeyen ya da sayısal olmayan kimlik hiçbir şey göndermeden "Ödünç bulunamadı" verir; liste 200 ile gösterilir. "Gecikmemiş" ölçütü listeyle aynıdır (`due_on < bugün` ve açık).
-- Komut, FAILED varsa sayımları yazdıktan sonra `CommandError("<n> hatırlatma gönderilemedi", returncode=1)` verir; `call_command` ile çağıran (G16 zamanlayıcısı) bu hatayı yakalamalıdır, `job_run` zaten SUCCESS'tir.
-- E-posta şablonları `autoescape off` düz metindir; gönderen `DEFAULT_FROM_EMAIL` (üretimde `LIBRARY_EMAIL_FROM`).
-- Komut testleri `notifications/tests/test_commands.py`'de (KL-11'deki üç dosyaya ek).
-- `INSTALLED_APPS`, kök `urls.py`, `base.html`, `home.html`, `app.css` (`.message-warning`, `.tag`, `.num`), `tests/test_authorization.py` (`gecikenler/` yolları personel kümesinde) ve `tests/test_prod_settings.py` (ADR-0052 testi) dosya listesi dışında değişti.
+- **Yedeğin kaynağı:** SQLite yedek API'si, kaynak bağlantı bir işlemin içindeyse sonsuza dek bekler. `backup_db` bu yüzden Django bağlantısını değil, veritabanı dosyasına açılan ayrı bir bağlantıyı (`mode=rw`) kullanır. Yedek dosyası `journal_mode=DELETE`'tir (yanında `-wal` yok).
+- **Klasörler oluşturulmaz:** Yedek ya da dışa aktarma klasörü yoksa komut "… klasörü bulunamadı" ile çıkış 1 verir (takılı olmayan disk sistem diskine yazılmasın diye). Kurulumda klasörler elle açılır (G19).
+- **Geri yükleme:** Kilit geri yükleme boyunca tutulur. `LIBX` ile başlamayan her dosya SQLite olarak denenir. Koruma kopyası `<db>.pre-restore-YYYYMMDD-HHMMSS` veritabanı klasöründe kalır ve elle silinir (KVKK notu G19'da kurulum belgesine).
+- **`runserver` de kilidi tutar:** `WSGI_APPLICATION` üzerinden `wsgi.py`'yi yüklediği için geliştirme sunucusu açıkken `restore_backup` reddedilir ve aynı veritabanında ikinci bir sunucu açılmaz. Zamanlayıcı yalnız `LIBRARY_SCHEDULER_ENABLED=1` ile başlar.
+- **Log:** `operations` ve `django` logger'ları stderr'e yazar ve `propagate: False`'tur; waitress kök logger'a kendi handler'ını eklediği için aksi hâlde her satır iki kez çıkar. Testlerde `caplog` handler'ı `operations` logger'ına doğrudan eklenir (`operations/tests/test_scheduler.py`).
+- **Zamanlayıcı:** Tek işçi; telafi işleri `catch-up-<sıra>-<görev>` kimlikleriyle kuyruğa girer (APScheduler aynı anda vadesi gelenleri kimlik sırasıyla çalıştırır). Açılıştaki telafi hatası uygulamayı durdurmaz, loglanır.
+- **Anonimleştirme:** Ödüncün saklama başlangıcı `closed_on`'dur (iade, kayıp, hasar). Bağ koparma adımları queryset `update` iledir (defter yalnız eklenir). `Member.display_name` adın tek kaynağıdır; nüsha ayrıntısındaki ödünç geçmişi yalnız üye no gösterdiği için değişmedi.
+- **Yetki testi:** 19 yönetici yolunun hepsi var; TC-32 artık tam eşitlik ister. Yeni bir yönetici yolu eklenirse `tests/test_authorization.py`'deki liste de güncellenmelidir.
+- **Dosya listesi dışında değişenler:** Yok; açılışta G14–G16 listelerine eklenenler (`base.py`, `members/models.py`, şablonlar, `circulation/services.py`, `notifications/services.py`, `templates/base.html`, `tests/test_authorization.py`, `operations/domain.py`) dışında dosya değişmedi. `docs/architecture.md` §3'e `operations → notifications` oku eklendi (ADR-0055).
+
+## G13 için hâlâ geçerli notlar
+
+- `send_reminders` FAILED varken `CommandError("<n> hatırlatma gönderilemedi", returncode=1)` verir; G16 zamanlayıcısı bunu yakalayıp loglar, `job_run` SUCCESS'tir.
+- E-posta şablonları `autoescape off` düz metindir; gönderen `DEFAULT_FROM_EMAIL` (üretimde `LIBRARY_EMAIL_FROM`). Komut testleri `notifications/tests/test_commands.py`'dedir.
 
 ## Önceki grup (G09–G12) için hâlâ geçerli notlar
 
@@ -40,8 +51,9 @@
 
 ## Sıradaki adım
 
-1. **`feature/operations` (bu oturum):** G14 → G15 → G16, görev başına TDD ve bir `feat:` commit'i; sonra handoff `docs:` commit'i ve `main`'e PR (birleştirilmez).
-2. **Sonra:** `feature/seed-load` (G17–G18), ardından `feature/deploy` (G19). Genel sıra: G01 → G13 (tamam), G14…G16, G17…G18, G19.
+1. **PR incelemesi (`feature/operations` → `main`):** Kullanıcı §11'deki "G14–G16 uygulayıcının seçtiği kullanıcıya görünen metinler" listesini onaylar; yerel Windows'ta TC-302 ve TC-313 dahil `python -m pytest -q`, `-m slow`, `makemigrations --check --dry-run` ve kapsam komutları çalışır; birleştirme kullanıcı onayıyla yerel oturumda yapılır. Sonraki dalın ilk commit'i `main`'in yeni hash'ini bu nota yazar.
+2. **Sonraki grup:** `feature/seed-load` (**G17–G18**: tohum veri ve yük testi betiği). G17'nin `load_seed_data` komutu `operations` app'ine eklenir (`operations/seed.py`). Açık noktalar açılış isteminden önce kullanıcıya sorulur; istem yeni bir bulut oturumunda verilir.
+   - Genel sıra: G01 → G16 (tamam, G14–G16 PR'da), G17…G18, G19.
 
 ## Açık sorular ve riskler
 
@@ -58,11 +70,12 @@
 - **Tasarım:** [architecture.md](architecture.md) ve [data-design.md](data-design.md).
 - **ADR'ler:** [0001–0055](decisions/), hepsi kabul edildi; özet plan §3. Sıradaki numara 0056.
 - **Plan:** §3 kararlar ve KL-1…KL-46; §4 görevler G01–G19; §7 izlenebilirlik; §8 tutarlılık; §11 sapmalar ve metinler.
-- **Test planı:** [docs/test-plan.md](test-plan.md): 339 TC (TC-320…TC-339 G14–G16 açılışında eklendi); 244'ü "Geçti". Elle TC'ler: TC-223, TC-225…TC-234, TC-319 (faz 6).
+- **Test planı:** [docs/test-plan.md](test-plan.md): 339 TC (TC-320…TC-339 G14–G16 açılışında eklendi); 308'i "Geçti". Elle TC'ler: TC-223, TC-225…TC-234, TC-319 (faz 6).
 - **Araştırma:** [ISBN meta veri](research/2026-10-31-isbn-meta-veri-apileri.md), [demo veri seti](research/2026-10-31-demo-kitap-veri-seti.md).
 
 ## Geçmiş (özet)
 
+- **2026-11-01, `feature/operations` bulut oturumu:** İlk commit `docs:` (bayat STATUS satırları, ADR-0053…0055, açılış kararları, TC-320…TC-339), ardından G14, G15, G16 görev başına TDD (testler önce kırmızı) ve birer `feat:` commit'i, sonra handoff `docs:`; her biri push edildi. Ekranlar Playwright ile, zamanlayıcı `waitress-serve` ile elle doğrulandı. Oturum içinde yeni kritik soru çıkmadı (sıradaki ADR 0056). PR açıldı, birleştirilmedi.
 - **2026-11-01, PR #4 (G13):** Yerel Windows doğrulaması (852 passed), metinler onaylandı, merge commit `c2e5bc8`. `feature/operations` açıldı.
 - **2026-11-01, `feature/notifications` bulut oturumu:** İlk commit `docs:` (bayat STATUS satırları, ADR-0052, G13 açılış kararları), ardından G13 TDD ile (20 TC önce kırmızı) tek `feat:` commit'i, sonra `docs:` (test planı, plan kutusu, §11, STATUS); her biri push edildi. Ekran Playwright ile göz kontrolünden geçti. PR açıldı, birleştirilmedi.
 - **2026-11-01, PR #3 (G09–G12):** Yerel Windows doğrulaması (784 passed), metinler onaylandı, merge commit `d0c4555`.
@@ -80,6 +93,10 @@
 - Servis hedefi: `coverage report --include="billing/services.py,circulation/services.py" --fail-under=85`; diğer hedefler test planı §4 (`notifications/services.py` için hedef yok, yalnız rapor).
 - Hatırlatmalar: `python manage.py send_reminders [--date YYYY-MM-DD]` (dev'de konsol backend'i; çıktı "gönderilen=…, başarısız=…, atlanan=…").
 - Migration kontrolü: `python manage.py makemigrations --check --dry-run`.
+- `operations` kapsamı (hedef ≥ %80, test planı §4): `coverage report --include="operations/*" --fail-under=80`.
+- Yedek ve geri yükleme (dev'de `var/backups`, `var/exports` ve `var/export-passphrase.txt` elle açılır): `python manage.py backup_db [--date …]`, `export_backup [--date …] [--passphrase-file PATH]`, `restore_backup PATH [--passphrase-file PATH] --yes` (uygulama ve `runserver` kapalıyken).
+- Anonimleştirme: `python manage.py anonymize_expired [--date …]` (çıktı "anonimleştirilen üye=…, bağı koparılan ödünç=…, ertelenen üye=…").
+- Zamanlayıcı: `LIBRARY_SCHEDULER_ENABLED=1 waitress-serve --listen=127.0.0.1:8000 --threads=8 library_site.wsgi:application` (dev için ayrıca `DJANGO_SETTINGS_MODULE=library_site.settings.dev`); log stderr'de.
 
 ## Tuzaklar
 
@@ -100,3 +117,6 @@
 - **E-posta testleri:** Test ayarı bellek backend'idir (`mail.outbox`). SMTP hatası `django.core.mail.backends.locmem.EmailBackend.send_messages` yamalanarak, eşzamanlı çalışma `notifications.services._send` yamalanarak canlandırılır. SMTP sırasında açık işlem olmadığını sınayan test `django_db(transaction=True)` ister.
 - **Bulutta yerel `main`:** Klonlanan depodaki yerel `main` dalı bayat olabilir (G13 oturumunda `1a93f2d`'deydi). Yeni dalı `git fetch origin main` ardından `origin/main`'den aç.
 - **Kum havuzu:** pytest geçici klasörü engellenirse `PYTEST_DEBUG_TEMPROOT` yalnız kabukta scratchpad'e yönlendirilir.
+- **SQLite yedeği ve işlem:** `sqlite3.Connection.backup`, kaynak bağlantı açık bir işlemdeyse dönmeden bekler; yedeği hiçbir zaman `transaction.atomic()` içindeki Django bağlantısından alma (G14 ayrı bağlantı kullanır).
+- **`operations` testleri:** Komut testleri `ops` fixture'ıyla (`file_db` ve `django_db(transaction=True)`) dosya veritabanında koşar; scrypt maliyeti `backup.KDF_PARAMS` yamasıyla düşürülür (TC-192 gerçek değerlerle). Kilit testleri kilidi alt süreçte tutar (`operations/tests/support.py`).
+- **Kilit dosyası:** `<LIBRARY_DB_PATH>.app.lock` kalıcıdır, silinmesi gerekmez; kilit süreç ölünce kalkar. `runserver` de kilidi tutar.
