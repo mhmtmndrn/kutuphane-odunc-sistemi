@@ -1672,6 +1672,72 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
 
 Henüz yok.
 
+### 12.4 Kurulum kontrol listesi (2026-11-01)
+
+Ana kaynak `docs/kurulum.md`'dir; bu liste yalnız sırayı ve ADR-0067'nin getirdiği sapmaları gösterir.
+Her adımda **belgeyi oku, komutu belgeden al**. Belgede takıldığın, belirsiz bulduğun ya da hata veren her yeri not et ve Claude'a yaz: bunlar §12.2'ye bulgu olarak girer.
+
+Sabit değerler:
+
+| Ne | Değer |
+|---|---|
+| IP (`LIBRARY_HOST`, `LIBRARY_BIND`, `LIBRARY_ALLOWED_HOSTS`) | `127.0.0.2` |
+| Yedek klasörü (`LIBRARY_BACKUP_DIR`) | `C:\Kutuphane\backups` |
+| Dışa aktarma klasörü (`LIBRARY_EXPORT_DIR`) | `C:\Kutuphane\exports` |
+| Sürüm arşivi | `library-v1.0.0-rc.1.zip` (`git archive --format=zip --prefix=library/ v1.0.0-rc.1 -o library-v1.0.0-rc.1.zip`, depo klasöründe) |
+
+#### A. Hazırlık (normal kullanıcı)
+
+1. Bir indirme klasörü aç, ör. `C:\Users\Mehmet Emin\Downloads\kutuphane-kurulum`, ve sürüm arşivini buraya kopyala.
+2. **Python 3.11, "Install for all users"** (belge "Python ve sanal ortam"). Bu makinedeki mevcut 3.11 yalnız kullanıcı başına kurulu (`AppData\Local\Programs\Python\Python311`); `library-svc` bu klasörü okuyamaz. python.org'dan 3.11.x 64 bit yükleyiciyi indir → "Customize installation" → "Install for all users" (`C:\Program Files\Python311`). Mevcut kurulumu kaldırma.
+3. Caddy 2.11.7 Windows zip'ini ve WinSW 2.12.0 `WinSW-x64.exe`'yi belgedeki bağlantılardan indirme klasörüne indir.
+4. Firefox'u mozilla.org'dan kur (TC-231, TC-230).
+
+#### B. Kurulum (Yönetici olarak açılmış PowerShell, indirme klasöründe)
+
+Belgenin "İlk kurulum" sırası, komutlar "Windows" bölümünden:
+
+5. **Sabit IP:** Atla (ADR-0067).
+6. **Hesap:** Belgedeki gibi. Parolayı bir yere not et; XML'lere yazılacak.
+7. **Klasörler ve izinler:** İlk `New-Item` ve dört `icacls` satırı belgedeki gibi.
+   **Sapma (harici disk yok):** `E:` komutları yerine:
+   ```powershell
+   New-Item -ItemType Directory -Force C:\Kutuphane\backups, C:\Kutuphane\exports
+   icacls C:\Kutuphane\backups /grant "library-svc:(OI)(CI)M"
+   icacls C:\Kutuphane\exports /grant "library-svc:(OI)(CI)M"
+   ```
+   Parola dosyası belgedeki gibi (`notepad ...`, ilk satır parola, UTF-8).
+8. **Sürüm arşivi:** "İlk kurulumda klasörü silip arşivi açın": `Remove-Item C:\Kutuphane\app`, sonra `Expand-Archive` ve `Rename-Item` (zip adı `library-v1.0.0-rc.1.zip`).
+9. **Python ve sanal ortam:** Belgedeki iki komut. Ardından şunu çalıştır ve çıktıyı bana yaz:
+   ```powershell
+   Get-Content C:\Kutuphane\venv\pyvenv.cfg
+   ```
+   `home` satırı `C:\Program Files\Python311` göstermeli. `AppData` gösteriyorsa bu bir bulgudur; durup bana yaz.
+10. **Caddy:** Özeti karşılaştır, zip'i aç (belge "Caddy").
+11. **Servis dosyaları:** WinSW kopyaları ve XML'ler (belge "Servisler", ilk blok). XML'leri doldur:
+    - `<password>` (iki XML): `library-svc` parolası
+    - `LIBRARY_SECRET_KEY`: belgedeki `python -c ...` komutunun çıktısı
+    - `LIBRARY_ALLOWED_HOSTS`, `LIBRARY_HOST`, `LIBRARY_BIND`: `127.0.0.2`
+    - `LIBRARY_BACKUP_DIR`: `C:\Kutuphane\backups`; `LIBRARY_EXPORT_DIR`: `C:\Kutuphane\exports`
+    - **SMTP (kurum hesabı yok, TC-232 kapsam dışı):** `LIBRARY_EMAIL_HOST` = `127.0.0.1`, `LIBRARY_EMAIL_USER` = `test`, `LIBRARY_EMAIL_PASSWORD` = `test`, `LIBRARY_EMAIL_FROM` = `kutuphane@example.invalid`. 09.00 hatırlatma görevi bağlanamayıp hata kaydı yazabilir; beklenen.
+12. **migrate, collectstatic, ilk yönetici:** "Komutların elle çalıştırılması" bloğuyla bir oturum aç, sonra `migrate`, `collectstatic --noinput`, `createsuperuser`.
+    **Test ortamı olduğu için** aynı oturumda demo verisini yükle (TC-231, TC-234 için):
+    ```powershell
+    python manage.py load_seed_data --profile demo --actor <createsuperuser'da verdiğin ad>
+    ```
+13. **Servisler:** Yedek klasörleri hazır; belgedeki `install`, `install`, `Start-Service library-caddy`, `Get-Service`. İki servis "Running" olmalı. Değilse `C:\Kutuphane\winsw\logs` içindeki son logları bana yaz.
+14. **Güvenlik duvarı:** Atla (ADR-0067).
+15. **NTP:** Belgedeki iki `w32tm` komutu; çıktıyı bana yaz. (Not: bu makinede `w32time` servisi şu an durmuş görünüyor; belgenin bu durumu karşılayıp karşılamadığına bakacağız.)
+
+#### C. Kontrol (belge "İlk kurulum → Kontrol" ve "Windows → Kontrol")
+
+16. `netstat` komutu (belge "Kontrol"); çıktıyı bana yaz. `<IP>` yerine `127.0.0.2`.
+17. Belgedeki `curl -k https://<IP>/static/css/app.css` ve `/admin/` kontrolleri, IP `127.0.0.2`. Komutu **belgede yazdığı gibi** dene; PowerShell'de hata verirse bana yaz.
+18. **Personel bilgisayarı adımları bu makinede** (belge "Personel bilgisayarları"): `root.crt`'yi `certutil -addstore -f Root root.crt` ile ekle (Yönetici komut istemi), Firefox adımı, kısayol isteğe bağlı.
+19. Chrome, Edge ve Firefox'ta `https://127.0.0.2/` sertifika uyarısı olmadan açılmalı; `http://127.0.0.2/` HTTPS'e yönlenmeli.
+
+Bitince ya da bir yerde takılınca bana yaz: hangi adım, ne çıktı. Kalan TC'leri (TC-223, TC-225, TC-231, TC-234, TC-319, TC-229 ve TC-230'un kalanı) ondan sonra birlikte yaparız.
+
 ### 12.3 Kabul tablosu
 
 Elle TC'ler ve tam test koşusu bittikten sonra doldurulur.

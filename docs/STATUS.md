@@ -1,19 +1,18 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-11-01 (faz 6 başladı: açılış kararları ADR-0067'de; proje artık bir deneme projesi)
-- **Aşama:** eng-process **faz 6 (doğrulama)**. Faz 5 tamam: PR #1…#7 (G01–G19) birleşti, `main` = `b3cc2a1`. Dal `feature/phase6-verification`. Kalan: faz 6 ve faz 7 (kapanış).
-- **Sıradaki adım:** `v1.0.0-rc.1` etiketi ve zip'i (push ayrıca onaylanır); ardından kullanıcı `docs/kurulum.md` Windows yolunu Claude'un kontrol listesiyle bu makinede `127.0.0.2` adresine kurar (ADR-0067). Elle TC'lerin kapsamı plan §12.1'de. Kullanıcı Firefox'u kurar (TC-231).
-- **Yerel doğrulama (2026-11-01, Windows 11, Python 3.11.9):** 1042 passed, `slow` 7, migration temiz, dört kapsam eşiği çıkış 0, proje %97. Caddy 2.11.7 Windows ikilisi (SHA-512 `checksums.txt` ve ADR-0063 ile aynı): `caddy validate` geçerli, LF Caddyfile `fmt` farksız; `127.0.0.2`'de waitress + Caddy: `/static/css/app.css` 200, `/admin/` 404, `/giris/` 200, HTTP 308, IP SAN'lı sertifika `root.crt` ile doğrulandı, arama sorgusu Caddy loguna düşmedi. Servis kaydı yapılmadı. Dikkat: Git for Windows `curl`'ü (Schannel) yerel CA'da `--cacert` ile 000 döner; `--ssl-no-revoke` ya da `-k` gerekir. Metinler ve birleştirme onaylandı (plan §11 "PR #7 yerel doğrulaması ve onaylar").
-- **`feature/deploy` commit'leri** (her biri push edildi):
-  - **`7c69b7b` (`docs:`):** STATUS'taki bayat satırlar (`main` = `e1ba56a`), ADR-0060…0066, plan G19 ve §2, §3, §5, §7, §11 ("G19 — açılıştan önce verilen kararlar"), test planına TC-359…TC-366.
-  - **`a97ef80` (`feat:` G19):** `deploy/Caddyfile`, `deploy/winsw/library-{app,caddy}.xml` (WinSW 2.12.0), `deploy/systemd/library-{app,caddy}.service`, `deploy/library.env.example`, `docs/kurulum.md` (ortak gövde + Windows ve Linux), `docs/kullanim-kilavuzu.md`, `README.md` ("Belgeler", "Geliştirme ortamı", "Testler"), `tests/test_deploy_files.py` (TC-359…TC-366; TDD, önce 19 failed).
-  - Son `docs:` commit'i: plan G19 kanıtı ve kutusu, §11 uygulama ayrıntıları ve onaya sunulan metinler, test planı durumları, bu devir notu.
-- **Sonuç (bulut, Linux, Python 3.11.18):** `python -m pytest -q` → 1042 passed (önceki 1022); `-m slow` → 7 passed; `makemigrations --check --dry-run` → "No changes detected"; kapsam `*/domain.py` %100, `accounts` izinleri %100, `billing`/`circulation` servisleri %99, `operations` %99 (dört eşik çıkış 0), proje %97.
-- **Elle doğrulama (bulut):** Caddy 2.11.7 Linux ikilisi GitHub sürüm indirmesinden alındı (SHA-512 doğru): `caddy validate` → "Valid configuration", `caddy fmt` farksız. Prod ayarlarıyla geçici veritabanında waitress + Caddy (`127.0.0.2`): `/static/css/app.css` → 200, `/admin/` → 404, HTTP → 308 HTTPS, 80/443 yalnız bind adresinde, waitress yalnız `127.0.0.1:8000`, IP sertifikası `root.crt` ile doğrulandı, arama URI'si Caddy loguna düşmedi. `systemd-analyze verify` yalnız eksik ikilileri bildirdi. WinSW Windows'ta çalıştırılmadı.
-- **Test planı:** 348 TC "Geçti" (340 + G19'un 8 otomatik TC'si); elle TC'ler TC-223, TC-225…TC-234, TC-319 faz 6'da.
-- **Plan:** [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G19 kutusu kanıtıyla işaretli; kararlar, uygulama ayrıntıları ve onaya sunulan metinler §11'de ("G19 — açılıştan önce verilen kararlar", "G19 — uygulama ayrıntıları", "G19 uygulayıcının seçtiği kullanıcıya görünen metinler").
-- **G17–G18 (PR #6, birleşti `e1ba56a`):** 1022 test, yerel Windows doğrulaması geçti, ADR-0059; ayrıntı plan §11 ve git geçmişinde.
-- **G14–G16 (PR #5, birleşti):** 972 test, yerel Windows doğrulaması geçti; ayrıntı plan §11 ve git geçmişinde.
+- **Güncelleme:** 2026-11-01 (faz 6 açıldı: ADR-0067, `v1.0.0-rc.1` etiketi ve zip'i hazır; kurulum kullanıcıda, henüz başlamadı)
+- **Aşama:** eng-process **faz 6 (doğrulama)**, plan §12. Faz 5 tamam (PR #1…#7, G01–G19, `main` = `b3cc2a1`). Proje artık bir **deneme projesi**: gerçek kütüphanede kullanılmayacak, kurulmuş temel gereksiz değiştirilmez (ADR-0067). Kalan: faz 6 ve faz 7 (kapanış).
+- **Git:** Dal `feature/phase6-verification`: `4179afe` (ADR-0067, plan §12, test planı, STATUS), `6dfe30e` (TC-230 kök sertifika ifadesi), ardından plan §12.4 ve bu devir notunun `docs:` commit'i (kullanıcı onayıyla, 2026-11-01). Annotated `v1.0.0-rc.1` → `b3cc2a1`. Dal da etiket de **yalnız yerelde, push edilmedi**.
+- **Kullanıcı onayı bekleyen:** Dalın ve `v1.0.0-rc.1` etiketinin push'u (öneri: push et). Kullanıcı onayları yeni oturumda vereceğini söyledi; push'tan önce tek soruyla açıkça teyit al. Belgelerin commit'i onaylandı ve yapıldı.
+- **Sıradaki adım:** eng-process faz 6, plan §12.
+  1. Push onayını sor.
+  2. Kullanıcı kurulumu plan **§12.4 kontrol listesiyle** yapar (`docs/kurulum.md` Windows yolu, `127.0.0.2`, `C:\Kutuphane\{app,backups,exports}`). Zip önceki oturumun scratchpad'inde kaldı; gerekirse depo klasöründe `git archive --format=zip --prefix=library/ v1.0.0-rc.1 -o <yeni scratchpad>\library-v1.0.0-rc.1.zip` ile yeniden üret ve yolunu kullanıcıya ver.
+  3. Kullanıcının bildirdiği her takılmayı plan §12.2'ye bulgu olarak yaz (belge düzeltmesi `docs:`; kod değişirse `v1.0.0-rc.2`).
+  4. Ardından elle TC'ler (plan §12.1): TC-223, TC-225, TC-231, TC-234, TC-319 tam; TC-229, TC-230 kısmi. Sonra tam test koşusu, kabul tablosu (§12.3), `spec-reviewer`, bulgular, `v1.0.0` ve temizlik sorusu (küçük karar 9).
+- **Kurulumda beklenen bulgular (öngörü, doğrulanmadı):** (a) Python 3.11 bu makinede yalnız kullanıcı başına kurulu (`AppData\Local\Programs\Python\Python311`); "all users" kurulumundan sonra bile `py -3.11 -m venv` kullanıcı başına olanı seçebilir, servis hesabı okuyamaz (§12.4 adım 9'da `pyvenv.cfg` kontrolü). (b) `w32time` servisi durmuş; belgedeki `w32tm /query /status` hata verebilir. (c) Belgenin ortak gövdesindeki `curl -k` Windows PowerShell 5.1'de `Invoke-WebRequest` takma adına düşer; `curl.exe` gerekir. Makinede 80/443/8000 boş, saat dilimi Turkey Standard Time, yalnız C: sürücüsü var, Firefox kurulu değil (kullanıcı kuracak).
+- **Test planı:** 348 TC "Geçti"; TC-226, 227, 228, 232, 233 "Kapsam dışı (deneme projesi, ADR-0067)"; elle kalan TC-223, 225, 229 (kısmi), 230 (kısmi), 231, 234, 319 "Planlandı".
+- **Son doğrulama (faz 5 sonu, 2026-11-01, yerel Windows 11, Python 3.11.9):** 1042 passed, `slow` 7, migration temiz, dört kapsam eşiği çıkış 0, proje %97; Caddy + waitress `127.0.0.2`'de geçici denendi, servis kaydı yapılmadı. Ayrıntı plan G19 ve §11; PR #5…#7 notları git geçmişinde.
+- **Plan:** [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md) (faz 6: §12).
 - **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`b3cc2a1`), `feature/phase6-verification` (açık), `feature/foundation`, `feature/catalog-members`, `feature/circulation`, `feature/notifications`, `feature/operations` ve `feature/seed-load` (kapandı), `feature/deploy` (kapandı).
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
 - **Bulut oturumu:** Her grup için kullanıcı yeni bir bulut oturumu açar, Claude açılış istemini hazırlar (KL-38). Oturum kritik soruyu oturumun içinde sorar; planın vermediği metinleri seçip §11'de listeler ve PR'da onaya sunar (plan §11, 2026-11-01 kararları).
@@ -73,10 +72,7 @@
 
 ## Sıradaki adım
 
-1. **Etiket:** `main` (`b3cc2a1`) üzerine annotated `v1.0.0-rc.1`; `git archive` zip'i (ADR-0064). Push kullanıcı onayıyla.
-2. **Kurulum:** Kullanıcı `docs/kurulum.md` Windows yolunu izler; adres `127.0.0.2`, klasörler `C:\Kutuphane\{app,backups,exports}`; DHCP, güvenlik duvarı ve kısayol adımları atlanır (ADR-0067). Takılınan adımlar plan §12.2'ye.
-3. **Elle TC'ler:** TC-223, TC-225, TC-231, TC-234, TC-319 tam; TC-229, TC-230 kısmi (plan §12.1).
-4. **Doğrulama:** Tam test koşusu, kabul tablosu (plan §12.3), `spec-reviewer`, bulgular kullanıcıya; ardından `v1.0.0` ve temizlik sorusu; faz 7.
+Baştaki "Sıradaki adım" maddesine bakın (etiket ve zip yerelde hazır; push onayı, kurulum, bulgular, elle TC'ler, doğrulama, faz 7).
 
 ## Açık sorular ve riskler
 
