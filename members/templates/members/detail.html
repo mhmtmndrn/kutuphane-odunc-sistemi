@@ -7,7 +7,7 @@
   <p><a href="{% url 'members:search' %}">Üyeler</a></p>
   <h1>Üye {{ member.member_no }}</h1>
   {% if member.is_anonymized %}
-    <p>Anonimleştirilmiş üye · Pasif</p>
+    <p>{{ member.display_name }} · Pasif</p>
   {% else %}
     <table>
       <tbody>
@@ -22,6 +22,7 @@
 
   <h2>Ödünç ve borç</h2>
   <p>Borç: {{ balance|tl }} · <a href="{% url 'billing:statement' member.member_no %}">Borç dökümü</a></p>
+  <p>Toplam ödünç: {{ loan_total }}</p>
   <h3>Açık ödünçler</h3>
   {% include "circulation/_loans.html" with loans=open_loans next=detail_url %}
 

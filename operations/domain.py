@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
 _BACKUP = re.compile(r"^library-(\d{8})\.sqlite3$")
@@ -63,3 +64,35 @@ def passphrase_from_text(text: str) -> str:
     if not passphrase:
         raise ValueError("empty passphrase")
     return passphrase
+
+
+# --- G15: retention (FR-25, phase 3 small decision 4, ADR-0018, ADR-0045) ---------
+
+
+def add_years(d: date, years: int) -> date:
+    """The same day ``years`` later (or earlier); 29 February falls back to
+    28 February."""
+    try:
+        return d.replace(year=d.year + years)
+    except ValueError:
+        return d.replace(year=d.year + years, day=28)
+
+
+def is_expired(start: date, years: int, today: date) -> bool:
+    """Retention is over the day after the anniversary (small decision 4)."""
+    return add_years(start, years) < today
+
+
+@dataclass(frozen=True)
+class AnonymizeCounts:
+    members: int
+    loans: int
+    deferred: int
+
+
+def anonymize_counts_text(counts: AnonymizeCounts) -> str:
+    """Output and ``job_run`` detail of ``anonymize_expired`` (architecture §6.2)."""
+    return (
+        f"anonimleştirilen üye={counts.members}, bağı koparılan ödünç={counts.loans}, "
+        f"ertelenen üye={counts.deferred}"
+    )

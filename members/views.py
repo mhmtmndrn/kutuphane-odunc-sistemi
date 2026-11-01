@@ -1,4 +1,4 @@
-"""Member screens (plan §4.1, G06, G11). Views only call forms and services.
+"""Member screens (plan §4.1, G06, G11, G15). Views only call forms and services.
 
 The detail screen also shows open loans and the balance, and deactivation
 calls ``circulation.services.deactivate_member``: views are leaves and may
@@ -13,11 +13,13 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods, require_POST
 
-from accounts.permissions import staff_view
+from accounts.models import Role
+from accounts.permissions import require_role, staff_view
 from administration import clock
 from administration.errors import RuleViolation
 from billing import services as billing
 from circulation import services as circulation
+from operations import services as operations
 
 from . import services
 from .forms import CardSelectionForm, ConsentForm, MemberForm
@@ -93,6 +95,7 @@ def _detail_page(
         "can_deactivate": member.is_active and not member.is_anonymized,
         "confirm_debt": confirm_debt,
         "open_loans": circulation.open_loans(member),
+        "loan_total": circulation.loan_total(member),
         "balance": billing.member_balance(member),
         "detail_url": reverse("members:detail", args=[member.member_no]),
     }
@@ -171,3 +174,11 @@ def card_print(request: HttpRequest) -> HttpResponse:
             response["Content-Disposition"] = 'inline; filename="uye-kartlari.pdf"'
             return response
     return render(request, "members/card_range.html", {"form": form})
+
+
+@require_role(Role.ADMIN)
+@require_http_methods(["GET"])
+def retention_pending(request: HttpRequest) -> HttpResponse:
+    """Anonymizations waiting because of debt (FR-25, ADR-0045, KL-34)."""
+    rows = operations.deferred_members(clock.today())
+    return render(request, "members/retention_pending.html", {"rows": rows})

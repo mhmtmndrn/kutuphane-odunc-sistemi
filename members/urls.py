@@ -10,6 +10,7 @@ urlpatterns = [
     path("uyeler/", views.member_search, name="search"),
     path("uyeler/yeni/", views.member_create, name="create"),
     path("uyeler/kart/", views.card_print, name="cards"),
+    path("uyeler/saklama/", views.retention_pending, name="retention"),
     path("uyeler/<int:member_no>/", views.member_detail, name="detail"),
     path("uyeler/<int:member_no>/duzenle/", views.member_edit, name="edit"),
     path("uyeler/<int:member_no>/pasif/", views.member_deactivate, name="deactivate"),

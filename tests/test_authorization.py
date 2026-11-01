@@ -2,9 +2,10 @@
 
 The admin views are found from the URL resolver through the ``required_role``
 attribute that ``require_role`` writes (plan G02). ``EXPECTED_ADMIN_ROUTES``
-holds all 19 admin routes of plan §4.1, including those that later tasks add.
-The ADMIN-guarded routes must equal the expected routes that exist today, so
-an admin route added later without the ADMIN guard fails TC-32.
+holds all 19 admin routes of plan §4.1. Since G15 (``uyeler/saklama/``) every
+one of them exists, so the ADMIN-guarded routes must equal the expected set
+exactly: an admin route that loses its guard, or a new one added without
+updating this list, fails TC-32.
 """
 
 from __future__ import annotations
@@ -22,8 +23,7 @@ from tests.support.factories import make_staff
 
 pytestmark = pytest.mark.django_db
 
-# All 19 admin routes of plan §4.1. Routes of later tasks are checked as
-# soon as they exist.
+# All 19 admin routes of plan §4.1; all exist since G15.
 EXPECTED_ADMIN_ROUTES = {
     "personel/",
     "personel/yeni/",
@@ -49,8 +49,7 @@ EXPECTED_ADMIN_ROUTES = {
 # Routes that are deliberately open to every visitor.
 PUBLIC_ROUTES = {"giris/", "cikis/"}
 
-# Staff routes of plan §4.1 that must stay out of the admin set (TC-32);
-# checked as soon as they exist.
+# Staff routes of plan §4.1 that must stay out of the admin set (TC-32).
 CLERK_ROUTES_NOT_ADMIN = {
     "parola/",
     "nushalar/<str:barcode>/bulundu/",
@@ -118,10 +117,10 @@ def test_tc32_admin_routes_match_plan_list() -> None:
     assert len(EXPECTED_ADMIN_ROUTES) == 19
     assert not EXPECTED_ADMIN_ROUTES & CLERK_ROUTES_NOT_ADMIN
     routes = _routes()
-    existing = set(routes)
-    admin_routes = _admin_routes()
-    assert admin_routes == EXPECTED_ADMIN_ROUTES & existing
-    for route in CLERK_ROUTES_NOT_ADMIN & existing:
+    assert EXPECTED_ADMIN_ROUTES <= set(routes)
+    assert CLERK_ROUTES_NOT_ADMIN <= set(routes)
+    assert _admin_routes() == EXPECTED_ADMIN_ROUTES
+    for route in CLERK_ROUTES_NOT_ADMIN:
         assert getattr(routes[route], "required_role", None) == Role.CLERK, route
 
 

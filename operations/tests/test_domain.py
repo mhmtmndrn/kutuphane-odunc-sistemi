@@ -75,3 +75,27 @@ def test_passphrase_drops_one_trailing_line_end(text: str, expected: str) -> Non
 def test_empty_passphrase_is_an_error(text: str) -> None:
     with pytest.raises(ValueError):
         domain.passphrase_from_text(text)
+
+
+# --- G15: retention dates (phase 3 small decision 4) -----------------------------
+
+
+def test_tc307_add_years_and_is_expired() -> None:
+    assert domain.add_years(date(2028, 2, 29), 2) == date(2030, 2, 28)
+    assert domain.add_years(date(2024, 2, 29), 4) == date(2028, 2, 29)
+    assert domain.is_expired(date(2028, 2, 29), 2, date(2030, 2, 28)) is False
+    assert domain.is_expired(date(2028, 2, 29), 2, date(2030, 3, 1)) is True
+
+
+def test_add_years_backwards_and_plain_days() -> None:
+    assert domain.add_years(date(2032, 2, 29), -2) == date(2030, 2, 28)
+    assert domain.add_years(date(2026, 11, 1), 2) == date(2028, 11, 1)
+    assert domain.is_expired(date(2026, 11, 1), 2, date(2028, 11, 1)) is False
+    assert domain.is_expired(date(2026, 11, 1), 2, date(2028, 11, 2)) is True
+
+
+def test_anonymize_counts_text() -> None:
+    counts = domain.AnonymizeCounts(members=1, loans=2, deferred=3)
+    assert domain.anonymize_counts_text(counts) == (
+        "anonimleştirilen üye=1, bağı koparılan ödünç=2, ertelenen üye=3"
+    )

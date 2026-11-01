@@ -209,7 +209,7 @@ def send_manual_reminders(actor, loan_ids: list[int]) -> list[ManualResult]:
                 loan_id=loan_id,
                 outcome=_manual_outcome(actor, loan, today, library_name),
                 member_no=member.member_no if member else None,
-                full_name=member.full_name if member else None,
+                full_name=member.display_name if member else None,
                 title=loan.copy.book.title,
             )
         )
