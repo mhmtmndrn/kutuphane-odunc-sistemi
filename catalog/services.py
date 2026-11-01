@@ -18,7 +18,7 @@ from administration.errors import RuleViolation
 from administration.services import get_settings
 from pdf.sheets import LABEL_LAYOUT, SheetItem, render_sheet
 
-from .domain import IsbnOk, IsbnSuggest, normalize_tr, parse_isbn
+from .domain import IsbnOk, IsbnSuggest, copy_barcode, normalize_tr, parse_isbn
 from .models import Book, Copy, CopyStatus
 
 SEARCH_LIMIT = 50  # KL-10
@@ -110,7 +110,7 @@ def add_copies(actor, book: Book, n: int) -> list[Copy]:
         copy = Copy.objects.create(book=book, barcode=_PENDING_BARCODE, status=CopyStatus.ON_SHELF)
         if copy.id > BARCODE_MAX_ID:
             raise RuleViolation("Barkod aralığı doldu")
-        copy.barcode = f"{copy.id:08d}"
+        copy.barcode = copy_barcode(copy.id)
         copy.save(update_fields=["barcode"])
         copies.append(copy)
     return copies

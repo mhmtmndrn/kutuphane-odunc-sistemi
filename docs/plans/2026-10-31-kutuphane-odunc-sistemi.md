@@ -26,8 +26,10 @@
 | docs/decisions/0001…0025 | Faz 3'te yazıldı (2026-10-31) |
 | docs/decisions/0026…0048 | Faz 4'te yazıldı (2026-10-31); 0048 bir süreç kararıdır |
 | docs/decisions/0049, 0050 | Faz 5'te, G02'den önce yazıldı (2026-10-31): kilit cevabı ve kilit süresi |
+| docs/decisions/0056…0058 | Faz 5'te, G17–G18 açılışında yazıldı (2026-11-01): Open Library çekimi, tohum telefonları, yük betiği koruması |
+| docs/decisions/0059 | Faz 5'te, PR #6'nın yerel doğrulamasında yazıldı (2026-11-01): demo kitap kaydı eşleşen Türkçe baskıdan alınır; ADR-0033'ün durumu güncellendi |
 | docs/architecture.md, docs/data-design.md | Faz 4 tutarlılık düzeltmeleri (§8) |
-| docs/test-plan.md | Faz 4'te oluşturuldu (2026-10-31): 319 TC, test taslağından revize edildi; G14–G16 açılışında TC-320…TC-339 eklendi (2026-11-01) |
+| docs/test-plan.md | Faz 4'te oluşturuldu (2026-10-31): 319 TC, test taslağından revize edildi; G14–G16 açılışında TC-320…TC-339, G17–G18 açılışında TC-340…TC-356, PR #6 yerel doğrulamasında TC-357…TC-358 eklendi (2026-11-01) |
 | docs/data-design.md | I6'ya ADR-0018 istisnası yazıldı (§8 T-02) |
 | docs/risk-register.md | Faz 4'te oluşturuldu (2026-10-31); plan §6'daki riskler buraya taşındı |
 
@@ -179,8 +181,12 @@ Kapsam içi FR sayısı 31 (23 Must, 8 Should), Won't sayısı 7.
 - [ADR-0053](../decisions/0053-hourly-catch-up.md): Kaçan görevler açılışa ek olarak saatlik bir telafi göreviyle de telafi edilir; cron ve telafi görevlerinde `misfire_grace_time=3600`, `coalesce=True` (ADR-0007'ye ek; faz 5, G14–G16 açılışı).
 - [ADR-0054](../decisions/0054-restore-keeps-pre-restore-copy.md): Geri yükleme mevcut veritabanını ve `-wal`/`-shm` dosyalarını silmez, `<db>.pre-restore-YYYYMMDD-HHMMSS` adıyla koruma kopyası olarak bırakır (faz 5, G14–G16 açılışı).
 - [ADR-0055](../decisions/0055-reminder-log-error-cleared-on-unlink.md): Ödüncün üye bağı koparılırken o ödüncün `reminder_log.error` alanları NULL yapılır (NFR-08; faz 5, G14–G16 açılışı).
+- [ADR-0056](../decisions/0056-open-library-fetch-network-blocked.md): Bulut oturumunda Open Library'ye erişilemezse `seed/books_openlibrary.json` olmadan devam edilir; testler örnek dosyayla koşar, gerçek dosya yerel doğrulamada çekilip dala commit'lenir (ADR-0033'e ek; faz 5, G17–G18 açılışı).
+- [ADR-0057](../decisions/0057-seed-phone-numbers.md): Tohum verideki telefonlar `000 ddd dd dd` biçiminde, hiçbir gerçek aboneye denk gelmeyen sahte numaralardır (TC-234; faz 5, G17–G18 açılışı).
+- [ADR-0058](../decisions/0058-loadtest-seed-only-guard.md): `--db` içinde e-postası `@example.invalid` ile bitmeyen bir üye varsa yük betiği "Tohum verisi olmayan veritabanı" ile çıkış 1 verir ve hiç istek atmaz (faz 5, G17–G18 açılışı).
+- [ADR-0059](../decisions/0059-demo-books-turkish-edition.md): Demo kitap kaydının başlığı, ISBN'i ve OL kimliği eserden değil, aramanın `editions` alanındaki ilk Türkçe baskıdan alınır; ADR-0033'ün beş kuralı o baskıya uygulanır, Türkçe baskısı olmayan kayıt atılır; filtre sürümü 2. HTTP 5xx ve zaman aşımında aynı sayfa en çok 3 kez daha, 2/4/8 sn beklenerek istenir (faz 5, PR #6 yerel doğrulaması).
 
-Sıradaki ADR numarası: 0056.
+Sıradaki ADR numarası: 0059.
 
 **Faz 4 küçük kararları (onaylandı 2026-10-31):**
 
@@ -774,37 +780,50 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
 
 ### Görev G17: Tohum veri
 
-- **Gereksinimler:** FR-29, NFR-02 (yük verisi); AC-29; ADR-0031, ADR-0033, ADR-0038; küçük kararlar 12 ve 13 (faz 4); KL-16, KL-27.
-- **Dosyalar:** oluştur `scripts/fetch_demo_books.py`, `seed/books_openlibrary.json` (betik bir kez çalıştırılır, çıktısı depoya girer), `seed/first_names.txt`, `seed/last_names.txt`, `operations/seed.py`, `operations/management/commands/load_seed_data.py`, testler; değiştir `README.md` (Veri kaynakları bölümü).
+- **Gereksinimler:** FR-29, NFR-02 (yük verisi); AC-29; ADR-0031, ADR-0033, ADR-0038, ADR-0056, ADR-0057, ADR-0059; küçük kararlar 12 ve 13 (faz 4); KL-16, KL-27; G17–G18 küçük kararları 1–9 (§11).
+- **Dosyalar:** oluştur `scripts/__init__.py`, `scripts/fetch_demo_books.py`, `scripts/tests/{__init__,test_fetch_demo_books}.py`, `seed/books_openlibrary.json` (betik bir kez çalıştırılır, çıktısı depoya girer; ağ engelliyse yerel doğrulamada, ADR-0056), `seed/first_names.txt`, `seed/last_names.txt`, `operations/seed.py`, `operations/management/commands/load_seed_data.py`, `operations/tests/test_seed.py` ve örnek kitap dosyası `operations/tests/data/books_sample.json`; oluştur `README.md` ("Veri kaynakları" ve "Demo verisi" bölümleri; küçük karar 1).
 - **Arayüzler:**
   - `scripts/fetch_demo_books.py --out seed/books_openlibrary.json --limit 300`
-  - `filter_records(raw: Iterable[dict]) -> list[dict]`: ADR-0033'teki beş filtre aynı sırayla uygulanır. Ağ çağrısı içermediği için birim testiyle doğrulanır.
+  - `filter_records(raw: Iterable[dict]) -> list[dict]`: ADR-0033'teki beş filtre aynı sırayla, her eserin eşleşen ilk Türkçe baskısına uygulanır (ADR-0059). Ağ çağrısı içermediği için birim testiyle doğrulanır.
   - `operations.seed.load(profile: Literal["demo", "load"], seed: int, actor: StaffUser) -> SeedCounts`
   - Komut `load_seed_data --profile demo|load --actor <kullanıcı adı> [--seed 42]`. Varsayılan `demo` ve 42'dir. `--actor` eksikse çıkış 2; kullanıcı yoksa ya da pasifse "Personel bulunamadı ya da pasif: <ad>" ile çıkış 1 (ADR-0038). Üye ya da kitap tablosu boş değilse "Veritabanı boş değil" mesajıyla çıkış 1.
 - **Davranış:**
-  - Demo ve yük profillerinin ayrıntısı KL-16'dadır.
-  - Tohum veri ORM ile doğrudan yazılır ve tutarlı durum üretir: açık ödüncün nüshası Ödünçtedir, kapalı ödüncün nüshası Raftadır.
-  - Sentetik üye e-postaları `uye<no>@example.invalid` biçimindedir; gerçek bir alıcıya ulaşmaz.
+  - Demo ve yük profillerinin ayrıntısı KL-16'dadır. **Demo** ayrıca son 180 güne yayılmış 350 kapalı ödünç içerir (150 açık ödünce ek). 5 borçlu üyenin borcu gecikmeli iadeden doğan ödenmemiş FINE'dır; diğer gecikmeli iadeler FINE ve aynı tutarda PAYMENT alır (küçük karar 3). **Yük** profilinde 100.000 ödünç son 365 güne yayılır; 2 yıllık saklama görevi yük verisine dokunmaz (küçük karar 4).
+  - Tarihler komutun çalıştığı günden (`administration.clock.today()`, yani `timezone.localdate()`) geriye doğru üretilir. Aynı gün ve aynı `--seed` aynı veriyi verir (küçük karar 2).
+  - Son tarih (kapalı gün kaydırması dahil, `due_date`), ceza (`late_days`, `fine`), barkod (`f"{id:08d}"`), `search_key` (`normalize_tr`) ve `phone_digits` mevcut domain fonksiyonlarıyla hesaplanır; süre, ceza oranı ve üst sınır `LibrarySettings`'ten okunur. Yazım `bulk_create` ile tek bir `transaction.atomic()` içinde yapılır; hata olursa hiçbir satır kalmaz (küçük karar 5).
+  - Tohum veri ORM ile doğrudan yazılır ve tutarlı durum üretir: açık ödüncün nüshası Ödünçtedir, kapalı ödüncün nüshası Raftadır. Aynı nüshanın ödünçleri zamanda çakışmaz.
+  - `seed/books_openlibrary.json`'daki ilk 300 kayıt (yük profilinde de en çok 300) Open Library kitabı olarak yazılır (`source_ol_id` dolu). Eksik kısım sentetik kitaplarla tamamlanır: başlık, dosyadaki başlıklardan alınan 2–4 sözcüktür; yazar ad ve soyad listelerinden gelir; ISBN, yayınevi ve `source_ol_id` boştur (küçük karar 6).
+  - Tohum veri audit kaydı yazmaz. PAYMENT'ların Allocation satırları FIFO (`allocate_fifo`) ile yazılır; bakiyeler defterle tutarlıdır (küçük karar 7).
+  - Çıktı kitap, nüsha, üye, açık ödünç (gecikmiş) ve kapalı ödünç sayılarını verir. Sentetik tamamlama olduysa bunu ayrı bir satırda yazar (küçük karar 8).
+  - Rızalı üye için `ConsentEvent(GIVEN)` yazılır; `effective_on` son 365 günden rastgele bir gündür. Sentetik üye e-postaları `uye<no>@example.invalid` biçimindedir; gerçek bir alıcıya ulaşmaz (küçük karar 9).
+  - Telefonlar `000 ddd dd dd` biçiminde, "000" önekli sahte numaralardır; hiçbir gerçek aboneye denk gelmez ([ADR-0057](../decisions/0057-seed-phone-numbers.md)).
   - Personel hesabı oluşturulmaz. Bütün `created_by`, `closed_by` ve `recorded_by` alanları `--actor` personelidir (ADR-0038).
-- **Testler:** TC-214…TC-220, TC-315…TC-317 (10 TC; `docs/test-plan.md` §6)
-- **Doğrulama:** `python -m pytest operations -q -k seed` → hepsi geçer. Boş dev veritabanında `createsuperuser` sonrası `python manage.py load_seed_data --profile demo --actor <ad>` → "kitap=300, nüsha=…, üye=200, açık ödünç=150 (gecikmiş 10)" ve çıkış 0. İkinci çalıştırmada çıkış 1.
-- [ ] Tamamlandı
+  - `load_seed_data` ağa çıkmaz. Open Library'ye bulut oturumundan erişilemezse JSON dosyası yerel doğrulamada çekilip dala commit'lenir ([ADR-0056](../decisions/0056-open-library-fetch-network-blocked.md)).
+- **Testler:** TC-214…TC-220, TC-315…TC-317, TC-340…TC-352, TC-357…TC-358 (25 TC; `docs/test-plan.md` §6). Yük profilini yükleyen TC-220, TC-317 ve TC-346 `slow` olarak işaretlenir.
+- **Doğrulama:** `python -m pytest operations -q -k seed` ve `python -m pytest scripts -q` → hepsi geçer. `python scripts/fetch_demo_books.py --out seed/books_openlibrary.json --limit 300` denenir (ADR-0056). Boş dev veritabanında (bulutta migrate edilmiş geçici bir veritabanı, `LIBRARY_DB_PATH`) `createsuperuser` sonrası `python manage.py load_seed_data --profile demo --actor <ad>` → "kitap=300, nüsha=…, üye=200, açık ödünç=150 (gecikmiş 10), kapalı ödünç=350" ve çıkış 0. İkinci çalıştırmada çıkış 1.
+- [x] Tamamlandı
+  - Kanıt (2026-11-01, bulut oturumu, Linux, Python 3.11.18): `python -m pytest operations -q -k seed` → 25 passed; `python -m pytest scripts -q` → 8 passed (G17'nin `test_fetch_demo_books.py`'si); `python -m pytest operations -q` → 138 passed; `python -m pytest -q` → 1005 passed (`slow` dahil; önceki 972); `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı `*/domain.py` %100 (`--fail-under=90` çıkış 0), `operations/seed.py` ve `load_seed_data.py` %100. ADR-0056 denemesi: `python scripts/fetch_demo_books.py --out seed/books_openlibrary.json --limit 300` → "Open Library'ye erişilemedi: Tunnel connection failed: 403 Forbidden", çıkış 1 (bulut ağ politikası); `seed/books_openlibrary.json` dala girmedi, yerel doğrulamada çekilecek. Elle: scratchpad'de migrate edilmiş geçici veritabanı (`LIBRARY_DB_PATH`), dev ayarları, örnek dosyanın geçici kopyası `seed/books_openlibrary.json` olarak (commit'lenmedi); `createsuperuser --username demo` sonrası `load_seed_data --profile demo --actor demo` → "kitap=300, nüsha=606, üye=200, açık ödünç=150 (gecikmiş 10), kapalı ödünç=350" ve "Open Library dosyasında 12 kayıt var; 288 sentetik kitap eklendi", çıkış 0, 0,7 sn; ikinci çalıştırma "Veritabanı boş değil", çıkış 1; `--actor yok` "Personel bulunamadı ya da pasif: yok", çıkış 1; `--actor` olmadan argparse çıkış 2. Ayrı veritabanında `--profile load` → "kitap=15000, nüsha=20000, üye=5000, açık ödünç=3000 (gecikmiş 300), kapalı ödünç=97000", 14 sn, ~21 MB; ardından `anonymize_expired` → "anonimleştirilen üye=0, bağı koparılan ödünç=0, ertelenen üye=0". Demo verisiyle üye araması, kitap araması, geciken listesi ve borçlu üyenin dökümü dev ayarlarıyla test istemcisinde 200 döndü ve göz kontrolünden geçti. Commit `ef50b96`.
+  - Kanıt, yerel doğrulama (2026-11-01, Windows 11, Python 3.11): Filtre sürümü 1 ile çekilen dosyanın 300 kaydının 43'ü yabancı baskıydı (ISBN Türk öneki taşımıyor, başlıklar "Den skrattande polisen", "Smaragdgrün" gibi). Kullanıcı kararıyla [ADR-0059](../decisions/0059-demo-books-turkish-edition.md) yazıldı: kayıt eşleşen Türkçe baskıdan alınıyor ve 5xx ile zaman aşımında yeniden deneniyor (TC-357, TC-358; TDD, önce kırmızı). `python scripts/fetch_demo_books.py --out seed/books_openlibrary.json --limit 300` → "300 kayıt yazıldı", çıkış 0, 2 dk 18 sn. `_meta.filter_version` 2. 300 ISBN'in hepsi 978605 önekli, tekrar yok, 300 `ol_id` `OL…M`, yabancı harfli başlık yok (ör. "Atomik Alışkanlıklar", "Küçük Prens", "Açlık Oyunları"). Geçici veritabanında `load_seed_data --profile demo --actor demo` → "kitap=300, nüsha=592, üye=200, açık ödünç=150 (gecikmiş 10), kapalı ödünç=350", sentetik satır yok, çıkış 0; ikinci koşu "Veritabanı boş değil", çıkış 1. `python -m pytest -q` → 1022 passed; `-m slow` → 7 passed; `makemigrations --check --dry-run` → "No changes detected"; kapsam `*/domain.py` %100, `accounts` izinleri %100, `operations` %99 (eşikler çıkış 0), `fetch_demo_books.py` %98, proje %97.
 
 ### Görev G18: Yük testi betiği
 
-- **Gereksinimler:** NFR-01, NFR-02; ADR-0031; KL-17.
-- **Dosyalar:** oluştur `scripts/loadtest.py`, `scripts/tests/test_loadtest.py` (yüzdelik hesabı ve karışım seçimi için birim testleri).
+- **Gereksinimler:** NFR-01, NFR-02; ADR-0031, ADR-0058; KL-17; G17–G18 küçük kararları 10–12 (§11).
+- **Dosyalar:** oluştur `scripts/loadtest.py`, `scripts/tests/test_loadtest.py` (yüzdelik hesabı, karışım seçimi, aday seçimi, koruma ve iş parçacığı akışı için birim testleri); değiştir `pyproject.toml` (`testpaths`'e `scripts`; küçük karar 11).
 - **Arayüzler:**
   - `scripts/loadtest.py --base-url URL --user U --password-file F --db PATH --workers 5 --duration 120 [--seed 42]`
   - `percentile(values: list[float], p: float) -> float`: en yakın sıra yöntemi.
   - `pick_operation(rng) -> str`: ağırlıklar %40/20/20/10/10.
 - **Davranış:**
   - KL-17'ye göre çalışır.
+  - **Koruma** ([ADR-0058](../decisions/0058-loadtest-seed-only-guard.md)): `--db` içinde e-postası `@example.invalid` ile bitmeyen bir üye varsa betik "Tohum verisi olmayan veritabanı" mesajıyla çıkış 1 verir ve hiç istek atmaz. E-postası boş üyeler korumayı tetiklemez.
+  - Kendi açık ödüncü yokken iade ya da uzatma seçilirse işlem yeniden seçilir ve sayılmaz. Uzatılan ödünç uzatma havuzundan çıkar; iade edilebilir kalır (küçük karar 10).
+  - `scripts/` bir pakettir ve `pyproject.toml` `testpaths`'e eklenir. Betik Django'yu import etmez (küçük karar 11).
   - Rapor işlem türü başına `istek, p50, p95, hata` sütunlarını içerir.
   - Bütün türlerde p95 < 500 ms ve hata = 0 ise çıkış 0, değilse 1.
-- **Testler:** TC-221…TC-223, TC-318 (4 TC; `docs/test-plan.md` §6)
-- **Doğrulama:** `python -m pytest scripts -q` → hepsi geçer. Ölçümün kendisi faz 6'da yapılır.
-- [ ] Tamamlandı
+- **Testler:** TC-221…TC-223, TC-318, TC-353…TC-356 (8 TC; `docs/test-plan.md` §6)
+- **Doğrulama:** `python -m pytest scripts -q` → hepsi geçer. Elle duman testi (küçük karar 12): demo verisiyle `waitress` + `scripts/loadtest.py --duration 10`; p95 bağlayıcı değildir, yalnız not edilir. Ölçümün kendisi faz 6'da yapılır (TC-223).
+- [x] Tamamlandı
+  - Kanıt (2026-11-01, bulut oturumu, Linux, Python 3.11.18): `python -m pytest scripts -q` → 21 passed; `python -m pytest -q` → 1018 passed (`slow` dahil; G17 sonrası 1005); `python -m pytest -m slow -q` → 7 passed; `makemigrations --check --dry-run` → "No changes detected"; `scripts/loadtest.py` kapsamı %76 (kapsanmayan kısım `main()`'in iş parçacığı ve giriş akışı; elle duman testinde koştu), `scripts/fetch_demo_books.py` %97. Elle duman testi (küçük karar 12): G17'nin demo veritabanında dev ayarlarıyla `waitress-serve --listen=127.0.0.1:8011 --threads=8 library_site.wsgi:application`, ardından `python scripts/loadtest.py --base-url http://127.0.0.1:8011 --user demo --password-file <dosya> --db <demo db> --workers 5 --duration 10` → kitap arama 334 istek (p50 39,4 ms, p95 207,3 ms), ödünç 170 (32,3 / 148,9), iade 139 (29,0 / 228,8), uzatma 61 (31,0 / 133,4), üye arama 74 (24,6 / 388,0), hata 0, "Sonuç: geçti", çıkış 0 (p95 bağlayıcı değil; bulut kapsayıcısı, Caddy yok). Sonrasında veritabanında 670 ödünç (500 + 170), 181 açık, 61 uzatılmış; defter ve denetim kaydı değişmedi; nüsha durumları açık ödünçlerle tutarlı; waitress logunda hata yok. Bir üyesinin e-postası `ali@ornek.com` yapılmış kopyada betik "Tohum verisi olmayan veritabanı" ile çıkış 1 verdi. Commit `ac74da7`.
 
 ### Görev G19: Dağıtım dosyaları ve kullanıcı belgeleri
 
@@ -833,7 +852,7 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
 
 ## 5. Testler
 
-Test planı: [docs/test-plan.md](../test-plan.md). 339 TC (TC-01…TC-339; TC-320…TC-339 G14–G16 açılış kararlarıyla 2026-11-01'de eklendi); seviyeler, teknikler, kapsam hedefleri, ortam ve giriş-çıkış ölçütleri orada. Her görevin TC listesi görevin **Testler** satırındadır. Elle TC'ler (TC-223, TC-225…TC-234, TC-319) faz 6'da yapılır.
+Test planı: [docs/test-plan.md](../test-plan.md). 358 TC (TC-01…TC-358; TC-320…TC-339 G14–G16, TC-340…TC-356 G17–G18 açılış kararlarıyla, TC-357…TC-358 ADR-0059 ile 2026-11-01'de eklendi); seviyeler, teknikler, kapsam hedefleri, ortam ve giriş-çıkış ölçütleri orada. Her görevin TC listesi görevin **Testler** satırındadır. Elle TC'ler (TC-223, TC-225…TC-234, TC-319) faz 6'da yapılır.
 
 ## 6. Riskler
 
@@ -845,23 +864,23 @@ Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve
 
 | Gereksinim | Tasarım öğesi | Görev | Test |
 |---|---|---|---|
-| FR-01 | `members`: `create_member`, `update_member`, `search_members`; `member` tablosu | G06 | TC-35, TC-44…TC-52, TC-261 |
+| FR-01 | `members`: `create_member`, `update_member`, `search_members`; `member` tablosu | G06, G17 | TC-35, TC-44…TC-52, TC-261, TC-342 |
 | FR-02 | `circulation.services.deactivate_member`, `members.services.set_inactive`, `Blocker.MEMBER_INACTIVE` | G06, G10, G11 | TC-53…TC-56, TC-115, TC-126, TC-286 |
-| FR-03 | `consent_event`, `set_consent`, `update_member` (ADR-0022, ADR-0047); S6 rıza koşulu | G06, G13 | TC-57…TC-59, TC-177, TC-254…TC-258, TC-319 |
+| FR-03 | `consent_event`, `set_consent`, `update_member` (ADR-0022, ADR-0047); S6 rıza koşulu | G06, G13, G17 | TC-57…TC-59, TC-177, TC-254…TC-258, TC-319, TC-351 |
 | FR-04 | `catalog.domain`: `parse_isbn`, `normalize_tr`; `create_book`, `search_books`; `book` tablosu | G05, G07 | TC-35, TC-37…TC-43, TC-60…TC-63, TC-66…TC-68, TC-253, TC-264 |
 | FR-05 | `copy` tablosu, `add_copies`, `COPY_TRANSITIONS`, `check_transition` | G07, G10, G12 | TC-64…TC-65, TC-71, TC-163…TC-169, TC-262…TC-263 |
 | FR-06 | `pdf.sheets.render_sheet`, `LABEL_LAYOUT`, `label_pdf`, `copies_for_labels` (ADR-0036) | G08 | TC-69…TC-72, TC-228, TC-265…TC-267, TC-269 |
-| FR-07 | `circulation.domain.due_date`, `closed_day_predicate`, `check_out` | G03, G10, G11 | TC-104…TC-105, TC-107…TC-109, TC-124, TC-133, TC-140 |
+| FR-07 | `circulation.domain.due_date`, `closed_day_predicate`, `check_out` | G03, G10, G11, G17 | TC-104…TC-105, TC-107…TC-109, TC-124, TC-133, TC-140, TC-347 |
 | FR-08 | `checkout_blockers`, `check_out`, `loan` kısmi benzersiz indeksi | G10, G11 | TC-114, TC-116…TC-119, TC-124…TC-127, TC-145…TC-146, TC-149, TC-280, TC-284 |
 | FR-09 | `check_in`, iade ekranı | G11 | TC-111, TC-134…TC-135, TC-138, TC-147, TC-283 |
 | FR-10 | `renew_blockers`, `renewed_due_date`, `renew` | G10, G11 | TC-120…TC-123, TC-139…TC-144, TC-148, TC-280, TC-288 |
 | FR-11 | Ödünç ve iade ekranları, `scan.js`, `classify_member_input` (ADR-0046) | G10, G11, G19 | TC-128…TC-130, TC-227, TC-279, TC-281…TC-282, TC-319 |
-| FR-12 | `late_days` (ADR-0040), `fine`, `loan` oran kopyası (ADR-0023) | G10, G11, G12 | TC-13, TC-110…TC-113, TC-132, TC-134, TC-136…TC-137, TC-152, TC-246, TC-276…TC-278, TC-283, TC-319 |
-| FR-13 | `allocate_fifo`, `record_payment`, `allocation` tablosu (ADR-0017) | G09 | TC-78…TC-85, TC-100, TC-103, TC-290 |
+| FR-12 | `late_days` (ADR-0040), `fine`, `loan` oran kopyası (ADR-0023) | G10, G11, G12, G17 | TC-13, TC-110…TC-113, TC-132, TC-134, TC-136…TC-137, TC-152, TC-246, TC-276…TC-278, TC-283, TC-319, TC-347 |
+| FR-13 | `allocate_fifo`, `record_payment`, `allocation` tablosu (ADR-0017) | G09, G17 | TC-78…TC-85, TC-100, TC-103, TC-290, TC-345 |
 | FR-14 | `waive` (ADR-0021) | G09 | TC-86…TC-90 |
 | FR-15 | `mark_lost`, `mark_damaged`, `post_charge` | G12 | TC-150…TC-152, TC-162, TC-289…TC-290, TC-293 |
 | FR-16 | `mark_found`, `repair`, `withdraw`, `cancel_unpaid`, `refund`, `cancel_fee_manual`, `loan.copy_found_on` (ADR-0037, ADR-0041) | G09, G12 | TC-92…TC-97, TC-153…TC-158, TC-162, TC-168…TC-169, TC-270…TC-275, TC-291…TC-292 |
-| FR-17 | `balance`, `member_balance` (S3), `statement`, döküm ekranı | G09 | TC-76…TC-77, TC-98…TC-99, TC-101 |
+| FR-17 | `balance`, `member_balance` (S3), `statement`, döküm ekranı | G09, G17 | TC-76…TC-77, TC-98…TC-99, TC-101, TC-344 |
 | FR-18 | `due_reminder_kind`, `send_due_reminders`, `reminder_log` (ADR-0039), `send_reminders` | G13, G16 | TC-173…TC-176, TC-178, TC-180…TC-182, TC-185, TC-208, TC-232, TC-294…TC-296 |
 | FR-19 | `send_manual_reminders`, `/gecikenler/hatirlat/` | G13 | TC-183…TC-184, TC-297…TC-298 |
 | FR-20 | `overdue_loans` (S5), `/gecikenler/` | G11, G13 | TC-171…TC-172, TC-287, TC-298 |
@@ -869,25 +888,25 @@ Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve
 | FR-22 | `require_role`, `staff_view`, `tests/test_authorization.py` | G02, G03, G04, G15 | TC-01, TC-11, TC-21, TC-31, TC-275, TC-308, TC-334 |
 | FR-23 | `LibrarySettings`, `update_settings`, ayar ekranı | G03, G08, G11 | TC-18…TC-20, TC-73, TC-131 |
 | FR-24 | `WeeklyClosedDay`, `ClosedDate`, `validate_weekly_closed` (ADR-0028) | G03, G10 | TC-22…TC-24, TC-106, TC-246 |
-| FR-25 | `anonymize_expired`, `add_years`, `deferred_members`, `Member.display_name` (ADR-0018, ADR-0045, ADR-0055) | G15, G16 | TC-201…TC-208, TC-305…TC-309, TC-330…TC-334 |
+| FR-25 | `anonymize_expired`, `add_years`, `deferred_members`, `Member.display_name` (ADR-0018, ADR-0045, ADR-0055) | G15, G16, G17 | TC-201…TC-208, TC-305…TC-309, TC-330…TC-334, TC-346 |
 | FR-26 | `audit.record_audit`, `AuditEvent`, `/denetim/` | G03, G04, G06, G09, G12 | TC-18, TC-22, TC-26…TC-27, TC-91, TC-93, TC-157…TC-158, TC-170, TC-247, TC-259, TC-273 |
 | FR-27 | Django `LoginView`, django-axes, oturum ayarları (ADR-0009) | G02 | TC-04…TC-10, TC-12, TC-30, TC-237 |
 | FR-28 | `backup_db`, `restore_backup` (koruma kopyası, ADR-0054), `applock`; kurulum belgesi | G14, G16, G19 | TC-186…TC-191, TC-199…TC-200, TC-208, TC-225, TC-301…TC-302, TC-320…TC-323, TC-325…TC-329 |
-| FR-29 | `fetch_demo_books`, `filter_records`, `operations.seed`, `load_seed_data` (ADR-0033, ADR-0038) | G17 | TC-214…TC-219, TC-234, TC-315…TC-316 |
+| FR-29 | `fetch_demo_books`, `filter_records`, `operations.seed`, `load_seed_data`, `README.md` (ADR-0033, ADR-0038, ADR-0056, ADR-0057, ADR-0059) | G17 | TC-214…TC-219, TC-234, TC-315…TC-316, TC-340…TC-345, TC-347…TC-352, TC-357…TC-358 |
 | FR-37 | `libx`, `export_backup`, `export_age_warning` (ADR-0006, ADR-0011) | G03, G14, G16 | TC-25, TC-192…TC-198, TC-208, TC-226, TC-244…TC-245, TC-299…TC-300, TC-303…TC-304, TC-310, TC-323…TC-326, TC-328…TC-329 |
 | FR-38 | `CARD_LAYOUT`, `member_card_pdf`, `members_for_cards` (ADR-0032, ADR-0036) | G08 | TC-69, TC-74…TC-75, TC-228, TC-266, TC-268…TC-269 |
 | FR-39 | `mark_shelf_copy`, `withdraw` (ADR-0026) | G12 | TC-159…TC-161, TC-293 |
 | FR-40 | `reactivate_member` (ADR-0042) | G06, G11 | TC-259…TC-260, TC-285 |
 | FR-41 | `change_own_password`, `ForcePasswordChangeMiddleware`, `must_change_password` (ADR-0043) | G02, G04 | TC-248…TC-251 |
 | FR-42 | `backup_warning`, `jobs.last_finished`, `last_success_at` (ADR-0044) | G03 | TC-241…TC-243, TC-245 |
-| NFR-01 | data-design §4 indeksleri, `scripts/loadtest.py` (ADR-0031) | G18 | TC-221…TC-223, TC-318 |
-| NFR-02 | `load_seed_data --profile load` | G17, G18 | TC-220, TC-223, TC-317 |
+| NFR-01 | data-design §4 indeksleri, `scripts/loadtest.py` (ADR-0031, ADR-0058) | G18 | TC-221…TC-223, TC-318, TC-353…TC-356 |
+| NFR-02 | `load_seed_data --profile load` | G17, G18 | TC-220, TC-223, TC-317, TC-346 |
 | NFR-03 | BACKUP 02:00, `backup_db`, telafi (saatlik, ADR-0053) | G14, G16, G19 | TC-190, TC-233, TC-336 |
 | NFR-04 | `restore_backup` (ADR-0054), `docs/kurulum.md` | G14, G19 | TC-225, TC-320 |
 | NFR-05 | `jobs_due_for_catch_up`, `catch_up` (saatlik, ADR-0053), `run_command`, tek işçili zamanlayıcı, `run_job`, `reminder_log` tekrar engeli | G03, G13, G16 | TC-178…TC-179, TC-209…TC-213, TC-233, TC-310…TC-314, TC-335…TC-339 |
 | NFR-06 | `Argon2PasswordHasher`, Caddy `tls internal` (ADR-0005) | G01, G19 | TC-03, TC-230 |
 | NFR-07 | `require_role`, `tests/test_authorization.py` | G04 | TC-11, TC-31…TC-33 |
-| NFR-08 | `member` alanları, anonimleştirme, `reminder_log.error` temizliği (ADR-0055), `Member.display_name`, Caddy LAN bağlaması | G06, G15, G19 | TC-52, TC-206, TC-229…TC-230, TC-330…TC-331 |
+| NFR-08 | `member` alanları, anonimleştirme, `reminder_log.error` temizliği (ADR-0055), `Member.display_name`, Caddy LAN bağlaması | G06, G15, G17, G19 | TC-52, TC-206, TC-229…TC-230, TC-330…TC-331, TC-342 |
 | NFR-09 | `LANGUAGE_CODE = "tr"`, `TIME_ZONE`, `templates/base.html` | G01, G19 | TC-231, TC-235 |
 | NFR-10 | `normalize_tr`, `search_key` (ADR-0019) | G05, G06, G07 | TC-34, TC-36, TC-47, TC-67 |
 | NFR-11 | Ödünç ekranı odak akışı, `scan.js` | G11, G19 | TC-128, TC-227 |
@@ -1475,3 +1494,65 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
     - "Toplam ödünç: <n>": `members/detail.html`.
   - **G15, komut:** "anonimleştirilen üye=<n>, bağı koparılan ödünç=<n>, ertelenen üye=<n>" (`anonymize_expired` çıktısı ve `job_run` detayı); "Anonimleştirme yapılamadı: <tür>: <metin>" (hata, çıkış 1); `--help` "Saklama süresi dolan ödünçlerin üye bağını koparır ve süresi dolan pasif üyeleri anonimleştirir; borçlu üyeler ertelenir."
   - **G16, log satırları** (`operations.scheduler`, stderr): "Zamanlanmış görev <kimlik>: sonraki çalışma <zaman>", "Telafi: <GÖREV> kuyruğa alındı (<komut>)", "Telafi denetimi başarısız oldu", "Görev <komut> tamamlandı: <çıktı>", "Görev <komut> başarısız: <mesaj>", "Görev <komut> beklenmeyen bir hatayla durdu". Arayüzde görünmeyen APScheduler görev adları: "Saatlik telafi", "Telafi: <GÖREV>".
+- **2026-11-01, G17–G18 — açılıştan önce verilen kararlar (kullanıcı onayı 2026-11-01):**
+  - **Kritik:**
+    - [ADR-0056](../decisions/0056-open-library-fetch-network-blocked.md), Open Library çekimi (ADR-0033'e ek): Oturum `scripts/fetch_demo_books.py`'yi çalıştırmayı dener. Ağ engelliyse `seed/books_openlibrary.json` olmadan devam edilir; testler küçük bir örnek dosyayla koşar ve ADR-0033'teki sentetik tamamlama çalışır. Gerçek JSON yerel doğrulamada çekilip dala commit'lenir; bu adım STATUS'a yazılır. Reddedilenler: G17'yi beklemeye almak; dosyayı başka kaynaktan üretmek.
+    - [ADR-0057](../decisions/0057-seed-phone-numbers.md), tohum telefonları: Telefonlar "000" önekli sahte numaralardır (ör. `000 123 45 67`) ve hiçbir gerçek aboneye denk gelmez. Kaynak TC-234. Reddedilenler: gerçek biçimli rastgele cep numarası; telefonsuz üye.
+    - [ADR-0058](../decisions/0058-loadtest-seed-only-guard.md), yük betiği koruması: `--db` içinde e-postası `@example.invalid` ile bitmeyen bir üye varsa betik "Tohum verisi olmayan veritabanı" mesajıyla çıkış 1 verir ve hiç istek atmaz. Sınırı: e-postasız gerçek veriyi yakalayamaz. Reddedilenler: veritabanında tohum işareti (migration gerekir); yalnız belge.
+  - **Küçük kararlar (onaylı):**
+    1. README.md yok. G17 onu yalnız "Veri kaynakları" (Open Library CC0 atfı) ve "Demo verisi" (`migrate` → `createsuperuser` → `load_seed_data --profile demo --actor <ad>`) bölümleriyle oluşturur; G19 genişletir.
+    2. Tarihler komutun çalıştığı günden (`timezone.localdate()`) geriye doğru üretilir. Aynı gün ve aynı `--seed` aynı veriyi verir; TC-218'de zaman sabitlenir.
+    3. Demo profili: 150 açık ödünce ek olarak son 180 güne yayılmış 350 kapalı ödünç. 5 borçlu üyenin borcu gecikmeli iadeden doğan ödenmemiş FINE'dır; diğer gecikmeli iadeler FINE + PAYMENT alır.
+    4. Yük profili: 100.000 ödünç son 365 güne yayılır; 2 yıllık saklama görevi yük verisine dokunmaz.
+    5. Son tarih (kapalı gün kaydırması dahil), ceza, barkod, `search_key` ve `phone_digits` mevcut domain fonksiyonlarıyla hesaplanır; ayarlar `LibrarySettings`'ten okunur. Yazım `bulk_create` ile, tek `transaction.atomic` içinde yapılır.
+    6. Sentetik kitabın başlığı, Open Library başlıklarındaki sözcüklerden 2–4 sözcüktür; yazarı ad ve soyad listelerinden gelir. ISBN, yayınevi ve `source_ol_id` boştur.
+    7. Tohum veri audit kaydı yazmaz. PAYMENT'ların Allocation satırları yazılır, bakiyeler tutarlı olur.
+    8. Çıktı kitap, nüsha, üye, açık ödünç (gecikmiş) ve kapalı ödünç sayılarını verir. Sentetik tamamlama olduysa bunu ayrı bir satırda yazar.
+    9. Rızalı üye için `ConsentEvent(GRANT)` yazılır (modeldeki adı `ConsentAction.GIVEN`); `effective_on` son 365 günden rastgele bir gündür. E-posta `uye<no>@example.invalid` biçimindedir.
+    10. G18: Kendi açık ödüncü yokken iade ya da uzatma seçilirse işlem yeniden seçilir ve sayılmaz. Uzatılan ödünç uzatma havuzundan çıkar.
+    11. G18: `scripts/` bir paket olur ve `pyproject.toml` `testpaths`'e eklenir. Betik Django'yu import etmez.
+    12. G18 elle duman testi: demo verisiyle `waitress` + `loadtest.py --duration 10`. p95 bağlayıcı değildir, yalnız not edilir.
+  - **Plana işlenenler:** G17 ve G18 bölümlerinin "Gereksinimler", "Dosyalar", "Davranış", "Testler" ve "Doğrulama" satırları; §2'de ADR-0056…0058; §3'te ADR-0056…0058 (sıradaki numara 0059); §5'te TC sayısı; §7'de yeni TC'ler. Yeni davranışların testleri `docs/test-plan.md`'de TC-340…TC-356 (G17: TC-340…TC-352, G18: TC-353…TC-356). TC-220, TC-317 ve TC-346 `slow` işaretlidir.
+  - **Açılışta sabitlenen uygulama seçimleri** (kararların doğrudan sonucu; onaya sunulan metinler grubun sonunda bu bölüme eklenir):
+    - G17'nin testleri ağsızdır; `filter_records` ve çekim döngüsü (TC-214…TC-216, TC-340) `scripts/tests/`'te, komut ve servis testleri `operations/tests/test_seed.py`'dedir. `scripts/` paketi bu yüzden G17'de açılır; `testpaths` ayarı küçük karar 11'e göre G18'de eklenir.
+    - Kitap dosyası yoksa `load_seed_data` tamamen sentetik veri üretmez, hata verir (ADR-0056; TC-341). Bulutta elle doğrulama, örnek dosyanın geçici bir kopyasıyla yapılır.
+    - Demo profilinde gecikmeli iade oranı yük profilindekiyle aynıdır (kapalı ödünçlerin %10'u, 35 ödünç); 5'i borçlu üyelerin ödenmemiş cezasıdır (küçük karar 3).
+- **2026-11-01, G17–G18 — uygulama ayrıntıları (bulut oturumu):**
+  - **G17:**
+    - **Plana ek arayüzler:** `operations.seed`: `Profile` ve `PROFILES` (demo, load), `SeedCounts(books, copies, members, open_loans, overdue_loans, closed_loans, ol_records, synthetic_books)`, `SeedError` (mesajı olduğu gibi gösterilen beklenen hata), `counts_lines(counts)`, `seed_phone(n)`, `seed_email(member_no)`, `title_words(titles)`, `read_books(path)`, `BOOKS_FILE` ve ad listelerinin yolları, `_bulk(model, rows)` (tek yazım yolu; TC-348 hatayı buraya enjekte eder). `scripts/fetch_demo_books.py`: `fetch_books(limit, *, urlopen, sleep)`, `write_output(path, records, fetched_on)`, `main(argv)`, `FILTER_VERSION = 1`. `catalog.domain.copy_barcode(copy_id)` yeni: barkodun tek kaynağıdır, `catalog.services.add_copies` de bunu kullanır (küçük karar 5 "mevcut domain fonksiyonu" dediği için barkod biçimi domain'e alındı).
+    - **Kimlikler:** Tablolar boş olduğu için kitap, nüsha, üye, rıza, ödünç, defter ve dağıtım satırlarının `id`'leri 1'den açıkça verilir; `member_no` = `id`, barkod = `copy_barcode(id)`. SQLite `AUTOINCREMENT` sayacı en büyük kimliğe ilerler; sonra eklenen nüshaların barkodu çakışmaz.
+    - **Zaman damgaları** tarihlerden türetilir, `timezone.now()` çağrılmaz (küçük karar 2, TC-218): `Copy.status_changed_at` açık ödünçte `loaned_on` 10:00, kapalı ödüncü olan nüshada son `closed_on` 12:00, hiç ödünç almamış nüshada pencerenin başı 09:00; FINE `closed_on` 12:00, PAYMENT 12:05; `ConsentEvent.recorded_at` `effective_on` 10:00 (Europe/Istanbul).
+    - **Açık ödünçler:** Rastgele nüshalara; üyeler karıştırılmış listeden sırayla atanır (demo 150, yük 3.000 farklı üye; limit 3 aşılmaz). Gecikmiş ödünçte `loaned_on` = bugün − süre − (1…20 gün); kapalı gün kaydırması `due_on`'u bugüne taşırsa `loaned_on` bir gün geri alınır. Gecikmemiş ödünçte `loaned_on` = bugün − (0…süre − 1).
+    - **Kapalı ödünçler:** Nüshalara karıştırılmış sırayla dağılır (yükte nüsha başına en çok 5). Her nüshanın penceresi (bugün − 180 ya da 365 gün … açık ödüncünden ya da bugünden bir gün önce) eşit dilimlere bölünür ve her ödünç kendi diliminde kalır; aynı nüshanın ödünçleri çakışmaz (TC-343). Zamanında iade 1…süre gün sonra, gecikmeli iade son tarihten 1–20 gün sonradır. Hepsi `RETURNED`'dır; kayıp, hasar, uzatma ve pasif üye üretilmez.
+    - **Gecikme ve borç:** Gecikmeli iade oranı iki profilde de kapalı ödünçlerin %10'udur (demo 35, yük 9.700; açılışta sabitlendi). Demo'nun 5 borçlusu, gecikmeli iadesi olan üyelerden rastgele seçilir; her birinin **en son** gecikmeli iadesinin cezası ödenmemiş kalır. Önceki cezalar aynı gün kendi ödemeleriyle FIFO'ya göre kapanır, böylece borçlunun tek açık kalemi o ceza olur (TC-344). PAYMENT'ın `loan` alanı boştur (`record_payment` gibi).
+    - **Kitaplar:** Open Library kayıtlarında yayınevi boştur (ADR-0033 yayınevi almaz). Sentetik başlığın sözcükleri dosyadaki bütün başlıkların harf dizileridir (rakam ve noktalama atılır, ilk görülme sırası, tekrarsız). Sentetik kitabın yılı 1950 ile bu yıl arasında rastgeledir (küçük karar 6 yılı boş saymadığı için). Çekim betiğinde birden çok yazar ", " ile birleşir; kaydın ISBN'i, belgedeki ISBN'lerden 13 haneli ve geçerli olan ilkidir; `ol_id` eser anahtarıdır (`OL…W`).
+    - **Ad listeleri:** `seed/first_names.txt` 83, `seed/last_names.txt` 79 tek sözcüklü Türkçe ad ve soyad.
+    - **Denetim sırası:** Komut önce aktörü, sonra işlemin içinde veritabanının boşluğunu, sonra kitap dosyasını denetler. Dosya yoksa "Kitap dosyası bulunamadı", kaydı yoksa "Kitap dosyasında kayıt yok" ile çıkış 1 (TC-341). Komut `job_run` yazmaz.
+    - **Süre:** Yük profili bulutta 14 sn'de yüklenir (100.000 ödünç, 9.700 FINE, 9.700 PAYMENT, 9.700 dağıtım; ~21 MB). Demo 0,7 sn.
+    - **Testler:** `operations/tests/test_seed.py` (25). TC-218 ve TC-343 iki yüklemeyi aynı test veritabanında işlemi geri alarak yapar (her yükleme boş veritabanında başlar). TC-220, TC-317 ve TC-346 modül kapsamlı tek bir yükleme fikstürünü paylaşır; fikstür sayıları toplar ve işlemi geri alır. TC-315'in kullanım hatası (çıkış 2) alt süreçte `manage.py` ile. `scripts/tests/test_fetch_demo_books.py` (8; TC-214…TC-216, TC-340) ağsızdır: HTTP açıcı ve bekleme yamalıdır. Örnek dosya `operations/tests/data/books_sample.json` (12 kayıt, `_meta.source` "Test örneği").
+    - **Dosya listesi dışında değişenler:** `catalog/domain.py` ve `catalog/services.py` (`copy_barcode`).
+  - **G18:**
+    - **Plana ek arayüzler:** `OPERATIONS` (işlem adları), `OpStats(durations_ms, errors)`, `passes(stats)`, `report_lines(stats)`, `ro_uri(path)`, `connect_ro(path)`, `check_seed_only(con)` ve `NotSeedData`, `WorkerPlan(members, copies, book_words, member_words)`, `load_candidates(con, workers, rng) -> (plans, max_open_loans)`, `Client(base_url)` (`request`, `login`), `Worker(client, plan, rng, lookup_loan, max_open_loans)` (`next_operation`, `step`, `run`), `main(argv)`.
+    - **Adaylar:** Üye aktif, anonim değil, açık ödüncü yok ve bakiyesi 0'dır (uzatma borçta reddedildiği için "engelsiz"den sıkı). Nüsha Raftadır. İkisi de `--seed` ile karıştırılıp `i::workers` ile ayrık bölünür (TC-318). Ödünç limiti `library_settings`'ten okunur.
+    - **Arama sözcükleri:** Kitap aramasında başlık sözcükleri (en az 3 harf); üye aramasında üyelerin soyadları. KL-17'nin "başlık sözcükleri" kuralı üye aramasında sonuç vermeyeceği için üye aramasına soyad seçildi.
+    - **Zincir:** Ödünçten sonra ödüncün kimliği iş parçacığının kendi salt okunur bağlantısıyla aranır (süreye girmez). Uygun üye ya da rafta nüsha kalmadıysa ödünç de, iade ve uzatma gibi (küçük karar 10), istek atılmadan yeniden seçilir. İade edilen nüsha raf havuzuna, üyenin kotası geri döner.
+    - **Başarı ölçütü:** Ödünç, iade ve uzatma 303, aramalar 200 beklenir. Kural ihlali aynı ekranda 200 döndüğü için hata sayılır; ağ hatası da hata sayılır. Süre her istekte ölçülür (hatalılar dahil). İstek yapılmamış bir tür sonucu "kaldı" yapar (kanıt eksik).
+    - **HTTP:** Yönlendirmeler izlenmez. `Secure` işaretli çerezler düz HTTP'de de gönderilir; betik üretimde (`SESSION_COOKIE_SECURE = True`) Caddy'siz waitress'e bağlandığı için bu gerekir (ADR-0031). Her iş parçacığı sırayla oturum açar; başarısız girişte çıkış 1. Parola dosyası `utf-8-sig` ile okunur, sondaki satır sonu atılır. Faz 6'da `LIBRARY_ALLOWED_HOSTS` waitress adresini (ör. `127.0.0.1`) içermelidir.
+    - **`testpaths`:** Bütün app klasörleri, `scripts` ve `tests`. Yeni bir app eklenirse listeye de eklenmelidir; TC-355 bunu denetler.
+    - **Testler:** `scripts/tests/test_loadtest.py` (13). TC-318 aday seçimini `file_db` ve fabrika fonksiyonlarıyla kurulmuş gerçek şemada sınar; TC-356 stdlib `http.server` ile yerel sahte sunucu kullanır.
+    - **Dosya listesi dışında değişenler:** Yok (`pyproject.toml`'daki `slow` işaretinin açıklaması "yük profili tohumu"nu da kapsayacak biçimde güncellendi).
+- **2026-11-01, G17–G18 uygulayıcının seçtiği kullanıcıya görünen metinler** (PR'da onaya sunulur). Planın, ADR'lerin ve açılış kararlarının verdiği metinler ("Personel bulunamadı ya da pasif: <ad>", "Veritabanı boş değil", "Tohum verisi olmayan veritabanı", "kitap=…, nüsha=…, üye=…, açık ödünç=… (gecikmiş …)") listede yoktur.
+  - **G17, `load_seed_data`:**
+    - Çıktının ilk satırının sonuna eklenen ", kapalı ödünç=<n>" (küçük karar 8).
+    - "Open Library dosyasında <n> kayıt var; <m> sentetik kitap eklendi": sentetik tamamlama satırı.
+    - Hatalar (çıkış 1): "Kitap dosyası bulunamadı: <yol>", "Kitap dosyasında kayıt yok: <yol>", "Tohum verisi yüklenemedi: <tür>: <metin>".
+    - `--help`: komut "Boş veritabanına demo ya da yük testi verisi yükler; kayıtların sahibi --actor personelidir."; `--profile` "demo ya da load; varsayılan demo"; `--actor` "Kayıtların sahibi olacak aktif personelin kullanıcı adı"; `--seed` "Rastgele üretecin tohumu; varsayılan 42".
+  - **G17, `scripts/fetch_demo_books.py`:** açıklama "Demo kitaplarını Open Library'den bir kez çeker ve JSON dosyasına yazar."; `--out` "Yazılacak JSON dosyası"; `--limit` "En çok kayıt sayısı; varsayılan 300"; "<n> kayıt yazıldı: <yol>"; "Open Library'ye erişilemedi: <neden>" (çıkış 1); "pozitif bir tam sayı olmalı: <değer>" (çıkış 2). `_meta.source` "Open Library (https://openlibrary.org), arama API'si"; `_meta.license` "Open Library kataloğu verisi CC0 (kamu malı) olarak sunulur; yalnız bibliyografik alanlar (başlık, yazar, yıl, ISBN) ve OL kimliği alındı, kapak alınmadı."; `User-Agent` "kutuphane-odunc-sistemi/1.0 (one-time demo data fetch; <repo adresi>)".
+  - **G17, `README.md`:** Başlık "Kütüphane ödünç sistemi", tanıtım cümlesi, "Veri kaynakları" bölümünün iki maddesi (Open Library CC0 atfı ve teşekkür; sentetik ad, "000" telefon ve `@example.invalid` notu) ve "Demo verisi" bölümünün metni (üç komut ve `<ad>` açıklaması).
+  - **G17, veri:** `seed/first_names.txt` ve `seed/last_names.txt` listeleri.
+  - **G18, `scripts/loadtest.py`:** işlem adları "kitap arama", "ödünç", "iade", "uzatma", "üye arama"; rapor başlığı "işlem, istek, p50 (ms), p95 (ms), hata"; istek yapılmamış türde "-"; son satır "Sonuç: geçti" ya da "Sonuç: kaldı". Hatalar (çıkış 1): "Parola dosyası okunamadı: <yol>", "Veritabanı okunamadı: <yol>: <hata>", "Sunucuya bağlanılamadı: <adres>: <hata>", "Giriş başarısız: <kullanıcı>". `--help`: açıklama "NFR-01 yük testi: tohum verili bir sunucuya 5 eşzamanlı personel gibi istek atar ve işlem türü başına p50, p95 ve hata sayısını raporlar."; `--base-url` "Waitress adresi, ör. http://127.0.0.1:8000"; `--user` "Personel kullanıcı adı"; `--password-file` "Parolanın bulunduğu dosya"; `--db` "Sunucunun SQLite veritabanı (salt okunur açılır)"; `--workers` "İş parçacığı sayısı; varsayılan 5"; `--duration` "Süre (saniye); varsayılan 120"; `--seed` "Rastgele üretecin tohumu; varsayılan 42"; "pozitif bir tam sayı olmalı: <değer>".
+- **2026-11-01, PR #6 yerel doğrulaması ve onaylar** (kullanıcı, soru penceresi):
+  - **Metinler:** "G17–G18 uygulayıcının seçtiği kullanıcıya görünen metinler" listesinin tamamı onaylandı.
+  - **Birleştirme:** Kitap dosyası commit'lendikten ve testler yeniden geçtikten sonra PR #6'nın `main`'e birleştirilmesi onaylandı.
+  - **Kitap dosyası:** Filtre sürümü 1'in yabancı baskı sorunu yerelde düzeltildi ("yerelde yalnız doğrulama" kuralına kullanıcının onayladığı istisna). Baskı düzeyi seçildi ve 5xx ile zaman aşımında yeniden deneme eklendi: [ADR-0059](../decisions/0059-demo-books-turkish-edition.md), TC-357, TC-358. ADR-0033'ün durum satırı güncellendi. Kanıt G17'de.
+  - **Uyarlanan testler:** TC-214…TC-216 ve TC-340'ın test yardımcısı (`doc`) artık eser ve eşleşen Türkçe baskıyı üretir; beklenen `ol_id`'ler `OL…M` oldu, sınanan davranış değişmedi.

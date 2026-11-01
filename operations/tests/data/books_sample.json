@@ -1,0 +1,96 @@
+{
+ "_meta": {
+  "source": "Test örneği (Open Library biçiminde; gerçek çekim değil)",
+  "query": "language:tur isbn:978605*",
+  "fetched_on": "2026-11-01",
+  "license": "Test verisi",
+  "filter_version": 1,
+  "count": 12
+ },
+ "books": [
+  {
+   "ol_id": "OL900000W",
+   "title": "Tutunamayanlar",
+   "author": "Oğuz Atay",
+   "year": 1972,
+   "isbn13": "9786050001006"
+  },
+  {
+   "ol_id": "OL900001W",
+   "title": "İnce Memed",
+   "author": "Yaşar Kemal",
+   "year": 1955,
+   "isbn13": "9786050001013"
+  },
+  {
+   "ol_id": "OL900002W",
+   "title": "Saatleri Ayarlama Enstitüsü",
+   "author": "Ahmet Hamdi Tanpınar",
+   "year": 1961,
+   "isbn13": "9786050001020"
+  },
+  {
+   "ol_id": "OL900003W",
+   "title": "Kürk Mantolu Madonna",
+   "author": "Sabahattin Ali",
+   "year": 1943,
+   "isbn13": "9786050001037"
+  },
+  {
+   "ol_id": "OL900004W",
+   "title": "Çalıkuşu",
+   "author": "Reşat Nuri Güntekin",
+   "year": 1922,
+   "isbn13": "9786050001044"
+  },
+  {
+   "ol_id": "OL900005W",
+   "title": "Aşk-ı Memnu",
+   "author": "Halit Ziya Uşaklıgil",
+   "year": 1900,
+   "isbn13": "9786050001051"
+  },
+  {
+   "ol_id": "OL900006W",
+   "title": "Huzur",
+   "author": "Ahmet Hamdi Tanpınar",
+   "year": 1949,
+   "isbn13": "9786050001068"
+  },
+  {
+   "ol_id": "OL900007W",
+   "title": "Yaban",
+   "author": "Yakup Kadri Karaosmanoğlu",
+   "year": 1932,
+   "isbn13": "9786050001075"
+  },
+  {
+   "ol_id": "OL900008W",
+   "title": "Kuyucaklı Yusuf",
+   "author": "Sabahattin Ali",
+   "year": 1937,
+   "isbn13": "9786050001082"
+  },
+  {
+   "ol_id": "OL900009W",
+   "title": "Sinekli Bakkal",
+   "author": "Halide Edib Adıvar",
+   "year": 1936,
+   "isbn13": "9786050001099"
+  },
+  {
+   "ol_id": "OL900010W",
+   "title": "Kiralık Konak",
+   "author": "Yakup Kadri Karaosmanoğlu",
+   "year": 1922,
+   "isbn13": "9786050001105"
+  },
+  {
+   "ol_id": "OL900011W",
+   "title": "Bir Düğün Gecesi",
+   "author": "Adalet Ağaoğlu",
+   "year": null,
+   "isbn13": "9786050001112"
+  }
+ ]
+}
