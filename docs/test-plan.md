@@ -1,8 +1,8 @@
 # Test planı: Kütüphane ödünç sistemi
 
-- **Güncelleme:** 2026-11-02 (TC-367…TC-368: faz 6 bulgusu B10; elle TC-231 `v1.0.0-rc.2` ile "Geçti"). Önceki: 2026-11-01 (TC-340…TC-356: G17–G18 açılış kararları, ADR-0056…0058; G17 ve G18 TC'leri "Geçti"; TC-357…TC-358: PR #6 yerel doğrulamasında ADR-0059; TC-359…TC-366: G19 açılış kararları, ADR-0060…0066; G19'un otomatik TC'leri "Geçti")
+- **Güncelleme:** 2026-11-02 (TC-369…TC-371: faz 6 spec incelemesi, B11 ve ADR-0069, ADR-0070; TC-277'nin ilk satırı değişti; §8'e HT-01 ve HT-02). Önceki: 2026-11-02 (TC-367…TC-368: faz 6 bulgusu B10; elle TC-231 `v1.0.0-rc.2` ile "Geçti"). Önceki: 2026-11-01 (TC-340…TC-356: G17–G18 açılış kararları, ADR-0056…0058; G17 ve G18 TC'leri "Geçti"; TC-357…TC-358: PR #6 yerel doğrulamasında ADR-0059; TC-359…TC-366: G19 açılış kararları, ADR-0060…0066; G19'un otomatik TC'leri "Geçti")
 - **Test yaklaşımı:** TDD (faz 0 kararı, AGENTS.md). Her görevde §6'daki TC'lerin testi önce yazılır ve kırmızı görülür, sonra kod yazılır (plan §4.0).
-- **Kaynak:** Faz 4 test tasarımı taslağı (TC-01…TC-234) ADR-0036…0047 ve KL-1…46'ya göre revize edildi; TC-235…TC-319 eklendi. TC-320…TC-339, G14–G16 açılışında kullanıcının onayladığı kararların (ADR-0053…0055, plan §11) yeni davranışları için eklendi (2026-11-01); TC-340…TC-356, G17–G18 açılışında onaylanan kararların (ADR-0056…0058, plan §11) yeni davranışları için eklendi (2026-11-01); TC-357…TC-358, PR #6'nın yerel doğrulamasında onaylanan ADR-0059 için eklendi (2026-11-01); TC-359…TC-366, G19 açılışında onaylanan dağıtım dosyası testleri (ADR-0066, plan §11) için eklendi (2026-11-01); TC-367…TC-368, faz 6 bulgusu B10 (İngilizce hata sayfaları, plan §12.2) için eklendi (2026-11-02). Taslak, içeriği buraya alındıktan sonra kullanıcı kararıyla silindi (2026-10-31); açık soruları plan §8.2'de.
+- **Kaynak:** Faz 4 test tasarımı taslağı (TC-01…TC-234) ADR-0036…0047 ve KL-1…46'ya göre revize edildi; TC-235…TC-319 eklendi. TC-320…TC-339, G14–G16 açılışında kullanıcının onayladığı kararların (ADR-0053…0055, plan §11) yeni davranışları için eklendi (2026-11-01); TC-340…TC-356, G17–G18 açılışında onaylanan kararların (ADR-0056…0058, plan §11) yeni davranışları için eklendi (2026-11-01); TC-357…TC-358, PR #6'nın yerel doğrulamasında onaylanan ADR-0059 için eklendi (2026-11-01); TC-359…TC-366, G19 açılışında onaylanan dağıtım dosyası testleri (ADR-0066, plan §11) için eklendi (2026-11-01); TC-367…TC-368, faz 6 bulgusu B10 (İngilizce hata sayfaları, plan §12.2) için eklendi (2026-11-02); TC-369…TC-371, faz 6 spec incelemesinden (B11, ADR-0069, ADR-0070) eklendi (2026-11-02). Taslak, içeriği buraya alındıktan sonra kullanıcı kararıyla silindi (2026-10-31); açık soruları plan §8.2'de.
 
 ## 1. Kapsam
 
@@ -43,14 +43,14 @@ Görev tablosundaki "Seviye" sütunu bu satırlardan birini gösterir.
 
 | Bileşen | Teknik | Örnek TC |
 |---|---|---|
-| Son tarih, gecikme günü, ceza (`circulation.domain`) | Sınır değer (ceza üst sınırı ve gecikme gününde üç değerli), denklik sınıfı, hata tahmini | TC-104…TC-113, TC-276, TC-277 |
+| Son tarih, gecikme günü, ceza (`circulation.domain`) | Sınır değer (ceza üst sınırı ve gecikme gününde üç değerli), denklik sınıfı, hata tahmini | TC-104…TC-113, TC-276, TC-277, TC-369 |
 | Ödünç ve uzatma engelleri | Karar tablosu (tek koşul ve birleşik engel satırları) | TC-114…TC-123, TC-280 |
 | Nüsha durumu | Durum geçişi: geçerli geçişler, geçersiz geçişler (her durumdan), 1-switch dizileri | TC-159…TC-169, TC-291 |
 | Borç defteri | Denklik sınıfı, sınır değer (borç, af, para iadesi tutarları), değişmez kontrolü (I1–I6) | TC-76…TC-103, TC-270…TC-275 |
 | Türkçe normalizasyon | Denklik sınıfı, metamorfik ilişki (idempotans, büyük/küçük harf) | TC-34…TC-36 |
 | ISBN | Denklik sınıfı, sınır değer (hane sayısı), hata tahmini | TC-37…TC-43, TC-253 |
 | Üye alanı yorumlama | Denklik sınıfı ve sınır değer (8 hane ve baştaki 0, 10–11 hane) | TC-279 |
-| Rıza olayları | Durum geçişi, sınır değer (bugün ve yarın) | TC-57…TC-59, TC-254…TC-258 |
+| Rıza olayları | Durum geçişi, sınır değer (bugün ve yarın) | TC-57…TC-59, TC-254…TC-258, TC-371 |
 | Yetki | Denklik sınıfı ve URL çözücüden üretilen tam tarama (NFR-07) | TC-31…TC-33 |
 | Hatırlatma aday koşulu (S6) | Koşul başına elle MC/DC: her koşulun sonucu tek başına değiştirdiği bir case | TC-173…TC-176, TC-179 |
 | Telafi ve görev kaydı | Sınır değer (saat), durum geçişi (RUNNING → SUCCESS/FAILED; saatlik telafi) | TC-210…TC-213, TC-310…TC-312, TC-336 |
@@ -367,7 +367,7 @@ Sütunlar: Görev, TC'nin yazıldığı görev (plan §4); Seviye, §2'deki sat�
 | TC-274 | FR-16 (ADR-0041) | G09 | servis | Karar tablosu | `cancel_fee_manual`: gerekçe "" ve "   "; ödüncüne bağlı bedel; ödenmemiş kısmı 0 olan bağsız bedel; bağsız FINE | "İptal için gerekçe zorunlu"; "Bu bedel ödüncüne bağlı; nüshayı Bulundu olarak işaretleyin"; "Bedelin ödenmemiş kısmı yok"; FINE reddedilir; hiçbirinde hareket yazılmaz | Geçti |
 | TC-275 | FR-16, FR-22 (ADR-0041, KL-26) | G09 | view | Karar tablosu | Görevli POST `/borclar/<no>/iptal/`; döküm ekranı yönetici ve görevliyle; bedeller: iade edilebilir tutarlı, bağsız ve ödenmemiş, ikisi de değil | 403; yönetici para iadesi formunu yalnız ilk bedelde, iptal formunu yalnız ikincide görür; görevli iki formu da görmez | Geçti |
 | TC-276 | FR-12, AC-12 (ADR-0040) | G10 | birim | Denklik sınıfı | `late_days(2026-11-16, 2026-11-20, {2026-11-18})`; `fine(3, 500, 15000)` | 3; 1500 | Geçti |
-| TC-277 | FR-12 (ADR-0040) | G10 | birim | Sınır değer | Son tarih 11-16, iade 11-20; kapalı tarih kümesi {11-16}, {11-20}, {11-15, 11-21}; ayrıca `late_days(11-16, 11-17, {11-17})` | 4 (son tarih düşülmez); 3 (iade günü düşülür); 4 (aralık dışı); 0 | Geçti |
+| TC-277 | FR-12 (ADR-0040, ADR-0069) | G10 | birim | Sınır değer | Son tarih 11-16, iade 11-20; kapalı tarih kümesi {11-16}, {11-20}, {11-15, 11-21}; ayrıca `late_days(11-16, 11-17, {11-17})` | 3 (son tarih düşülür, ADR-0069; faz 6'ya kadar 4); 3 (iade günü düşülür); 4 (aralık dışı); 0 | Geçti |
 | TC-278 | FR-12 (ADR-0040, KL-29) | G11 | servis | Denklik sınıfı | Pazar haftalık kapalı; son tarih 2026-11-14 (cumartesi), iade 2026-11-17; ayrı testte 2026-11-15 (pazar) ayrıca kapalı tarih | İlkinde 3 gün, 15,00 TL FINE; ikincisinde 2 gün, 10,00 TL | Geçti |
 | TC-279 | FR-11 (ADR-0046, KL-35) | G10 | birim | Denklik sınıfı | `classify_member_input`: "00000042", "05551112233", "5551112233", "0555 111 22 33", "(0555) 111-22-33", "1042", "12345678", "0000042", "012345678", "ayşe" | COPY_BARCODE; PHONE "05551112233"; PHONE "5551112233"; PHONE "05551112233"; PHONE "05551112233"; MEMBER_NO "1042"; MEMBER_NO; MEMBER_NO; MEMBER_NO; TEXT | Geçti |
 | TC-280 | FR-08, FR-10 (KL-6) | G10 | birim | Karar tablosu | `checkout_blockers`: pasif, limit dolu, gecikmiş, eşik aşılmış, nüsha ON_LOAN; `renew_blockers`: uzatılmış, gecikmiş, borçlu | Beş engel enum sırasıyla; [ALREADY_RENEWED, LOAN_OVERDUE, HAS_DEBT] | Geçti |
@@ -459,6 +459,9 @@ Sütunlar: Görev, TC'nin yazıldığı görev (plan §4); Seviye, §2'deki sat�
 | TC-366 | FR-28, NFR-04, AC-28 (ADR-0054, ADR-0060, ADR-0061, ADR-0063, ADR-0064, ADR-0066) | G19 | birim | Gözden geçirme (otomatik) | `docs/kurulum.md` | "Windows" ve "Linux" bölümleri var; 7 adımın komutları (`migrate`, `collectstatic`, `createsuperuser`, kök sertifika, servis kaydı, yedek klasörleri, NTP); güncelleme yordamında `backup_db` `migrate`'ten önce; `restore_backup` ve `pre-restore` KVKK notu; `git archive --format=zip --prefix=library/`; `certutil -addstore -f Root`; Caddy indirme bağlantıları 2.11.7'ye sabit; `git clone` yok | Geçti |
 | TC-367 | NFR-09 (B10) | Faz 6 | birim | Denklik sınıfı | `django.views.defaults` işleyicileri `RequestFactory` ile (400, 403, 404, 500); kayıtsız istemciyle CSRF jetonsuz `POST /giris/` | Durum kodu doğru; `lang="tr"`; başlıklar "Geçersiz istek", "Erişim izni yok", "Sayfa bulunamadı", "Sunucu hatası", "Form güvenlik kontrolünden geçemedi"; "Not Found", "Forbidden", "Bad Request", "Server Error" yok | Geçti |
 | TC-368 | NFR-09, NFR-07 (B10) | Faz 6 | view | Senaryo | `DEBUG=False`; görevli personelle olmayan üye no `/uyeler/999999/` ve yönetici yolu `/personel/` | 404 ve 403, ikisi de Türkçe ve `lang="tr"`; 404'te personel menüsü ("Çıkış") görünür | Geçti |
+| TC-369 | FR-12, AC-12 (ADR-0069, B11) | Faz 6 | birim | Sınır değer | Son tarih 11-16, kapalı tarih {11-16}; iade 11-17, 11-18 ve 11-16 | 0; 1; 0 | Geçti |
+| TC-370 | FR-12, FR-24, AC-12 (ADR-0069, B11) | Faz 6 | servis | Senaryo | Bugün 2026-11-02 ödünç (son tarih 11-16); sonra yönetici `add_closed_date(11-16)`; 11-17'de iade | `fine_kurus` 0; FINE kaydı yok | Geçti |
+| TC-371 | FR-03, AC-03 (ADR-0070) | G06 (faz 6'da numaralandı) | servis | Senaryo | Rızalı üye; `update_member(email="ayse.yilmaz@example.org")` | `has_email_consent` True; rıza olayı sayısı 1 (yeni olay yok) | Geçti |
 
 ## 7. Giriş ve çıkış ölçütleri
 
@@ -474,3 +477,5 @@ Sütunlar: Görev, TC'nin yazıldığı görev (plan §4); Seviye, §2'deki sat�
 
 | ID | Tarih | TC | Önem | Açıklama | Durum |
 |---|---|---|---|---|---|
+| HT-01 | 2026-11-02 | TC-231, TC-367, TC-368 | Düşük | B10: 400, 403, 404, 500 ve CSRF hata sayfaları İngilizce (NFR-09); `96ba347` | Kapandı |
+| HT-02 | 2026-11-02 | TC-277, TC-369, TC-370 | Kritik | B11: ödünçten sonra kapatılan son tarih gecikme günü sayılıyor, üyeye kapalı gün için ceza yazılıyor (FR-12, ADR-0069); `fix:` commit'i plan §12.2'de | Kapandı |

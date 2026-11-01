@@ -39,7 +39,7 @@ Aynı üyeye başka kitap vermek için 5. adımdan devam edin; yeni üye için "
 2. Kitabın barkodunu okutun. Etiket okunmuyorsa başlığı yazın ve "Ödünçteki nüshalar" listesinde doğru satırdaki "İade al"a basın.
 3. Gecikme yoksa "İade alındı" görünür. Gecikme varsa ceza kendiliğinden yazılır ve mesajda tutarı görünür ("İade alındı; … ceza yazıldı"). Cezayı hemen ödemek isteyen üye için [Ödeme](#ödeme) bölümüne geçin.
 
-Gecikme günü, son tarihten sonraki takvim günleridir; yönetici tarafından eklenmiş kapalı tarihler (tatil, beklenmedik kapanış) sayılmaz. Ödünç başına ceza, ayarlardaki üst sınırı geçmez.
+Gecikme günü, son tarihten sonraki takvim günleridir; yönetici tarafından eklenmiş kapalı tarihler (tatil, beklenmedik kapanış) sayılmaz. Son tarihin kendisi sonradan kapalı tarih yapılırsa o gün de sayılmaz. Ödünç başına ceza, ayarlardaki üst sınırı geçmez.
 
 ## Uzatma
 

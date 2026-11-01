@@ -197,8 +197,11 @@ Kapsam içi FR sayısı 31 (23 Must, 8 Should), Won't sayısı 7.
 - [ADR-0066](../decisions/0066-deploy-files-consistency-tests.md): Dağıtım dosyaları ve kullanıcı belgeleri `tests/test_deploy_files.py`'deki tutarlılık testleriyle denetlenir; elle TC'ler de kalır (faz 5, G19 açılışı).
 
 - [ADR-0067](../decisions/0067-phase6-trial-project-single-windows-machine.md): Faz 6 deneme projesi olarak bu Windows 11 makinesinde, yalnız Windows, `127.0.0.2` adresiyle yapılır; kurulumu kullanıcı belgeyi izleyerek yapar; kurulum `v1.0.0-rc.1` zip'inden; TC-226, TC-227, TC-228, TC-232, TC-233 kapsam dışı, TC-229 ve TC-230 kısmi (faz 6 açılışı).
+- [ADR-0068](../decisions/0068-phase6-python-from-nuget-package.md): Faz 6 test ortamında servis Python'u resmi NuGet paketinden `C:\Program Files\Python311`'e açılır (faz 6, bulgu B1).
+- [ADR-0069](../decisions/0069-closed-due-date-not-a-late-day.md): Ödünçten sonra kapatılan son tarih de gecikme günü sayılmaz; `late_days` aralığı `[due_on, on]` (faz 6 spec incelemesi, B11; ADR-0040'ı tamamlar).
+- [ADR-0070](../decisions/0070-email-change-keeps-consent.md): E-posta adresi başka bir adresle değişince rıza korunur, olay yazılmaz (faz 6 spec incelemesi).
 
-Sıradaki ADR numarası: 0068.
+Sıradaki ADR numarası: 0071.
 
 **Faz 4 küçük kararları (onaylandı 2026-10-31):**
 
@@ -610,7 +613,7 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
 - **Arayüzler:** sunar
   - `NoOpenDayError(RuleViolation)`: mesajı ADR-0028'deki metindir.
   - `due_date(start: date, period_days: int, is_closed: Callable[[date], bool]) -> date`. Aday tarih `start + period_days` olur. `i = 0…366` için `aday + i` kontrol edilir ve ilk açık gün döner; hiçbiri açık değilse `NoOpenDayError` fırlatılır. En kötü durum O(366).
-  - `late_days(due_on: date, on: date, closed_dates: AbstractSet[date]) -> int`: `max(0, (on − due_on).days − |{d ∈ closed_dates : due_on < d ≤ on}|)` (ADR-0040). O(c).
+  - `late_days(due_on: date, on: date, closed_dates: AbstractSet[date]) -> int`: `max(0, (on − due_on).days − |{d ∈ closed_dates : due_on ≤ d ≤ on}|)` (ADR-0040; alt sınır ADR-0069, faz 6). O(c).
   - `MemberInput` ve `classify_member_input(raw: str) -> MemberInput` (ADR-0046, KL-35).
   - `fine(late_days: int, daily_kurus: int, cap_kurus: int) -> int`: `min(late_days × daily_kurus, cap_kurus)`.
   - `Blocker(Enum)`, değeri SRS mesajıdır: `MEMBER_INACTIVE="Üye pasif"`, `LIMIT_REACHED="Ödünç limiti dolu"`, `HAS_OVERDUE="Gecikmiş ödünç var"`, `DEBT_THRESHOLD="Borç eşiği aşıldı"`, `COPY_NOT_ON_SHELF="Nüsha rafta değil"`, `ALREADY_RENEWED="Uzatma hakkı kullanıldı"`, `LOAN_OVERDUE="Ödünç gecikmiş"`, `HAS_DEBT="Ödenmemiş borç var"`.
@@ -1726,6 +1729,26 @@ Sıra TC-234 → TC-225 → TC-223 → TC-231 → TC-319 (TC-225 sayımları dem
   - **Sürüm (2026-11-02, kullanıcı onayı):** annotated `v1.0.0-rc.2` → `6cbd3a1` (yalnız yerel). `git archive --format=zip --prefix=library/ v1.0.0-rc.2` → `library-v1.0.0-rc.2.zip`, 617 417 bayt, SHA-256 `bc5239f34ddf85861cc9257fd407d5f7dfa69ba35ea55a9c36150426c6543ee1`. rc.1 → rc.2 farkı yalnız şablonlar, testler ve belgeler (`deploy/`, `requirements.txt`, migration aynı).
   - **Test ortamında güncelleme (2026-11-02, kullanıcı koştu, `docs/kurulum.md` "Güncelleme" 1–9):** `library-app` ve `library-caddy` Stopped; `backup_db` → "Yedek alındı: C:\Kutuphane\backups\library-20261102.sqlite3", "Silinen eski yedek: 0"; zip'in `Get-FileHash` değeri beklenenle aynı (`BC5239F3…6543EE1`); `app` → `app-old`, arşiv açılıp `library` → `app`; `pip install -r requirements.txt` hepsi "Requirement already satisfied"; `migrate` "No migrations to apply"; `collectstatic --noinput` "2 static files copied to 'C:\Kutuphane\static'" (depodaki iki statik dosyanın ikisi; `git diff v1.0.0-rc.1 v1.0.0-rc.2 -- static` boş, `git archive` dosya zamanını commit zamanı yaptığı için yeniden kopyalandılar); adım 7 atlandı (`deploy/` aynı); iki servis Running; `curl.exe` → `200`, `404`, `308 https://127.0.0.2/`. Belgeden tek sapma Claude'un eklediği iki `Set-Location` (`C:\Kutuphane` ve `C:\Kutuphane\app`, "klasör kullanımda" hatasını önlemek için); komutlar onlarla koşuldu ve hata çıkmadı, belge değişmedi.
   - **Test ortamında doğrulama (TC-231 hata sayfası kısmı, 2026-11-02, kullanıcı koştu):** Önce `admin` ile `/personel/yeni/`'den yönetici olmayan görevli (CLERK) personel hesabı `gorevli` açıldı, ilk giriş parola değişimi yapıldı. Kontroller gerçek tarayıcı motorlarında otomasyonla yapıldı: Chrome 156 ve Edge 156 CDP, Firefox 159.0 Marionette; her sayfada `<title>`, `<h1>`, `document.documentElement.lang`, personel menüsü ve Çıkış düğmesi ile İngilizce metin araması okundu. Üç tarayıcıda da aynı sonuç: (1) anonim `/admin/` → 404, "Sayfa bulunamadı" / "Sayfa bulunamadı · Kütüphane", menü yok; (2) `admin` ile `/uyeler/999999/` → 404, "Sayfa bulunamadı", menü ve Çıkış var; (3) `gorevli` ile `/personel/` → 403, "Erişim izni yok" / "Erişim izni yok · Kütüphane", menü ve Çıkış var. Hepsinde `lang` = `"tr"`, İngilizce metin yok. 400, 500 ve CSRF sayfaları elle denenmedi; TC-367 ve TC-368 otomatik sınıyor. B10 kapandı, TC-231 Geçti.
+- **Spec incelemesi (faz 6 adım 4, 2026-11-02, küçük karar 10):** `spec-reviewer` alt ajanı SRS, tasarım belgeleri, test planı, plan ve ADR'lere karşı uygulamanın tamamını ve testleri okudu. Bulgu çıkmadı, dört soru çıktı; Claude dördünü de kodda doğruladı. Kullanıcı dördünde de önerilen seçeneği seçti:
+  1. **AC-25 ile ADR-0018 çelişiyordu:** AC-25 borç hareketlerinin "üye bağı" kaldırılır diyordu. Kod ADR-0018'i ve data-design I6'yı izliyor (yalnız `loan_id` boşalır). AC-25 metni ADR'ye uyduruldu (`docs:`), kod değişmedi.
+  2. **Kapalı son tarih (B11, aşağıda).**
+  3. **E-posta değişince rıza:** Rıza GIVEN kalıyor, yeni olay yazılmıyor. Davranış [ADR-0070](../decisions/0070-email-change-keeps-consent.md) ile kayda geçti. Davranışı sınayan mevcut adsız test TC-371 olarak numaralandı. Kod değişmedi.
+  4. **KL-46 hata tablosu boştu:** B1–B9'un hepsi belge kusuruydu ("Kod değişmedi"), kod hatası olanlar yalnız B10 ve B11. Test-plan §8'e HT-01 (B10, Düşük) ve HT-02 (B11, Kritik: para hesabı) "Kapandı" olarak yazıldı.
+- **B11 (spec incelemesi, 2026-11-02): Ödünçten sonra kapatılan son tarih gecikme günü sayılıyor (FR-12, ADR-0040).**
+  - **Gözlem:** `late_days` kapalı tarihleri `(due_on, on]` aralığında düşüyordu. FR-07 son tarihi ödünç verilirken açık güne kaydırdığı için son tarih ancak sonradan kapatılırsa kapalı olabilir. Örnek: son tarih 11-16, sonradan 11-16 kapatılıyor, 11-17'de iade → 1 gün, 5,00 TL ceza. TC-277 bu sınırı "son tarih düşülmez" diye sınıyordu.
+  - **Karar (kullanıcı onayı, 2026-11-02, önerilen seçenek):** Düzeltme ve yeni ADR. TC-277'nin bu satırı sınadığı söylenince kullanıcı "Düzelt, TC-277 değişsin" ile kararını onayladı. [ADR-0069](../decisions/0069-closed-due-date-not-a-late-day.md): aralık `[due_on, on]`. Haftalık kapalı günler, OVERDUE_1 penceresi ve uzatmadaki gecikme kontrolü ADR-0040'taki gibi kalıyor.
+  - **Küçük kararlar (onaylandı 2026-11-02, 1–9):**
+    - (1) Dal `feature/phase6-verification`.
+    - (2) ADR-0069 ve ADR-0070.
+    - (3) TC-277'nin ilk satırı 3; TC-369 (birim), TC-370 (servis, `add_closed_date` ile), TC-371.
+    - (4) TC-371'in TDD sapması (aşağıdaki sapma nedeniyle oluşmadı).
+    - (5) Dosya yerleri.
+    - (6) Belgeler: SRS AC-25 ve sözlük, test-plan, plan, STATUS. FR-12'nin metni zaten doğru olduğu için değişmedi.
+    - (7) `test:`, `fix:`, `docs:` commit'leri.
+    - (8) Dal HEAD'ine yerel `v1.0.0-rc.3`. Gecikme gününü sınayan elle TC olmadığı için test ortamı güncellenmiyor; kurulu sürüm rc.2 kalıyor.
+    - (9) Tam koşu, kapsam eşikleri ve `makemigrations --check`.
+  - **Uygulamadaki sapma:** `members/tests/test_services.py`'deki `test_changing_email_keeps_consent` TC-371'in davranışını zaten sınıyordu. İkinci bir test yazılmadı; bu test `test_tc371_…` adıyla numaralandı. Kullanım kılavuzunun gecikme günü paragrafına ve `docs/architecture.md`'nin karmaşıklık tablosuna ADR-0069 eklendi.
+  - **Çözüm ve doğrulama (2026-11-02):** `ca0ee78` (`test:`; TC-277[closed0], TC-369, TC-370 önce kırmızı: TC-370'te `fine_kurus` 500), `29febed` (`fix:`, `circulation/domain.py`'de tek koşul). Tam koşu 1051 passed (1049 + TC-369 + TC-370); kapsam ve migration sonuçları §12.3.1'de.
 - **Bulgu olmayan gözlem (§12.4 adım 18):** Firefox 159'da `security.enterprise_roots.enabled` ilk değeri `true`; Caddy CA'sı `certutil` ile Windows deposuna eklenince Firefox uyarısız açtı. Belgenin koşullu Firefox adımı ("kullanmıyorsa") doğru; değiştirilmedi.
 
 ### 12.4 Kurulum kontrol listesi (2026-11-01)
@@ -1809,6 +1832,7 @@ Biçim küçük kararlar 11–14'te. 2026-11-02'de dolduruldu.
 
 #### 12.3.1 Test koşusu
 
+- **Tam koşu (2026-11-02, `29febed`, B11 sonrası):** `python -m coverage run --branch -m pytest -q --basetemp=<scratchpad>` → `1051 passed`, çıkış 0 (1049 + TC-369, TC-370; TC-371 mevcut testin numaralanması). Kapsam eşiklerinin dördü de çıkış 0: domain %100 (383 satır, 110 dal), iki servis %99 (411 satır; 4 satır, 2 kısmi dal eksik), yetki %100, operations %99; `pdf/sheets.py` %100; proje %97. `makemigrations --check --dry-run` → "No changes detected". Aşağıdaki tablo ve önceki koşu değişmedi; ölçümler aynı.
 - **Tam koşu (2026-11-02, `78b2d7d`):** Kod `96ba347` ve `v1.0.0-rc.2` ile aynı; sonraki commit'ler yalnız `docs/`. `python -m coverage run --branch -m pytest -q --basetemp=<scratchpad>` → `1049 passed`, çıkış 0 (`slow` dahil); proje toplam kapsamı %97. `python manage.py makemigrations --check --dry-run` → "No changes detected", çıkış 0. `--basetemp`'in nedeni: yereldeki `%TEMP%\pytest-of-Mehmet Emin` klasörüne erişim engelli (`WinError 5`); testlerin kendisiyle ilgisi yok (STATUS "Kum havuzu").
 - **G01'in altı TC'si (küçük karar 14):** `python -m pytest tests/test_prod_settings.py -k "tc01 or tc02 or tc03 or tc235 or tc236" -v` → `19 passed` (TC-236 her zorunlu değişken için ayrı parametre). TC-224 aşağıdaki kapsam ölçümü. Altısı test-plan'da "Geçti (faz 6)".
 - **Kapsam hedefleri (test-plan §4), aynı koşudan; her biri `coverage report --include=… --fail-under=…` çıkış 0:**
@@ -1829,7 +1853,7 @@ Biçim küçük kararlar 11–14'te. 2026-11-02'de dolduruldu.
 |---|---|---|---|---|---|
 | AC-01 | FR-01 | TC-44, TC-47; FR'ye bağlı 10 TC daha | — | Geçti | — |
 | AC-02 | FR-02 | TC-115, TC-126, TC-286; 4 TC daha | — | Geçti | — |
-| AC-03 | FR-03 | TC-57, TC-177, TC-254, TC-255; 7 TC daha | TC-319 Geçti (kılavuzda geçmiş tarihli rıza notu) | Geçti | — |
+| AC-03 | FR-03 | TC-57, TC-177, TC-254, TC-255, TC-371; 7 TC daha | TC-319 Geçti (kılavuzda geçmiş tarihli rıza notu) | Geçti | — |
 | AC-04 | FR-04 | TC-39, TC-62, TC-66; 14 TC daha | — | Geçti | — |
 | AC-05 | FR-05 | TC-64; 11 TC daha | — | Geçti | — |
 | AC-06 | FR-06 | TC-71 (30 etiketli PDF, barkodlar çözücüyle okunuyor); 7 TC daha | TC-228 Kapsam dışı | Geçti (kısmi, ADR-0067) | Basılı etiketin gerçek okuyucuyla okunması denenmedi: etiket kağıdı ve okuyucu yok |
@@ -1838,7 +1862,7 @@ Biçim küçük kararlar 11–14'te. 2026-11-02'de dolduruldu.
 | AC-09 | FR-09 | TC-111, TC-135; 4 TC daha | TC-231 akışında iade, üç tarayıcıda | Geçti | — |
 | AC-10 | FR-10 | TC-121, TC-123, TC-141, TC-142; 9 TC daha | TC-231 akışında uzatma (30.11.2026) | Geçti | — |
 | AC-11 | FR-11 | TC-128 (`autofocus`, form sırası, 303 akışı), TC-281; 5 TC daha | TC-227 Kapsam dışı; TC-319 Geçti ("üyeye adını sorun") | Geçti (kısmi, ADR-0067) | "Fare yok, okuyucuyla" kısmı gerçek okuyucu olmadan denenmedi; ikinci senaryo (nüsha barkodu uyarısı) otomatik |
-| AC-12 | FR-12 | TC-110, TC-112, TC-134, TC-136, TC-276, TC-283; 11 TC daha | TC-319 Geçti ("geçmiş kapalı tarihleri silmeyin") | Geçti | — |
+| AC-12 | FR-12 | TC-110, TC-112, TC-134, TC-136, TC-276, TC-283, TC-369, TC-370; 11 TC daha | TC-319 Geçti ("geçmiş kapalı tarihleri silmeyin") | Geçti | B11 (HT-02) kapandı: kapalı son tarih de düşülür (ADR-0069) |
 | AC-13 | FR-13 | TC-80; 11 TC daha | TC-231 akışında ödeme alma (1,00 TL) | Geçti | — |
 | AC-14 | FR-14 | TC-86, TC-87; 3 TC daha | — | Geçti | — |
 | AC-15 | FR-15 | TC-150; 6 TC daha | — | Geçti | — |
@@ -1851,7 +1875,7 @@ Biçim küçük kararlar 11–14'te. 2026-11-02'de dolduruldu.
 | AC-22 | FR-22 | TC-21; 6 TC daha (TC-01 dahil, Geçti (faz 6)) | — | Geçti | — |
 | AC-23 | FR-23 | TC-131; 4 TC daha | — | Geçti | — |
 | AC-24 | FR-24 | TC-23, TC-106; 3 TC daha | — | Geçti | — |
-| AC-25 | FR-25 | TC-201…TC-203, TC-305; 15 TC daha | — | Geçti | — |
+| AC-25 | FR-25 | TC-201…TC-203, TC-305; 15 TC daha | — | Geçti | 2. senaryonun metni ADR-0018'e uyduruldu (spec incelemesi): borç hareketlerinde yalnız ödünç bağı kalkar |
 | AC-26 | FR-26 | TC-91; 11 TC daha | — | Geçti | — |
 | AC-27 | FR-27 | TC-06, TC-07, TC-09; 7 TC daha | — | Geçti | — |
 | AC-28 | FR-28 | TC-191, TC-320, TC-366; 18 TC daha | TC-225 Geçti: sayılar `200 592 500` aynen geldi, 6,1 s | Geçti | Silinen veritabanı belgedeki adımlarla geri yüklendi |
@@ -1885,4 +1909,4 @@ Biçim küçük kararlar 11–14'te. 2026-11-02'de dolduruldu.
 
 **Özet:** 13 NFR'nin 9'u Geçti, 4'ü Geçti (kısmi, ADR-0067): NFR-03, NFR-05, NFR-08, NFR-11. Kaldı yok.
 
-**Test-plan §7 faz 6 çıkışı:** Must FR'lerin TC'leri geçiyor; her AC'nin kanıtı var; §4 kapsam hedefleri tutuyor; elle TC'ler yapıldı ya da ADR-0067 ile kapsam dışı; §8 hata tablosunda açık hata yok. Kalan adım `spec-reviewer` (küçük karar 10).
+**Test-plan §7 faz 6 çıkışı:** Must FR'lerin TC'leri geçiyor; her AC'nin kanıtı var; §4 kapsam hedefleri tutuyor; elle TC'ler yapıldı ya da ADR-0067 ile kapsam dışı; §8 hata tablosunda açık hata yok (HT-01 ve HT-02 kapandı). `spec-reviewer` 2026-11-02'de çalıştı: bulgu yok, dört soru (§12.2).

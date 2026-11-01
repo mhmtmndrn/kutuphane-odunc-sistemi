@@ -117,7 +117,7 @@ Oklar "kullanır" anlamına gelir; döngü yoktur. `billing.LedgerEntry → circ
 |---|---|---|---|
 | `due_date` | O(k), en kötü O(366) | O(1) | k = aday tarihten sonraki ardışık kapalı gün sayısı. Kapalı tarihler küme olarak verildiği için her kontrol O(1). Ayarlar en az bir haftalık açık günü zorunlu kılar (FR-24), bu yüzden tipik olarak k ≤ 7 + (ardışık tek tarihli kapalı gün sayısı). Her durumda en fazla 366 gün ileri bakılır; açık gün yoksa `NoOpenDayError` ([ADR-0028](decisions/0028-open-weekday-rule-shift-bound.md)). |
 | `fine` | O(1) | O(1) | |
-| `late_days` | O(c) | O(1) | c = kapalı tarih sayısı (yılda onlarca); aralıktaki tek tek kapalı tarihler sayılıp takvim günü farkından düşülür ([ADR-0040](decisions/0040-late-days-skip-closed-dates.md)) |
+| `late_days` | O(c) | O(1) | c = kapalı tarih sayısı (yılda onlarca); son tarih dahil aralıktaki tek tek kapalı tarihler sayılıp takvim günü farkından düşülür ([ADR-0040](decisions/0040-late-days-skip-closed-dates.md), [ADR-0069](decisions/0069-closed-due-date-not-a-late-day.md)) |
 | `checkout_blockers` | O(1) | O(1) | Sayımlar ve bakiye girdi olarak gelir |
 | `allocate_fifo` | O(k) | O(k) | k = açık kalem sayısı; girdi zaten sıralı gelir (S4) |
 | `parse_isbn` | O(1) | O(1) | En fazla 13 hane |

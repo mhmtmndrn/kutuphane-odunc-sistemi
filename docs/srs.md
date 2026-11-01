@@ -441,7 +441,7 @@ Senaryo: Pasif üyenin anonimleştirilmesi
 Senaryo: Eski ödüncün üye bağının kaldırılması
   Diyelim ki saklama süresi 2 yıl ve bir ödünç 2026-11-01'de iade edilmiş
   Eğer ki anonimleştirme görevi 2028-11-02'de çalışırsa
-  O zaman ödüncün ve ona bağlı borç hareketlerinin üye bağı kaldırılır
+  O zaman ödüncün üye bağı ve ona bağlı borç hareketlerinin ödünç bağı kaldırılır; borç hareketleri üyeye bağlı kalır (ADR-0018)
   Ve üyenin toplam ödünç sayısı değişmez (arşivlenmiş ödünç sayacına eklenir, ADR-0018)
 
 Senaryo: Borcu olan üyenin anonimleştirilmesi ertelenir
@@ -612,7 +612,7 @@ Senaryo: Eskimiş yedek uyarısı
 | Nüsha | Bir kitabın rafta duran tek fiziksel kopyası; benzersiz barkodu vardır |
 | Ödünç | Bir nüshanın bir üyeye verildiği, iade ya da kayıp/hasarla kapanan kayıt |
 | Son tarih | Ödüncün cezasız iade edilebileceği son gün |
-| Gecikme günü | İade (ya da kayıp işaretleme) tarihi ile son tarih arasındaki takvim günü farkından, bu aralıktaki tek tek kapalı tarihlerin sayısı çıkarılarak bulunur; haftalık kapalı günler sayılır; son tarihte iade 0 gündür (ADR-0040) |
+| Gecikme günü | İade (ya da kayıp işaretleme) tarihi ile son tarih arasındaki takvim günü farkından, son tarih dahil bu aralıktaki tek tek kapalı tarihlerin sayısı çıkarılarak bulunur; haftalık kapalı günler sayılır; son tarihte iade 0 gündür (ADR-0040, ADR-0069) |
 | Açık gün / kapalı gün | Kütüphanenin açık olduğu gün; kapalı günler haftalık günler ve tek tek tarihlerle tanımlanır |
 | Ceza | Gecikme için yazılan, ödünç başına üst sınırlı borç |
 | Bedel | Kayıp ya da hasarlı nüsha için yöneticinin girdiği borç |
