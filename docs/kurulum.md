@@ -284,10 +284,14 @@ Rename-Item C:\Kutuphane\library app
 
 ### Python ve sanal ortam
 
-[python.org](https://www.python.org/downloads/windows/)'dan Python 3.11'in 64 bit Windows yükleyicisini indirin. Kurulumda "Install for all users" seçin (varsayılan yol `C:\Program Files\Python311`). Ardından:
+[python.org](https://www.python.org/downloads/windows/)'dan Python 3.11'in 64 bit Windows yükleyicisini indirin. Yükleyicinin ilk ekranında "Customize installation" → "Next" ile "Advanced Options" ekranına geçin ve "Install for all users" kutucuğunu işaretleyin; hedef yol `C:\Program Files\Python311` olur. Servis hesabı kullanıcı profilindeki bir Python'u okuyamaz.
+
+Python 3.11 bu bilgisayarda yalnız bir kullanıcı için kuruluysa (`C:\Users\<ad>\AppData\Local\Programs\Python\Python311`), önce onu "Ayarlar → Uygulamalar"dan kaldırın: yükleyici kurulu 3.11'i görünce kurulum yerine değiştirme ekranını açar ve "Install for all users" kutucuğu pasif kalır.
+
+Sanal ortamı tam yolla oluşturun; `py -3.11` kullanıcı başına bir kurulumu tercih edebilir. Python'u başka bir klasöre kurduysanız yolu ona göre değiştirin:
 
 ```powershell
-py -3.11 -m venv C:\Kutuphane\venv
+& "C:\Program Files\Python311\python.exe" -m venv C:\Kutuphane\venv
 C:\Kutuphane\venv\Scripts\python.exe -m pip install -r C:\Kutuphane\app\requirements.txt
 ```
 

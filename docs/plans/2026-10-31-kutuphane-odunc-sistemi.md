@@ -1648,7 +1648,7 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   6. `main` üzerine annotated `v1.0.0-rc.1`; push ayrıca onaylanır; zip ADR-0064 komutuyla.
   7. Kurulumda takılınan her adım §12.2'de bulgu olarak kaydedilir; belge düzeltmesi `docs:` commit'iyle, kod değişirse `v1.0.0-rc.2`.
   8. TC-223 `docs/kurulum.md` "Yük testi" notuna göre ayrı bir test veritabanında, `--profile load` ile; `127.0.0.1` `LIBRARY_ALLOWED_HOSTS`'a geçici eklenir, sonra kaldırılır.
-  9. Servisler, `library-svc`, kök sertifika ve Firefox'un temizliği faz 6 sonunda sorulur.
+  9. Servisler, `library-svc`, kök sertifika, Firefox ve `C:\Program Files\Python311`'in (ADR-0068) temizliği faz 6 sonunda sorulur.
   10. `spec-reviewer` elle TC'lerden sonra çalıştırılır.
 
 ### 12.1 Elle TC'ler
@@ -1670,7 +1670,11 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
 
 ### 12.2 Kurulum bulguları
 
-Henüz yok.
+- **B1 (§12.4 adım 2, 2026-11-01): Kişisel Python 3.11 kuruluyken "Install for all users" kurulamıyor.**
+  - **Gözlem:** Python 3.11 serisinin Windows yükleyicisi olan son sürüm 3.11.9'dur (3.11.10+ yalnız kaynak). Makinede 3.11.9 kullanıcı başına kurulu (`py -0p` → `AppData\Local\Programs\Python\Python311`). `python-3.11.9-amd64.exe` aynı sağlayıcı anahtarını (`CPython-3.11`) görüp Modify/Repair/Uninstall ekranını açıyor; "Customize installation" çıkmıyor, Advanced Options'ta `InstallAllUsersState = disable`, `TargetDir` kullanıcı profilinde kilitli.
+  - **Belge eksikleri:** (a) "Install for all users" kutucuğunun "Customize installation → Next → Advanced Options" ekranında olduğu yazmıyor. (b) Kişisel kurulum varsa önce kaldırılması gerektiği yazmıyor. (c) `py -3.11 -m venv`, PEP 514 gereği HKCU kaydını HKLM'ye tercih edebilir; servis hesabının okuyamadığı Python'la venv kurulur.
+  - **Kontrol listesi hatası:** §12.4 adım 2'deki "Mevcut kurulumu kaldırma" talimatı yanlıştı (iki kurulumun yan yana durabileceği varsayılmıştı).
+  - **Çözüm:** `docs/kurulum.md` Windows "Python ve sanal ortam" (a), (b), (c) için düzeltildi (`docs:`); venv komutu `& "C:\Program Files\Python311\python.exe" -m venv`. Test ortamında Python resmi NuGet paketinden kuruldu ([ADR-0068](../decisions/0068-phase6-python-from-nuget-package.md)); §12.4 adım 2 ve 9 güncellendi. Kod değişmedi.
 
 ### 12.4 Kurulum kontrol listesi (2026-11-01)
 
@@ -1689,7 +1693,16 @@ Sabit değerler:
 #### A. Hazırlık (normal kullanıcı)
 
 1. Bir indirme klasörü aç, ör. `C:\Users\Mehmet Emin\Downloads\kutuphane-kurulum`, ve sürüm arşivini buraya kopyala.
-2. **Python 3.11, "Install for all users"** (belge "Python ve sanal ortam"). Bu makinedeki mevcut 3.11 yalnız kullanıcı başına kurulu (`AppData\Local\Programs\Python\Python311`); `library-svc` bu klasörü okuyamaz. python.org'dan 3.11.x 64 bit yükleyiciyi indir → "Customize installation" → "Install for all users" (`C:\Program Files\Python311`). Mevcut kurulumu kaldırma.
+2. **Python 3.11.9, NuGet paketinden** ([ADR-0068](../decisions/0068-phase6-python-from-nuget-package.md), bulgu B1). Bu makinedeki 3.11.9 yalnız kullanıcı başına kurulu ve python.org yükleyicisi kaldırmadan "all users" kurmuyor; kişisel kurulumu kaldırma, ona dokunma. Yönetici PowerShell'de, indirme klasöründe:
+   ```powershell
+   Invoke-WebRequest -UseBasicParsing https://www.nuget.org/api/v2/package/python/3.11.9 -OutFile python.3.11.9.zip
+   (Get-FileHash python.3.11.9.zip -Algorithm SHA512).Hash
+   # Beklenen: E353A7EFD159EF98AB9CE1011854A30D5D778F59D96FC9BB11B07CED2990B355F030486B0707F798C73C4420173AB111876A96EAD5981718B604C4CDD71C558D
+   Expand-Archive python.3.11.9.zip .\python-nuget
+   New-Item -ItemType Directory "C:\Program Files\Python311"
+   Copy-Item .\python-nuget\tools\* "C:\Program Files\Python311" -Recurse
+   & "C:\Program Files\Python311\python.exe" -c "import sys; print(sys.version)"
+   ```
 3. Caddy 2.11.7 Windows zip'ini ve WinSW 2.12.0 `WinSW-x64.exe`'yi belgedeki bağlantılardan indirme klasörüne indir.
 4. Firefox'u mozilla.org'dan kur (TC-231, TC-230).
 
@@ -1708,7 +1721,7 @@ Belgenin "İlk kurulum" sırası, komutlar "Windows" bölümünden:
    ```
    Parola dosyası belgedeki gibi (`notepad ...`, ilk satır parola, UTF-8).
 8. **Sürüm arşivi:** "İlk kurulumda klasörü silip arşivi açın": `Remove-Item C:\Kutuphane\app`, sonra `Expand-Archive` ve `Rename-Item` (zip adı `library-v1.0.0-rc.1.zip`).
-9. **Python ve sanal ortam:** Belgedeki iki komut. Ardından şunu çalıştır ve çıktıyı bana yaz:
+9. **Python ve sanal ortam:** Belgedeki iki komut (venv komutu B1 düzeltmesiyle `& "C:\Program Files\Python311\python.exe" -m venv C:\Kutuphane\venv`). Ardından şunu çalıştır ve çıktıyı bana yaz:
    ```powershell
    Get-Content C:\Kutuphane\venv\pyvenv.cfg
    ```
