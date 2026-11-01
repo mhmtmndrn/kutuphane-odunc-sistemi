@@ -1,6 +1,19 @@
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "library_site.settings.test"
-markers = ["slow: PDF ve barkod çözme testleri"]
+markers = ["slow: PDF ve barkod çözme testleri, yük profili tohumu"]
+testpaths = [
+    "accounts",
+    "administration",
+    "billing",
+    "catalog",
+    "circulation",
+    "members",
+    "notifications",
+    "operations",
+    "pdf",
+    "scripts",
+    "tests",
+]
 
 [tool.coverage.run]
 branch = true
