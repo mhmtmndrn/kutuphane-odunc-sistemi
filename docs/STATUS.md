@@ -1,7 +1,8 @@
 # Durum (devir notu)
 
-- **Güncelleme:** 2026-11-01 (faz 5, PR #4 onaylandı)
-- **Aşama:** eng-process **faz 5**. `feature/foundation` (G01–G04, PR #1), `feature/catalog-members` (G05–G08, PR #2) ve `feature/circulation` (G10 → G09 → G11 → G12, PR #3) birleşti; `main` = `d0c4555` (PR #3'ün merge commit'i). Grup `feature/notifications` (**G13**, geciken listesi ve hatırlatmalar) **tamam**; PR #4 kullanıcı tarafından onaylandı (metinler dahil, 2026-11-01) ve merge commit'iyle `main`'e birleştirilir.
+- **Güncelleme:** 2026-11-01 (faz 5, `feature/operations` açıldı)
+- **Aşama:** eng-process **faz 5**. `feature/foundation` (G01–G04, PR #1), `feature/catalog-members` (G05–G08, PR #2), `feature/circulation` (G10 → G09 → G11 → G12, PR #3) ve `feature/notifications` (G13, PR #4) birleşti; `main` = `c2e5bc8` (PR #4'ün merge commit'i). `feature/notifications` kapandı. Şu an `feature/operations` (**G14 → G15 → G16**: yedek, şifreli dışa aktarma ve geri yükleme; saklama ve anonimleştirme; zamanlayıcı ve telafi) açık; ilk `docs:` commit'i açılış kararlarını yazdı (ADR-0053…0055, plan §11 "G14–G16 — açılıştan önce verilen kararlar", TC-320…TC-339).
+- **G13 (PR #4, birleşti) özeti:**
   - **`92bf48e` (`docs:`):** STATUS'taki bayat satırlar, ADR-0052, G13 açılış kararları (plan §11), G13 dosya listesine `prod.py`, plan §3'te ADR-0052 ve sıradaki numara 0053.
   - **`158d43d` (`feat:` G13):** `notifications` app'i: `ReminderLog` (son tarih başına kısmi benzersiz indeks, ADR-0039), pencere kuralları, `send_due_reminders` (S6 adayları, önce e-posta sonra kendi işleminde kayıt, benzersiz kısıt ihlali `skipped`, SMTP hatası FAILED), `send_manual_reminders` (tekrar engeli yok, `triggered_by`, denetim kaydı yok), KL-13 e-posta şablonları, `send_reminders` komutu (`run_job`, FAILED varsa çıkış 1 ve `job_run` SUCCESS), `/gecikenler/` ve `/gecikenler/hatirlat/`, menü ve ana sayfada "Gecikenler", üretimde `EMAIL_TIMEOUT = 10` (ADR-0052).
   - Sonuç (bulut, Linux, Python 3.11.18): `python -m pytest notifications -q` → 67 passed; `python -m pytest -q` → 852 passed (`slow` dahil; önceki 784); `-m slow` → 4 passed; `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı: `*/domain.py` %100 (`--fail-under=90` geçti), `accounts/permissions.py` ve `accounts/middleware.py` %100, `notifications/services.py` %98 (hedef yok, yalnız rapor; kapsanmayan tek satır ulaşılamayan üyesiz ödünç dalı), `notifications` toplam %99, proje toplamı %99.
@@ -10,7 +11,7 @@
   - Test planında 244 TC "Geçti" (224 + G13'ün 20'si).
   - Plan: [docs/plans/2026-10-31-kutuphane-odunc-sistemi.md](plans/2026-10-31-kutuphane-odunc-sistemi.md). G13 kutusu kanıtıyla işaretli; uygulama ayrıntıları ve onaya sunulan metinler §11'de ("G13 — uygulama ayrıntıları", "G13 uygulayıcının seçtiği kullanıcıya görünen metinler").
   - Yerel Windows (R-15, Python 3.11.9, 2026-11-01): `python -m pytest -q` → 852 passed (eşzamanlılık testleri dahil; geçici dosya sorunu yok); `-m slow` → 4 passed; `makemigrations --check --dry-run` → "No changes detected"; dal kapsamı: `*/domain.py` %100 (`--fail-under=90` çıkış 0), `accounts/permissions.py` ve `accounts/middleware.py` %100 (`--fail-under=100` çıkış 0), `billing/services.py` %100, `circulation/services.py` %98, `members/services.py` %100, `notifications/services.py` %98, `notifications` toplam %99, proje toplamı %99. `send_reminders --date 2026-11-14` migrate edilmiş boş geçici veritabanında (scratchpad, `LIBRARY_DB_PATH`) iki kez → "gönderilen=0, başarısız=0, atlanan=0", çıkış 0; `--date 2026-13-40` → "CommandError: Geçersiz tarih: 2026-13-40", çıkış 1. İki e-postalı senaryo yerelde veriyle denenmedi; testler kapsıyor.
-- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`d0c4555`), `feature/foundation`, `feature/catalog-members` ve `feature/circulation` (kapandı), `feature/notifications` (PR #4 onaylandı, birleştiriliyor).
+- **Repo:** https://github.com/mhmtmndrn/kutuphane-odunc-sistemi (özel). Dallar: `main` (`c2e5bc8`), `feature/foundation`, `feature/catalog-members`, `feature/circulation` ve `feature/notifications` (kapandı), `feature/operations` (açık).
 - **Bulut kredisi (ADR-0048):** 100 $, yaklaşık 2026-11-05'te sıfırlanıyor (R-16).
 - **Bulut oturumu:** Her grup için kullanıcı yeni bir bulut oturumu açar, Claude açılış istemini hazırlar (KL-38). Oturum kritik soruyu oturumun içinde sorar; planın vermediği metinleri seçip §11'de listeler ve PR'da onaya sunar (plan §11, 2026-11-01 kararları).
   - **Tarayıcı (önerilen):** claude.ai/code; repo `mhmtmndrn/kutuphane-odunc-sistemi`, ortam **Default** (Trusted ağ; pip için PyPI gerekir).
@@ -19,8 +20,8 @@
 
 ## Bu oturumda sorulan ve cevaplanan
 
-- **G13 açılışından önce (2026-11-01, kullanıcı onayı):** Kritik karar [ADR-0052](decisions/0052-smtp-timeout.md): üretimde `EMAIL_TIMEOUT = 10` (`prod.py`); SMTP takılırsa waitress ya da zamanlayıcı iş parçacığı süresiz kilitlenmez, zaman aşımı FAILED olarak kaydedilip pencere içinde yeniden denenir. Yedi küçük karar (PRG ve ödünç başına mesaj, boş seçim, SMTP sırasında açık işlem yok, e-postada ödüncün ceza kopyaları, yalnız `SMTPException`/`OSError` FAILED, "Gecikenler" bağlantısı, geçersiz `--date`) plan §11'de.
-- Oturum içinde kritik soru çıkmadı; yeni ADR yok (sıradaki numara 0053).
+- **G14–G16 açılışından önce (2026-11-01, kullanıcı onayı):** Üç kritik karar: [ADR-0053](decisions/0053-hourly-catch-up.md) (açılışa ek saatlik telafi; `misfire_grace_time=3600`, `coalesce=True`), [ADR-0054](decisions/0054-restore-keeps-pre-restore-copy.md) (geri yükleme mevcut veritabanını `<db>.pre-restore-YYYYMMDD-HHMMSS` olarak bırakır) ve [ADR-0055](decisions/0055-reminder-log-error-cleared-on-unlink.md) (bağ koparılırken `reminder_log.error` NULL). Dokuz küçük karar (komut argümanları ve geçersiz tarih, magic bayt, migration yok, `.tmp` + `os.replace`, tek işçili zamanlayıcı, komut sarmalayıcı ve stderr `LOGGING`, "Saklama" bağlantısı, `Member.display_name`, ilk istisnada durma) plan §11'de. Sıradaki ADR numarası 0056.
+- **G13 açılışından önce (2026-11-01):** [ADR-0052](decisions/0052-smtp-timeout.md) ve yedi küçük karar; plan §11.
 
 ## G13 sapmaları ve dikkat edilecekler (ayrıntı plan §11)
 
@@ -39,9 +40,8 @@
 
 ## Sıradaki adım
 
-1. **PR #4 tamam (2026-11-01):** Yerel Windows koşusu geçti, G13 metinleri değişmeden onaylandı, birleştirme onaylandı. Sonraki dalın ilk commit'i `main`'in yeni hash'ini bu nota yazar.
-2. **Sonraki grup:** `feature/operations`: **G14–G16** (yedek, şifreli dışa aktarma ve geri yükleme; saklama ve anonimleştirme; zamanlayıcı ve telafi). G16 `send_reminders`'ı zamanlayıcıdan 09:00'da tetikler (faz 3 küçük karar 13) ve telafide `last_success(Job.REMINDERS)`'ı kullanır. Açık noktalar açılış isteminden önce kullanıcıya sorulur; istem yeni bir bulut oturumunda verilir.
-   - Genel sıra: G01 → G13 (tamam), G14…G16, G17…G18, G19.
+1. **`feature/operations` (bu oturum):** G14 → G15 → G16, görev başına TDD ve bir `feat:` commit'i; sonra handoff `docs:` commit'i ve `main`'e PR (birleştirilmez).
+2. **Sonra:** `feature/seed-load` (G17–G18), ardından `feature/deploy` (G19). Genel sıra: G01 → G13 (tamam), G14…G16, G17…G18, G19.
 
 ## Açık sorular ve riskler
 
@@ -56,13 +56,14 @@
 
 - **SRS:** [docs/srs.md](srs.md), onaylı. 35 FR (24 Must, 11 Should), 7 Won't, 13 NFR, 35 AC.
 - **Tasarım:** [architecture.md](architecture.md) ve [data-design.md](data-design.md).
-- **ADR'ler:** [0001–0052](decisions/), hepsi kabul edildi; özet plan §3. Sıradaki numara 0053.
+- **ADR'ler:** [0001–0055](decisions/), hepsi kabul edildi; özet plan §3. Sıradaki numara 0056.
 - **Plan:** §3 kararlar ve KL-1…KL-46; §4 görevler G01–G19; §7 izlenebilirlik; §8 tutarlılık; §11 sapmalar ve metinler.
-- **Test planı:** [docs/test-plan.md](test-plan.md): 319 TC; 244'ü "Geçti". Elle TC'ler: TC-223, TC-225…TC-234, TC-319 (faz 6).
+- **Test planı:** [docs/test-plan.md](test-plan.md): 339 TC (TC-320…TC-339 G14–G16 açılışında eklendi); 244'ü "Geçti". Elle TC'ler: TC-223, TC-225…TC-234, TC-319 (faz 6).
 - **Araştırma:** [ISBN meta veri](research/2026-10-31-isbn-meta-veri-apileri.md), [demo veri seti](research/2026-10-31-demo-kitap-veri-seti.md).
 
 ## Geçmiş (özet)
 
+- **2026-11-01, PR #4 (G13):** Yerel Windows doğrulaması (852 passed), metinler onaylandı, merge commit `c2e5bc8`. `feature/operations` açıldı.
 - **2026-11-01, `feature/notifications` bulut oturumu:** İlk commit `docs:` (bayat STATUS satırları, ADR-0052, G13 açılış kararları), ardından G13 TDD ile (20 TC önce kırmızı) tek `feat:` commit'i, sonra `docs:` (test planı, plan kutusu, §11, STATUS); her biri push edildi. Ekran Playwright ile göz kontrolünden geçti. PR açıldı, birleştirilmedi.
 - **2026-11-01, PR #3 (G09–G12):** Yerel Windows doğrulaması (784 passed), metinler onaylandı, merge commit `d0c4555`.
 - **2026-11-01, `feature/circulation` bulut oturumu:** İlk commit `docs:` (STATUS ve pasifleştirme koruması kararı), ardından G10, G09, G11, G12 görev başına TDD ve `feat:` commit'i, her biri push edildi. TC-91 için bir soru soruldu (denetim listesinde TL). Ekranlar geliştirme sunucusunda Playwright ile açılıp göz kontrolünden geçti. PR açıldı, birleştirilmedi.

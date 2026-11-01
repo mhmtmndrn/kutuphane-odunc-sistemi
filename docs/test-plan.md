@@ -1,8 +1,8 @@
 # Test planı: Kütüphane ödünç sistemi
 
-- **Güncelleme:** 2026-10-31
+- **Güncelleme:** 2026-11-01 (TC-320…TC-339: G14–G16 açılış kararları, ADR-0053…0055)
 - **Test yaklaşımı:** TDD (faz 0 kararı, AGENTS.md). Her görevde §6'daki TC'lerin testi önce yazılır ve kırmızı görülür, sonra kod yazılır (plan §4.0).
-- **Kaynak:** Faz 4 test tasarımı taslağı (TC-01…TC-234) ADR-0036…0047 ve KL-1…46'ya göre revize edildi; TC-235…TC-319 eklendi. Taslak, içeriği buraya alındıktan sonra kullanıcı kararıyla silindi (2026-10-31); açık soruları plan §8.2'de.
+- **Kaynak:** Faz 4 test tasarımı taslağı (TC-01…TC-234) ADR-0036…0047 ve KL-1…46'ya göre revize edildi; TC-235…TC-319 eklendi. TC-320…TC-339, G14–G16 açılışında kullanıcının onayladığı kararların (ADR-0053…0055, plan §11) yeni davranışları için eklendi (2026-11-01). Taslak, içeriği buraya alındıktan sonra kullanıcı kararıyla silindi (2026-10-31); açık soruları plan §8.2'de.
 
 ## 1. Kapsam
 
@@ -52,8 +52,8 @@ Görev tablosundaki "Seviye" sütunu bu satırlardan birini gösterir.
 | Rıza olayları | Durum geçişi, sınır değer (bugün ve yarın) | TC-57…TC-59, TC-254…TC-258 |
 | Yetki | Denklik sınıfı ve URL çözücüden üretilen tam tarama (NFR-07) | TC-31…TC-33 |
 | Hatırlatma aday koşulu (S6) | Koşul başına elle MC/DC: her koşulun sonucu tek başına değiştirdiği bir case | TC-173…TC-176, TC-179 |
-| Telafi ve görev kaydı | Sınır değer (saat), durum geçişi (RUNNING → SUCCESS/FAILED) | TC-210…TC-213, TC-310…TC-312 |
-| Yedek, dışa aktarma, geri yükleme | Hata tahmini (bozuk dosya, yanlış parola, kilit, yol), sınır değer (saklama günleri) | TC-186…TC-200, TC-299…TC-304 |
+| Telafi ve görev kaydı | Sınır değer (saat), durum geçişi (RUNNING → SUCCESS/FAILED; saatlik telafi) | TC-210…TC-213, TC-310…TC-312, TC-336 |
+| Yedek, dışa aktarma, geri yükleme | Hata tahmini (bozuk dosya, yanlış parola, kilit, yol, yarıda kalan yazım), sınır değer (saklama günleri), senaryo (koruma kopyası) | TC-186…TC-200, TC-299…TC-304, TC-320…TC-329 |
 | Eşzamanlılık | Hata tahmini: iki iş parçacığı aynı kaynağa | TC-103, TC-145…TC-148 |
 
 ## 4. Kapsam hedefleri
@@ -406,6 +406,26 @@ Sütunlar: Görev, TC'nin yazıldığı görev (plan §4); Seviye, §2'deki sat�
 | TC-317 | NFR-02 (KL-16) | G17 | komut (slow) | Denklik sınıfı | TC-220'nin veritabanı | Üyelerin %30'u e-postalı ve rızalı; kapalı ödünçlerin %10'unda eşit tutarlı FINE ve PAYMENT; bu üyelerin bakiyesi bu ödünçlerden dolayı 0 | Planlandı |
 | TC-318 | NFR-01 (ADR-0031, KL-17) | G18 | birim | Denklik sınıfı | `pick_operation(random.Random(42))` 10.000 kez; aday seçimi salt okunur bağlantıyla 5 iş parçacığına bölünür | Oranlar %40/20/20/10/10 ± 2 puan; iş parçacıklarının üye ve nüsha kümeleri ayrık; bağlantı URI'si `mode=ro` içerir | Planlandı |
 | TC-319 | FR-11, FR-03, FR-12 (ADR-0032, ADR-0038, ADR-0040, ADR-0047, KL-21, KL-27) | G19 | elle | Gözden geçirme | `docs/kullanim-kilavuzu.md` ve `README.md` okunur | Kılavuzda "üyeye adını sor" adımı, "geçmiş kapalı tarihleri silmeyin" ve geçmiş tarihli rıza notu var; README'de `migrate` → `createsuperuser` → `load_seed_data --profile demo --actor <ad>` sırası ve "Veri kaynakları" bölümü var | Planlandı |
+| TC-320 | FR-28, NFR-04, AC-28 (ADR-0054) | G14 | komut | Senaryo | Mevcut veritabanı `-wal` ve `-shm` dosyalarıyla duruyor; `restore_backup <yedek>.sqlite3 --yes` | Çıkış 0; üç dosya `<db>.pre-restore-YYYYMMDD-HHMMSS`, `…-wal`, `…-shm` adıyla ve içerikleri değişmeden duruyor; yeni veritabanının sayıları yedektekiyle aynı; çıktıda koruma kopyasının yolu var | Planlandı |
+| TC-321 | FR-28 (ADR-0054) | G14 | komut | Hata tahmini | Mevcut veritabanı dosyası bozuk (SQLite olmayan baytlar); geçerli yedekle geri yükleme | Çıkış 0; bozuk dosya koruma kopyası olarak baytı baytına duruyor; sayılar yedektekiyle aynı | Planlandı |
+| TC-322 | FR-28 (ADR-0054, G14–G16 küçük karar 4) | G14 | komut | Hata tahmini | SQLite olmayan dosya; ayrı testte `django_migrations` tablosu olmayan SQLite dosyası geri yüklenir | Çıkış 1; veritabanı, `-wal` ve `-shm` değişmez; koruma kopyası oluşmaz; veritabanı klasöründe geçici dosya kalmaz | Planlandı |
+| TC-323 | FR-28, FR-37 (küçük karar 1) | G14 | komut | Denklik sınıfı | `backup_db --date 2026-13-40`; `export_backup --date 2026-02-30` | "Geçersiz tarih: …" ile `CommandError`, çıkış 1; `job_run` yazılmaz; dosya oluşmaz | Planlandı |
+| TC-324 | FR-37 (küçük karar 1) | G14 | komut | Denklik sınıfı | `export_backup --passphrase-file` olmadan; `LIBRARY_EXPORT_PASSPHRASE_FILE` bir parola dosyasını gösterir | Çıkış 0; `.libx` o dosyadaki parolayla çözülür | Planlandı |
+| TC-325 | FR-28, FR-37 (küçük karar 2) | G14 | komut | Denklik sınıfı | `.libx` içeriği `yedek.sqlite3` adıyla; SQLite yedeği `yedek.libx` adıyla geri yüklenir | İkisinde de çıkış 0 ve yedekteki sayılar (tür `LIBX` magic baytından anlaşılır) | Planlandı |
+| TC-326 | FR-28, FR-37 (küçük karar 2) | G14 | komut | Karar tablosu | `.libx` geri yükleme `--passphrase-file` olmadan: `LIBRARY_EXPORT_PASSPHRASE_FILE` doğru parola dosyasını gösterir; ayrı testte o dosya yok | İlkinde çıkış 0; ikincisinde çıkış 1 ve veritabanı değişmez | Planlandı |
+| TC-327 | FR-28 (küçük karar 3) | G14 | komut | Denklik sınıfı | `django_migrations` tablosunda bir satırı eksik olan yedek geri yüklenir | Çıkış 0; geri yüklenen `django_migrations` yedektekiyle aynı (migration çalışmaz); çıktıda "gerekirse `python manage.py migrate` çalıştırın" notu | Planlandı |
+| TC-328 | FR-28, FR-37 (küçük karar 4) | G14 | komut | Hata tahmini | Yedek ve (ayrı testte) dışa aktarma yazımı sırasında `PermissionError`; hedef klasörde aynı günün eski dosyası var | Çıkış 1; `job_run` FAILED; klasörde `.tmp` kalmaz; aynı günün eski dosyası değişmez | Planlandı |
+| TC-329 | FR-28, FR-37 (küçük karar 4) | G14 | komut | Senaryo | Aynı gün iki `backup_db` ve iki `export_backup`; iki koşu arasında bir üye eklenir | İkinci koşular aynı adlı dosyanın üzerine yazar; geri yüklenen sayılar ikinci durumunki; `.tmp` kalmaz | Planlandı |
+| TC-330 | FR-25, NFR-08 (ADR-0055) | G15 | komut | Denklik sınıfı | Bağı koparılacak ödüncün `error` dolu FAILED ve SENT `reminder_log` satırları; bağı kalan başka bir ödüncün `error` dolu FAILED satırı | Bağı kopan ödüncün satırlarında `error` NULL; `kind`, `status`, `due_on`, `sent_at` aynı; öteki ödüncün satırı değişmez | Planlandı |
+| TC-331 | FR-25, NFR-08 (küçük karar 8) | G15 | view | Denklik sınıfı | Anonim üye: üye no ile üye araması, ödünç ekranındaki üye paneli, borç dökümü, geciken listesi; ayrıca `Member.display_name` | Hepsinde "Anonimleştirilmiş üye"; `display_name` anonim üyede "Anonimleştirilmiş üye", diğerinde `full_name` | Planlandı |
+| TC-332 | FR-25 (küçük karar 1) | G15 | komut | Denklik sınıfı | `anonymize_expired --date 2028-02-30` | "Geçersiz tarih: 2028-02-30" ile `CommandError`, çıkış 1; `job_run` yazılmaz; veri değişmez | Planlandı |
+| TC-333 | FR-25 (küçük karar 9) | G15 | komut | Senaryo | TC-207'deki hatalı koşudan sonra hata giderilir ve görev aynı gün yeniden çalışır | İlk koşu: `job_run` FAILED, çıkış 1, ilk ödünç işlenmiş. İkinci koşu: kalan ödünç ve üye işlenir, ilk ödünç yeniden sayılmaz, `job_run` SUCCESS | Planlandı |
+| TC-334 | FR-25, FR-22 (küçük karar 7) | G15 | view | Denklik sınıfı | Yönetici ve görevli ana sayfayı açar | Yöneticinin menüsünde `/uyeler/saklama/` bağlantısı var; görevlininkinde yok | Planlandı |
+| TC-335 | NFR-05 (ADR-0053, küçük karar 5) | G16 | servis | Denklik sınıfı | `start_scheduler()` | Beş görev: dört cron ve `IntervalTrigger(hours=1)` telafisi; hepsinde `misfire_grace_time` 3600, `coalesce` True, `max_instances` 1; yürütücü tek işçili `ThreadPoolExecutor` | Planlandı |
+| TC-336 | NFR-03, NFR-05 (ADR-0053) | G16 | servis | Durum geçişi | Saatlik telafi 2026-11-04 (çarşamba) 03:10'da; bugün BACKUP FAILED, ANONYMIZE SUCCESS, EXPORT son SUCCESS 2026-11-02; ayrı testte BACKUP da SUCCESS | İlkinde yalnız BACKUP kuyruğa alınır ve log satırı yazılır; ikincisinde hiçbir görev kuyruğa alınmaz | Planlandı |
+| TC-337 | NFR-05 (küçük karar 5) | G16 | servis | Senaryo | Dört görevin telafisi gerekiyor; zamanlayıcı gerçekten çalışır (komutlar yamalı ve yavaş) | Komutlar BACKUP, ANONYMIZE, EXPORT, REMINDERS sırasıyla ve çakışmadan (aynı anda en fazla bir tane) çalışır | Planlandı |
+| TC-338 | NFR-05 (küçük karar 6, KL-23) | G16 | servis | Hata tahmini | Sarmalayıcı `send_reminders`'ı çalıştırır, bir hatırlatma FAILED olur; ayrı testte komut `RuntimeError` fırlatır | İkisi de `operations.scheduler` logger'ıyla ERROR olarak loglanır ve sarmalayıcıdan dışarı çıkmaz; ilkinde `job_run` SUCCESS | Planlandı |
+| TC-339 | NFR-05 (küçük karar 6) | G16 | birim | Denklik sınıfı | `base.py`'deki `LOGGING` | stderr'e yazan bir `StreamHandler`; `operations` ve `django` logger'ları INFO; biçim `%(asctime)s %(levelname)s %(name)s %(message)s` | Planlandı |
 
 ## 7. Giriş ve çıkış ölçütleri
 

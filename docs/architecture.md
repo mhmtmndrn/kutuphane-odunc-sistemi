@@ -92,10 +92,11 @@ flowchart TD
   operations --> members
   operations --> administration
   operations --> billing
+  operations --> notifications
   notifications --> administration
 ```
 
-Oklar "kullanır" anlamına gelir; döngü yoktur. `billing.LedgerEntry → circulation.Loan` yabancı anahtarı tembel bir string referansıdır (`"circulation.Loan"`) ve import oluşturmaz. Bütün app'ler yetki için `accounts`'u kullanır; diyagramda yalnız bir ok çizildi. `accounts.services` denetim kaydı için yalnız `administration.audit` modülünü import eder; `administration` ise `accounts`'tan yalnız `permissions` modülünü kullanır ve kullanıcı modeline `AUTH_USER_MODEL` string referansıyla bağlanır. Bu yüzden modül düzeyinde import döngüsü oluşmaz. Etiket ve kart PDF'leri app olmayan `pdf/` paketini kullanır (faz 4 küçük karar 5). `members → catalog` oku yalnız `catalog.domain.normalize_tr` içindir (KL-2).
+Oklar "kullanır" anlamına gelir; döngü yoktur. `billing.LedgerEntry → circulation.Loan` yabancı anahtarı tembel bir string referansıdır (`"circulation.Loan"`) ve import oluşturmaz. Bütün app'ler yetki için `accounts`'u kullanır; diyagramda yalnız bir ok çizildi. `accounts.services` denetim kaydı için yalnız `administration.audit` modülünü import eder; `administration` ise `accounts`'tan yalnız `permissions` modülünü kullanır ve kullanıcı modeline `AUTH_USER_MODEL` string referansıyla bağlanır. Bu yüzden modül düzeyinde import döngüsü oluşmaz. Etiket ve kart PDF'leri app olmayan `pdf/` paketini kullanır (faz 4 küçük karar 5). `members → catalog` oku yalnız `catalog.domain.normalize_tr` içindir (KL-2). `operations → notifications` oku yalnız bağı koparılan ödüncün `reminder_log.error` alanını temizlemek içindir ([ADR-0055](decisions/0055-reminder-log-error-cleared-on-unlink.md)).
 
 **View'lar yapraktır (KL-22):** Oklar `domain`, `services` ve `models` modülleri içindir. `views` modülleri herhangi bir app'in servisini import edebilir, ama hiçbir modül bir `views` modülünü import etmez. Bu yüzden üye ayrıntısı gibi birden çok app'e dokunan ekranlar döngü oluşturmaz.
 

@@ -27,7 +27,7 @@
 | docs/decisions/0026…0048 | Faz 4'te yazıldı (2026-10-31); 0048 bir süreç kararıdır |
 | docs/decisions/0049, 0050 | Faz 5'te, G02'den önce yazıldı (2026-10-31): kilit cevabı ve kilit süresi |
 | docs/architecture.md, docs/data-design.md | Faz 4 tutarlılık düzeltmeleri (§8) |
-| docs/test-plan.md | Faz 4'te oluşturuldu (2026-10-31): 319 TC, test taslağından revize edildi |
+| docs/test-plan.md | Faz 4'te oluşturuldu (2026-10-31): 319 TC, test taslağından revize edildi; G14–G16 açılışında TC-320…TC-339 eklendi (2026-11-01) |
 | docs/data-design.md | I6'ya ADR-0018 istisnası yazıldı (§8 T-02) |
 | docs/risk-register.md | Faz 4'te oluşturuldu (2026-10-31); plan §6'daki riskler buraya taşındı |
 
@@ -176,8 +176,11 @@ Kapsam içi FR sayısı 31 (23 Must, 8 Should), Won't sayısı 7.
 - [ADR-0050](../decisions/0050-lockout-cooloff-not-reset.md): Kilitliyken yapılan denemeler kilit süresini uzatmaz (faz 5, G02).
 - [ADR-0051](../decisions/0051-axes-w006-silenced.md): django-axes `axes.W006` uyarısı gerekçe yorumuyla susturulur; kilit yalnız kullanıcı adına göre kalır (faz 5, PR #1 incelemesi).
 - [ADR-0052](../decisions/0052-smtp-timeout.md): Üretimde SMTP bağlantısına 10 saniyelik zaman aşımı (`EMAIL_TIMEOUT = 10`, `prod.py`); zaman aşımı FAILED kaydına düşer ve pencere içinde yeniden denenir (faz 5, G13 açılışı).
+- [ADR-0053](../decisions/0053-hourly-catch-up.md): Kaçan görevler açılışa ek olarak saatlik bir telafi göreviyle de telafi edilir; cron ve telafi görevlerinde `misfire_grace_time=3600`, `coalesce=True` (ADR-0007'ye ek; faz 5, G14–G16 açılışı).
+- [ADR-0054](../decisions/0054-restore-keeps-pre-restore-copy.md): Geri yükleme mevcut veritabanını ve `-wal`/`-shm` dosyalarını silmez, `<db>.pre-restore-YYYYMMDD-HHMMSS` adıyla koruma kopyası olarak bırakır (faz 5, G14–G16 açılışı).
+- [ADR-0055](../decisions/0055-reminder-log-error-cleared-on-unlink.md): Ödüncün üye bağı koparılırken o ödüncün `reminder_log.error` alanları NULL yapılır (NFR-08; faz 5, G14–G16 açılışı).
 
-Sıradaki ADR numarası: 0053.
+Sıradaki ADR numarası: 0056.
 
 **Faz 4 küçük kararları (onaylandı 2026-10-31):**
 
@@ -693,7 +696,7 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
 ### Görev G14: Yedek, şifreli dışa aktarma ve geri yükleme
 
 - **Gereksinimler:** FR-28, FR-37, NFR-03, NFR-04; AC-28, AC-30; ADR-0002, ADR-0006, ADR-0011; küçük kararlar 13, 14 ve 15 (faz 3), küçük karar 6 (faz 4); KL-4, KL-14, KL-24.
-- **Dosyalar:** oluştur `operations/{__init__,apps,domain,libx,backup,applock}.py`, `operations/management/commands/{backup_db,export_backup,restore_backup}.py`, `operations/tests/*`.
+- **Dosyalar:** oluştur `operations/{__init__,apps,domain,libx,backup,applock}.py`, `operations/management/commands/{backup_db,export_backup,restore_backup}.py`, `operations/tests/*`; değiştir `library_site/settings/base.py` (`INSTALLED_APPS`'e `operations`).
 - **Arayüzler:**
   - domain:
     - `backup_name(on: date) -> str`
@@ -703,44 +706,50 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - `libx.encrypt(plaintext: bytes, passphrase: str, n=2**17, r=8, p=1) -> bytes` ve `libx.decrypt(blob: bytes, passphrase: str) -> bytes`. Biçim architecture §6.3'tedir. Hatalı parola ya da bozuk dosya `LibxError("Parola hatalı ya da dosya bozuk")`, bilinmeyen sürüm `LibxError("Desteklenmeyen dosya sürümü")` verir.
   - `backup.backup_db(run_on: date) -> Path`. `sqlite3.Connection.backup` önce geçici bir dosyaya yazılır, sonra `os.replace` ile yerine konur. Ardından eski yedekler silinir.
   - `backup.export_backup(run_on: date, passphrase_file: Path) -> Path`. Başarılı yazımdan sonra eski dışa aktarmaları siler (KL-24).
-  - `backup.restore(path: Path, passphrase_file: Path | None) -> RestoreCounts(members, copies, loans)`
-  - `applock.hold_app_lock(db_path: Path) -> IO` ve `applock.try_lock(db_path: Path) -> bool` (KL-4).
+  - `backup.restore(path: Path, passphrase_file: Path | None) -> RestoreCounts(members, copies, loans)`. Sonuç ayrıca koruma kopyasının yolunu taşır (`RestoreResult(counts, pre_restore: Path | None)`, ADR-0054).
+  - `applock.hold_app_lock(db_path: Path) -> IO` ve `applock.try_lock(db_path: Path) -> bool` (KL-4). Kilit alınamazsa `hold_app_lock`, `RuntimeError`'ın alt sınıfı `AppLockError("Uygulama zaten çalışıyor: <kilit yolu>")` fırlatır (G16'daki `wsgi.py` mesajı).
+  - Komutlar (G14–G16 küçük karar 1): `backup_db [--date YYYY-MM-DD]`, `export_backup [--date …] [--passphrase-file PATH]` (verilmezse `LIBRARY_EXPORT_PASSPHRASE_FILE`), `restore_backup PATH [--passphrase-file PATH] --yes`. Tarih geçersizse `job_run` yazılmadan `CommandError("Geçersiz tarih: …")`.
 - **Davranış:**
   - Parola dosyasının içeriğinin sonundaki satır sonu atılır. Boş parola hatadır.
+  - Yedek ve dışa aktarma önce hedef klasörde bir `.tmp` dosyasına yazılır, ardından `os.replace` ile yerine konur. Hata olursa `.tmp` silinir. Aynı gün ikinci koşu dosyanın üzerine yazar (küçük karar 4).
   - `restore_backup PATH [--passphrase-file PATH] --yes` şu adımları izler:
     1. `--yes` yoksa çıkış 2. PATH yoksa "Dosya bulunamadı: <yol>" ile çıkış 1 (KL-41).
     2. Uygulama kilidi alınamıyorsa "Uygulama çalışıyor; önce servisi durdurun" mesajıyla çıkış 1.
-    3. `.libx` dosyası çözülür.
+    3. Dosya türü uzantıdan değil `LIBX` magic baytından anlaşılır. `.libx` dosyası `--passphrase-file`, o yoksa `LIBRARY_EXPORT_PASSPHRASE_FILE` ile çözülür; ikisi de yoksa çıkış 1 (küçük karar 2). Çözülen ya da kopyalanan içerik veritabanıyla aynı klasörde geçici bir dosyaya yazılır (küçük karar 4).
     4. Geçici dosyada `PRAGMA integrity_check = ok` ve `django_migrations` tablosunun varlığı doğrulanır.
-    5. `-wal` ve `-shm` dosyaları silinir, dosya `os.replace` ile yerine konur.
-    6. Sayımlar yazılır.
+    5. Mevcut veritabanı dosyası ve varsa `-wal`/`-shm` dosyaları silinmez; `<db>.pre-restore-YYYYMMDD-HHMMSS` (ve `…-wal`, `…-shm`) olarak yeniden adlandırılır. Mevcut dosya bozuk olsa da bu adım çalışır. Ardından geçici dosya `os.replace` ile yerine konur ([ADR-0054](../decisions/0054-restore-keeps-pre-restore-copy.md)).
+    6. Sayımlar ve koruma kopyasının yolu yazılır. Geri yükleme migration çalıştırmaz; çıktı "gerekirse `python manage.py migrate` çalıştırın" notunu da yazar (küçük karar 3).
   - `backup_db` ve `export_backup`, `run_job` içinde çalışır (`BACKUP`, `EXPORT`).
-- **Testler:** TC-186…TC-200, TC-299…TC-304 (21 TC; `docs/test-plan.md` §6)
+- **Testler:** TC-186…TC-200, TC-299…TC-304, TC-320…TC-329 (31 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest operations -q` → hepsi geçer. Elle: dev veritabanında `python manage.py backup_db`, ardından `export_backup` ve `restore_backup <libx> --yes` → çıkış 0 ve yazılan sayımlar yedekten önceki sayımlarla aynı.
 - [ ] Tamamlandı
 
 ### Görev G15: Saklama süresi ve anonimleştirme
 
 - **Gereksinimler:** FR-25, NFR-08; AC-25; ADR-0018, ADR-0045; küçük kararlar 4 ve 8 (faz 3); KL-34.
-- **Dosyalar:** değiştir `operations/domain.py`, `operations/services.py`, `members/views.py`, `members/urls.py`; oluştur `operations/management/commands/anonymize_expired.py`, `members/templates/members/retention_pending.html`, testler.
+- **Dosyalar:** değiştir `operations/domain.py`, `operations/services.py`, `members/views.py`, `members/urls.py`; oluştur `operations/management/commands/anonymize_expired.py`, `members/templates/members/retention_pending.html`, testler. Açılış kararlarıyla eklenenler: `members/models.py` (`Member.display_name`), anonim üyenin adını gösteren şablon ve servisler (`members/templates/members/{search,detail}.html`, `billing/templates/billing/statement.html`, `circulation/templates/circulation/checkout.html`, `circulation/services.py` `overdue_loans`, `notifications/services.py` elle hatırlatma sonucu), `templates/base.html` (yöneticiye "Saklama" bağlantısı), `tests/test_authorization.py`.
 - **Arayüzler:**
   - domain `add_years(d: date, years: int) -> date`: 29 Şubat, 28 Şubat'a düşer.
   - domain `is_expired(start: date, years: int, today: date) -> bool`: `add_years(start, years) < today` (küçük karar 4).
   - `anonymize_expired(today: date) -> AnonymizeCounts(members, loans, deferred)`. Her kayıt kendi işleminde işlenir:
     - **Borçlu üye:** `billing.services.member_balance(member) > 0` ise üye atlanır ve `deferred` artar (ADR-0045).
     - **Üye:** `full_name`, `phone`, `phone_digits` ve `email` alanları NULL, `search_key` boş, `has_email_consent` False olur. `consent_event` satırları silinir ve `anonymized_at` doldurulur.
-    - **Ödünç:** `member` NULL olur ve `member_unlinked_at` doldurulur. Üyenin `archived_loan_count` sayacı 1 artar. Bağlı `ledger_entry.loan` alanları NULL olur.
-  - Komut `anonymize_expired [--date …]`, `run_job(Job.ANONYMIZE, …)` içinde çalışır.
+    - **Ödünç:** `member` NULL olur ve `member_unlinked_at` doldurulur. Üyenin `archived_loan_count` sayacı 1 artar. Bağlı `ledger_entry.loan` alanları NULL olur. Aynı işlemde o ödüncün `reminder_log` satırlarının `error` alanı NULL olur; tür, durum ve tarihler kalır ([ADR-0055](../decisions/0055-reminder-log-error-cleared-on-unlink.md)).
+  - Komut `anonymize_expired [--date …]`, `run_job(Job.ANONYMIZE, …)` içinde çalışır. Tarih geçersizse `job_run` yazılmadan `CommandError("Geçersiz tarih: …")` (G14–G16 küçük karar 1).
   - `deferred_members(today) -> list[DeferredRow]` ve `/uyeler/saklama/` listesi (KL-34).
-- **Davranış:** Anonim üye ekranda "Anonimleştirilmiş üye" olarak görünür. Toplam ödünç sayısı, bağlı ödünçlerle `archived_loan_count` toplamıdır ve üye ayrıntısında gösterilir.
-- **Testler:** TC-201…TC-207, TC-305…TC-309 (12 TC; `docs/test-plan.md` §6)
+  - `Member.display_name`: anonim üyede "Anonimleştirilmiş üye", diğerlerinde `full_name` (küçük karar 8).
+- **Davranış:**
+  - Anonim üye her yerde "Anonimleştirilmiş üye" olarak görünür: listeler, ödünç ekranı, borç dökümü ve geciken listesi; ad tek kaynaktan, `Member.display_name`'den gelir (küçük karar 8). Toplam ödünç sayısı, bağlı ödünçlerle `archived_loan_count` toplamıdır ve üye ayrıntısında gösterilir.
+  - `anonymize_expired` ilk istisnada durur. Önceki kayıtlar işlenmiş kalır, `job_run` FAILED olur, çıkış 1 olur (TC-207). Sonraki koşu kaldığı yerden devam eder (küçük karar 9).
+  - Menüde yalnız yöneticinin gördüğü bir `/uyeler/saklama/` bağlantısı bulunur (küçük karar 7).
+- **Testler:** TC-201…TC-207, TC-305…TC-309, TC-330…TC-334 (17 TC; `docs/test-plan.md` §6)
 - **Doğrulama:** `python -m pytest operations -q` → hepsi geçer.
 - [ ] Tamamlandı
 
 ### Görev G16: Zamanlayıcı ve telafi
 
 - **Gereksinimler:** FR-18 (09:00), FR-25, FR-28, FR-37 (haftalık), NFR-03, NFR-05; ADR-0007, ADR-0012; küçük kararlar 13 ve 14 (faz 3), küçük karar 14 (faz 4); KL-5.
-- **Dosyalar:** oluştur `operations/scheduler.py`, `operations/tests/test_scheduler.py`; değiştir `library_site/wsgi.py`.
+- **Dosyalar:** oluştur `operations/scheduler.py`, `operations/tests/test_scheduler.py`; değiştir `library_site/wsgi.py`, `operations/domain.py` (`jobs_due_for_catch_up`), `library_site/settings/base.py` (`LOGGING`, küçük karar 6).
 - **Arayüzler:**
   - `SCHEDULE: list[ScheduledJob(job: Job, command: str, cron: dict)]`: BACKUP 02:00, ANONYMIZE 02:30, REMINDERS 09:00, EXPORT pazartesi 03:00 (Europe/Istanbul).
   - `jobs_due_for_catch_up(now: datetime, last_success: dict[Job, date | None]) -> list[Job]` (domain'de, saf):
@@ -748,12 +757,16 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
     - Haftalık görev için koşul: en son pazartesi 03:00 geçmiş ve `last_success` o pazartesiden eski.
     - Sıra: BACKUP, ANONYMIZE, EXPORT, REMINDERS.
   - `start_scheduler() -> BackgroundScheduler`. Görevler `call_command(command)` ile çalışır; telafi görevleri tek seferlik `date` tetikleyicisiyle hemen kuyruğa alınır.
+  - `catch_up(scheduler, now) -> list[Job]`: son başarılı çalışmaları okur, `jobs_due_for_catch_up` sonucunu sırayla kuyruğa alır ve döndürür. Açılışta bir kez ve `IntervalTrigger(hours=1)` göreviyle saatte bir çalışır ([ADR-0053](../decisions/0053-hourly-catch-up.md)).
+  - `run_command(command: str) -> None`: her `call_command` çağrısını sarar; `CommandError` ve diğer istisnalar `logging.getLogger("operations.scheduler")` ile loglanır, dışarı çıkmaz (küçük karar 6).
 - **Davranış:**
   - `wsgi.py` önce `hold_app_lock` çağırır (her zaman). Kilit alınamazsa `RuntimeError("Uygulama zaten çalışıyor: <kilit yolu>")` fırlatır ve süreç başlamaz (R-09). Ardından `LIBRARY_SCHEDULER_ENABLED == "1"` ise `start_scheduler()` çalışır (KL-5).
   - Testlerde ve yönetim komutlarında zamanlayıcı başlamaz, çünkü bunlar `wsgi.py`'yi yüklemez.
-  - Görev istisnası loglanır ve zamanlayıcıyı durdurmaz.
-- **Testler:** TC-208…TC-213, TC-310…TC-314 (11 TC; `docs/test-plan.md` §6)
-- **Doğrulama:** `python -m pytest operations/tests/test_scheduler.py -q` → hepsi geçer. Elle: `LIBRARY_SCHEDULER_ENABLED=1` ile `waitress-serve` başlatılır → logda dört görevin sonraki çalışma zamanları ve gerekiyorsa telafi satırları görünür.
+  - Görev istisnası loglanır ve zamanlayıcıyı durdurmaz. `send_reminders`'ın FAILED varken verdiği `CommandError` da bu yolla yakalanır; `job_run` zaten SUCCESS'tir (KL-23).
+  - Zamanlayıcı tek işçili yürütücüyle çalışır (`ThreadPoolExecutor(max_workers=1)`, `max_instances=1`); telafi sırası korunur ve EXPORT taze yedeği görür (küçük karar 5). Cron ve telafi görevlerinde `misfire_grace_time=3600` ve `coalesce=True` (ADR-0053).
+  - `base.py`'deki `LOGGING` stderr'e yazar; `operations` ve `django` logger'ları INFO seviyesindedir (küçük karar 6).
+- **Testler:** TC-208…TC-213, TC-310…TC-314, TC-335…TC-339 (16 TC; `docs/test-plan.md` §6)
+- **Doğrulama:** `python -m pytest operations/tests/test_scheduler.py -q` → hepsi geçer. Elle: `LIBRARY_SCHEDULER_ENABLED=1` ile `waitress-serve` başlatılır → logda beş tetikleyicinin (dört görev ve saatlik telafi) sonraki çalışma zamanları ve gerekiyorsa telafi satırları görünür.
 - [ ] Tamamlandı
 
 ### Görev G17: Tohum veri
@@ -804,6 +817,7 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
   - **`docs/kurulum.md`** architecture §8'deki 7 adımı içerir. Ayrıca şunları içerir:
     - Migration öncesinde elle `backup_db` çalıştırılması.
     - Yedekten geri yükleme yordamı: servisi durdur, `restore_backup`, servisi başlat ve sayımları kontrol et. AC-28'de bu yordamın süresi ölçülür.
+    - Geri yüklemenin bıraktığı koruma kopyası (`<db>.pre-restore-…`, ADR-0054) saklama kuralı dışında kalan bir kişisel veri kopyasıdır; geri yükleme kontrol edildikten sonra elle silinmelidir (KVKK notu).
     - USB rotasyonu, parolanın çevrimdışı saklanması, CA kök sertifikasının yüklenmesi, NTP ayarı ve SQLite dosyasının yerel diskte tutulması.
   - **`docs/kullanim-kilavuzu.md`**, masa işlerini adım adım anlatır. Ödünçte "üyeye adını sor" adımı da buradadır. Ayrıca şu notları içerir: geçmiş kapalı tarihler silinmez (ADR-0040); geçmiş tarihli rıza olayı geçerli durumu değiştirmez (ADR-0047).
 - **Testler:** TC-225…TC-234, TC-319 (11 TC; `docs/test-plan.md` §6)
@@ -816,7 +830,7 @@ Karar listesi dışında kalan iki ayrıntı ADR-0032'de yazılı: kartta "Üye 
 
 ## 5. Testler
 
-Test planı: [docs/test-plan.md](../test-plan.md). 319 TC (TC-01…TC-319); seviyeler, teknikler, kapsam hedefleri, ortam ve giriş-çıkış ölçütleri orada. Her görevin TC listesi görevin **Testler** satırındadır. Elle TC'ler (TC-223, TC-225…TC-234, TC-319) faz 6'da yapılır.
+Test planı: [docs/test-plan.md](../test-plan.md). 339 TC (TC-01…TC-339; TC-320…TC-339 G14–G16 açılış kararlarıyla 2026-11-01'de eklendi); seviyeler, teknikler, kapsam hedefleri, ortam ve giriş-çıkış ölçütleri orada. Her görevin TC listesi görevin **Testler** satırındadır. Elle TC'ler (TC-223, TC-225…TC-234, TC-319) faz 6'da yapılır.
 
 ## 6. Riskler
 
@@ -849,15 +863,15 @@ Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve
 | FR-19 | `send_manual_reminders`, `/gecikenler/hatirlat/` | G13 | TC-183…TC-184, TC-297…TC-298 |
 | FR-20 | `overdue_loans` (S5), `/gecikenler/` | G11, G13 | TC-171…TC-172, TC-287, TC-298 |
 | FR-21 | `accounts.services`: `create_staff`, `set_role`, `deactivate_staff`, `reset_password`, `unlock_staff` | G02, G04 | TC-12, TC-27…TC-29, TC-237, TC-252 |
-| FR-22 | `require_role`, `staff_view`, `tests/test_authorization.py` | G02, G03, G04 | TC-01, TC-11, TC-21, TC-31, TC-275, TC-308 |
+| FR-22 | `require_role`, `staff_view`, `tests/test_authorization.py` | G02, G03, G04, G15 | TC-01, TC-11, TC-21, TC-31, TC-275, TC-308, TC-334 |
 | FR-23 | `LibrarySettings`, `update_settings`, ayar ekranı | G03, G08, G11 | TC-18…TC-20, TC-73, TC-131 |
 | FR-24 | `WeeklyClosedDay`, `ClosedDate`, `validate_weekly_closed` (ADR-0028) | G03, G10 | TC-22…TC-24, TC-106, TC-246 |
-| FR-25 | `anonymize_expired`, `add_years`, `deferred_members` (ADR-0018, ADR-0045) | G15, G16 | TC-201…TC-208, TC-305…TC-309 |
+| FR-25 | `anonymize_expired`, `add_years`, `deferred_members`, `Member.display_name` (ADR-0018, ADR-0045, ADR-0055) | G15, G16 | TC-201…TC-208, TC-305…TC-309, TC-330…TC-334 |
 | FR-26 | `audit.record_audit`, `AuditEvent`, `/denetim/` | G03, G04, G06, G09, G12 | TC-18, TC-22, TC-26…TC-27, TC-91, TC-93, TC-157…TC-158, TC-170, TC-247, TC-259, TC-273 |
 | FR-27 | Django `LoginView`, django-axes, oturum ayarları (ADR-0009) | G02 | TC-04…TC-10, TC-12, TC-30, TC-237 |
-| FR-28 | `backup_db`, `restore_backup`, `applock`; kurulum belgesi | G14, G16, G19 | TC-186…TC-191, TC-199…TC-200, TC-208, TC-225, TC-301…TC-302 |
+| FR-28 | `backup_db`, `restore_backup` (koruma kopyası, ADR-0054), `applock`; kurulum belgesi | G14, G16, G19 | TC-186…TC-191, TC-199…TC-200, TC-208, TC-225, TC-301…TC-302, TC-320…TC-323, TC-325…TC-329 |
 | FR-29 | `fetch_demo_books`, `filter_records`, `operations.seed`, `load_seed_data` (ADR-0033, ADR-0038) | G17 | TC-214…TC-219, TC-234, TC-315…TC-316 |
-| FR-37 | `libx`, `export_backup`, `export_age_warning` (ADR-0006, ADR-0011) | G03, G14, G16 | TC-25, TC-192…TC-198, TC-208, TC-226, TC-244…TC-245, TC-299…TC-300, TC-303…TC-304, TC-310 |
+| FR-37 | `libx`, `export_backup`, `export_age_warning` (ADR-0006, ADR-0011) | G03, G14, G16 | TC-25, TC-192…TC-198, TC-208, TC-226, TC-244…TC-245, TC-299…TC-300, TC-303…TC-304, TC-310, TC-323…TC-326, TC-328…TC-329 |
 | FR-38 | `CARD_LAYOUT`, `member_card_pdf`, `members_for_cards` (ADR-0032, ADR-0036) | G08 | TC-69, TC-74…TC-75, TC-228, TC-266, TC-268…TC-269 |
 | FR-39 | `mark_shelf_copy`, `withdraw` (ADR-0026) | G12 | TC-159…TC-161, TC-293 |
 | FR-40 | `reactivate_member` (ADR-0042) | G06, G11 | TC-259…TC-260, TC-285 |
@@ -865,12 +879,12 @@ Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve
 | FR-42 | `backup_warning`, `jobs.last_finished`, `last_success_at` (ADR-0044) | G03 | TC-241…TC-243, TC-245 |
 | NFR-01 | data-design §4 indeksleri, `scripts/loadtest.py` (ADR-0031) | G18 | TC-221…TC-223, TC-318 |
 | NFR-02 | `load_seed_data --profile load` | G17, G18 | TC-220, TC-223, TC-317 |
-| NFR-03 | BACKUP 02:00, `backup_db`, telafi | G14, G16, G19 | TC-190, TC-233 |
-| NFR-04 | `restore_backup`, `docs/kurulum.md` | G14, G19 | TC-225 |
-| NFR-05 | `jobs_due_for_catch_up`, `run_job`, `reminder_log` tekrar engeli | G03, G13, G16 | TC-178…TC-179, TC-209…TC-213, TC-233, TC-310…TC-314 |
+| NFR-03 | BACKUP 02:00, `backup_db`, telafi (saatlik, ADR-0053) | G14, G16, G19 | TC-190, TC-233, TC-336 |
+| NFR-04 | `restore_backup` (ADR-0054), `docs/kurulum.md` | G14, G19 | TC-225, TC-320 |
+| NFR-05 | `jobs_due_for_catch_up`, `catch_up` (saatlik, ADR-0053), `run_command`, tek işçili zamanlayıcı, `run_job`, `reminder_log` tekrar engeli | G03, G13, G16 | TC-178…TC-179, TC-209…TC-213, TC-233, TC-310…TC-314, TC-335…TC-339 |
 | NFR-06 | `Argon2PasswordHasher`, Caddy `tls internal` (ADR-0005) | G01, G19 | TC-03, TC-230 |
 | NFR-07 | `require_role`, `tests/test_authorization.py` | G04 | TC-11, TC-31…TC-33 |
-| NFR-08 | `member` alanları, anonimleştirme, Caddy LAN bağlaması | G06, G15, G19 | TC-52, TC-206, TC-229…TC-230 |
+| NFR-08 | `member` alanları, anonimleştirme, `reminder_log.error` temizliği (ADR-0055), `Member.display_name`, Caddy LAN bağlaması | G06, G15, G19 | TC-52, TC-206, TC-229…TC-230, TC-330…TC-331 |
 | NFR-09 | `LANGUAGE_CODE = "tr"`, `TIME_ZONE`, `templates/base.html` | G01, G19 | TC-231, TC-235 |
 | NFR-10 | `normalize_tr`, `search_key` (ADR-0019) | G05, G06, G07 | TC-34, TC-36, TC-47, TC-67 |
 | NFR-11 | Ödünç ekranı odak akışı, `scan.js` | G11, G19 | TC-128, TC-227 |
@@ -1387,3 +1401,20 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   - "<n> hatırlatma gönderilemedi": `notifications/management/commands/send_reminders.py`, en az bir FAILED varsa `CommandError` (stderr'de "CommandError: …").
   - "Son tarihi yaklaşan ve geciken ödünçler için hatırlatma e-postalarını gönderir." ve "YYYY-MM-DD; varsayılan bugün": `send_reminders.py`, `--help` metinleri.
   - Arayüzde şimdilik görünmeyen etiketler: `ReminderKind` "Son tarih yaklaşıyor", "Gecikme", "Elle" (`notifications/domain.py`); `ReminderStatus` "Gönderildi", "Gönderilemedi" (`notifications/models.py`); app adı "Bildirimler" (`notifications/apps.py`).
+- **2026-11-01, G14–G16 — açılıştan önce verilen kararlar (kullanıcı onayı 2026-11-01):**
+  - **Kritik:**
+    - [ADR-0053](../decisions/0053-hourly-catch-up.md), saatlik telafi (ADR-0007'ye ek): `jobs_due_for_catch_up` açılışa ek olarak bir `IntervalTrigger(hours=1)` göreviyle saatte bir de çalışır ve vadesi gelen görevleri aynı sırayla kuyruğa alır. Uygulama açıkken kaçan tetiklemeler (ör. sunucu 02:00'de uykudaydı) ve FAILED görevler en geç bir saat içinde telafi edilir; sürekli başarısız olan görevin saatte bir yeniden denenmesi kabul edildi. Cron ve telafi görevlerine `misfire_grace_time=3600` ve `coalesce=True` verilir. Cron ile telafinin çakışması komutlar idempotent olduğu için zararsızdır. Reddedilenler: yalnız geniş misfire toleransı; yalnız açılışta telafi (plandaki).
+    - [ADR-0054](../decisions/0054-restore-keeps-pre-restore-copy.md), geri yükleme öncesi koruma kopyası: `restore_backup` mevcut veritabanını ve varsa `-wal`/`-shm` dosyalarını silmez, `<db>.pre-restore-YYYYMMDD-HHMMSS` (ve `…-wal`, `…-shm`) olarak yeniden adlandırır, sonra yeni dosyayı `os.replace` ile yerine koyar; mevcut dosya bozuk olsa da çalışır. Kopyanın yolu çıktıya yazılır, kopya otomatik silinmez. KVKK notu G19'da kurulum belgesine yazılır (G19 bölümüne satır eklendi). Plan G14 davranışındaki 5. adım değişti. Reddedilen: kopya bırakmamak.
+    - [ADR-0055](../decisions/0055-reminder-log-error-cleared-on-unlink.md), hatırlatma kaydının hata metni temizlenir: G15'te bir ödüncün üye bağı koparılırken (ADR-0018) aynı işlemde o ödünce ait `reminder_log` satırlarının `error` alanı NULL yapılır; tür, durum ve tarihler kalır. Sebep: G13'ün sakladığı SMTP hata metni alıcının e-posta adresini içerebilir (NFR-08). Bu, architecture §3'e `operations → notifications` okunu ekler. Reddedilenler: G13'ün `error_text`'inde adres ayıklamak; olduğu gibi bırakmak.
+  - **Küçük kararlar (onaylı):**
+    1. Komutlar: `backup_db [--date YYYY-MM-DD]`, `export_backup [--date …] [--passphrase-file PATH]` (verilmezse `LIBRARY_EXPORT_PASSPHRASE_FILE`), `anonymize_expired [--date …]`. Tarih geçersizse `job_run` yazılmadan `CommandError("Geçersiz tarih: …")` verilir (G13 geleneği).
+    2. `restore_backup` dosya türünü uzantıdan değil `LIBX` magic baytından anlar. `.libx` dosyası `--passphrase-file` olmadan verilirse `LIBRARY_EXPORT_PASSPHRASE_FILE` kullanılır; ikisi de yoksa çıkış 1.
+    3. Geri yükleme migration çalıştırmaz. Başarı çıktısı "gerekirse `python manage.py migrate` çalıştırın" notunu da yazar.
+    4. Yedek ve dışa aktarma önce hedef klasörde bir `.tmp` dosyasına yazılır, ardından `os.replace` ile yerine konur. Hata olursa `.tmp` silinir. Aynı gün ikinci koşu dosyanın üzerine yazar. Geri yüklemenin geçici dosyası veritabanıyla aynı klasördedir.
+    5. Zamanlayıcı tek işçili yürütücüyle çalışır (`ThreadPoolExecutor(max_workers=1)`, `max_instances=1`). Telafi sırası BACKUP → ANONYMIZE → EXPORT → REMINDERS böylece gerçekten korunur ve EXPORT taze yedeği görür.
+    6. Zamanlayıcı her `call_command` çağrısını sarar. `CommandError` ve diğer istisnalar `logging.getLogger("operations.scheduler")` ile loglanır ve zamanlayıcıyı durdurmaz. `send_reminders`'ın FAILED varken verdiği `CommandError` da bu yolla yakalanır; `job_run` zaten SUCCESS'tir. `base.py`'ye stderr'e yazan küçük bir `LOGGING` ayarı eklenir; logger'lar `operations` ve `django`, seviye INFO. *Not:* Faz 4 küçük karar 14 log için stdout diyordu; bu onaylı kararla log stderr'e yazılır (biçim aynı: `%(asctime)s %(levelname)s %(name)s %(message)s`).
+    7. `/uyeler/saklama/` için menüye yalnız yöneticinin gördüğü bir bağlantı eklenir. `tests/test_authorization.py` kümeleri güncellenir.
+    8. Anonim üyenin adı her yerde "Anonimleştirilmiş üye" olarak görünür: listeler, ödünç geçmişi, defter, gecikenler. Bunu `Member.display_name` adlı tek bir özellik sağlar.
+    9. `anonymize_expired` ilk istisnada durur. Önceki kayıtlar işlenmiş kalır, `job_run` FAILED olur, çıkış 1 olur (TC-207). Görev idempotent olduğu için sonraki koşu kaldığı yerden devam eder.
+  - **Plana işlenenler:** G14, G15 ve G16 bölümlerinin "Dosyalar", "Arayüzler", "Davranış" ve "Testler" satırları; G19'a KVKK notu; §3'te ADR-0053…0055 (sıradaki numara 0056); §7'de yeni TC'ler. Yeni davranışların testleri `docs/test-plan.md`'de TC-320…TC-339 (G14: TC-320…TC-329, G15: TC-330…TC-334, G16: TC-335…TC-339).
+  - Kilit testleri (TC-302, TC-313) bulutta yalnız Linux'ta (`fcntl`) koşar; Windows (`msvcrt`) koşusu yerel doğrulamada yapılır (R-15).
