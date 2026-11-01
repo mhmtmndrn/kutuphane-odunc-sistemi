@@ -13,6 +13,7 @@ __all__ = [
     "IsbnInvalid",
     "IsbnOk",
     "IsbnSuggest",
+    "copy_barcode",
     "isbn10_to_13",
     "normalize_tr",
     "parse_isbn",
@@ -119,3 +120,11 @@ def parse_isbn(raw: str) -> IsbnOk | IsbnSuggest | IsbnInvalid:
     if _is_isbn13_form(prefixed) and _isbn13_valid(prefixed):
         return IsbnSuggest(prefixed)
     return IsbnInvalid(CHECK_REASON)
+
+
+# --- Copy barcode (phase 3 small decision 3) -------------------------------------
+
+
+def copy_barcode(copy_id: int) -> str:
+    """The copy id zero-padded to eight digits (Code 128 label, FR-05)."""
+    return f"{copy_id:08d}"
