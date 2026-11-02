@@ -2,7 +2,7 @@
 
 - **Tarih:** 2026-10-31
 - **İz:** Tam
-- **Durum:** Faz 4 tamamlandı, onay kapısı geçildi. Kararlar alındı (ADR-0026…0048; küçük karar listesi onaylandı, 2026-10-31). Görevler, risk kaydı, test planı (319 TC), izlenebilirlik ve tutarlılık kontrolü yazıldı; inşa kontrolü ayıklandı (§8.1). Plan, test planı ve KL-1…KL-46 onaylandı (2026-10-31); faz 5 başladı: G01 tamam (2026-10-31); G02 kararları ADR-0049, ADR-0050 ve §11'de. Faz 5 tamamlandı (G01–G19, PR #1…#7, 2026-11-01). Faz 6 başladı (2026-11-01): ADR-0067, §12.
+- **Durum:** Tamamlandı (2026-11-02); kapanış notu §13. Tarihçe: Faz 4 tamamlandı, onay kapısı geçildi. Kararlar alındı (ADR-0026…0048; küçük karar listesi onaylandı, 2026-10-31). Görevler, risk kaydı, test planı (319 TC), izlenebilirlik ve tutarlılık kontrolü yazıldı; inşa kontrolü ayıklandı (§8.1). Plan, test planı ve KL-1…KL-46 onaylandı (2026-10-31); faz 5 başladı: G01 tamam (2026-10-31); G02 kararları ADR-0049, ADR-0050 ve §11'de. Faz 5 tamamlandı (G01–G19, PR #1…#7, 2026-11-01). Faz 6 başladı (2026-11-01): ADR-0067, §12. Faz 6 tamamlandı (PR #8, `v1.0.0`, 2026-11-02). Faz 7 kapanışı dal `feature/phase7-closure`, PR #9 (2026-11-02).
 
 ## 1. Süreç uyarlaması
 
@@ -1933,3 +1933,47 @@ Test-Path C:\Users\library-svc                                                  
 ```
 
 Hive'lar bu arada Windows tarafından boşaltılmıştı; silmenin ön koşulu (SID'in `HKEY_USERS`'da olmaması) sağlandığı için yeniden başlatmaya gerek kalmadı. **Sonuç:** Test ortamından makinede iz kalmadı.
+
+## 13. Kapanış (2026-11-02)
+
+### 13.1 Ne yapıldı
+
+Küçük bir kütüphanenin personeli için yerel ağda çalışan web tabanlı ödünç sistemi, `v1.0.0` (`66c741c`). Django 5.2 ve SQLite; waitress arkasında Caddy ile yerel CA'lı HTTPS; Windows'ta WinSW, Linux'ta systemd servisleri.
+
+- **İşlev:** Üye yönetimi ve e-posta rızası; kitap ve nüsha kataloğu; barkodla ödünç, iade ve uzatma; kapalı günlere göre son tarih ve gecikme günü; gecikme cezası, FIFO kısmi ödeme, gerekçeli af; kayıp ve hasarlı nüsha; geciken listesi ve e-posta hatırlatması; barkod etiketi ve üye kartı PDF'i; yönetici ve görevli rolleri; ayarlar; KVKK anonimleştirmesi; denetim kaydı; günlük yedek, haftalık şifreli dışa aktarma ve geri yükleme; demo ve yük testi tohum verisi.
+- **Kapsam:** SRS'teki 35 FR (Must ve Should; FR-30 Won't) ve 13 NFR; 35 AC.
+- **Süreç:** eng-process fazları 1–7, 2026-10-31…2026-11-02. Faz 5'te 19 görev grubu (G01–G19) bulut oturumlarında TDD ile uygulandı ve yerelde doğrulandı (PR #1…#7). Faz 6'da tek Windows makinesinde deneme kurulumu, elle TC'ler, spec incelemesi ve 11 bulgu (B1…B11) (PR #8). Faz 7'de yaşayan dokümanlar güncellendi ve test ortamı kaldırıldı (PR #9).
+- **Sürümler:** `v1.0.0-rc.1` (`b3cc2a1`), `v1.0.0-rc.2` (`6cbd3a1`, B10), `v1.0.0-rc.3` (`ed6b855`, B11), `v1.0.0` (`66c741c`). Faz 7 yalnız `docs/` değiştirdiği için yeni etiket yok.
+
+### 13.2 Kararlar
+
+70 ADR ([docs/decisions/](../decisions/), ADR-0001…ADR-0070); listeleri plan §3 ve §11'de, durumları faz 7 taramasında uyumlu bulundu. Kapanışa yön verenler:
+
+- [ADR-0048](../decisions/0048-cloud-sessions-implementation.md): Faz 5 görevleri bulut oturumlarında, yerel doğrulamayla.
+- [ADR-0067](../decisions/0067-phase6-trial-project-single-windows-machine.md): Proje bir deneme projesidir; faz 6 tek Windows makinesinde, gerçek kurulum olmadan. Donanım ve kurum hesabı isteyen TC'ler kapsam dışı.
+- [ADR-0068](../decisions/0068-phase6-python-from-nuget-package.md): Test ortamında tüm kullanıcılar için Python NuGet paketinden.
+- [ADR-0069](../decisions/0069-closed-due-date-not-a-late-day.md): Kapalı son tarih de gecikme gününden düşülür (B11).
+- [ADR-0070](../decisions/0070-email-change-keeps-consent.md): E-posta değişince rıza korunur.
+
+### 13.3 Doğrulama
+
+- **Otomatik:** `coverage run --branch -m pytest -q` → 1051 passed (yerel Windows 11, Python 3.11.9, `29febed`); kapsam eşiklerinin hepsi tuttu: `*/domain.py` %100, servisler %99, yetki %100, `operations` %99, `pdf/sheets.py` %100, proje %97; `makemigrations --check` temiz (§12.3.1).
+- **Test planı:** 371 TC; 366'sı Geçti (TC-229, TC-230 kısmi), 5'i Kapsam dışı (TC-226, 227, 228, 232, 233; ADR-0067). Açık hata yok (HT-01, HT-02 kapandı).
+- **Kabul:** 35 AC'nin 31'i Geçti, 4'ü Geçti (kısmi): AC-06, AC-11, AC-30, AC-31. 13 NFR'nin 9'u Geçti, 4'ü Geçti (kısmi): NFR-03, NFR-05, NFR-08, NFR-11. Kaldı yok (§12.3.2, §12.3.3). Kısmi kalanların hepsi makinede bulunmayan donanıma ya da çok günlük çalışmaya bağlı.
+- **Spec incelemesi:** `spec-reviewer` bulgu yok, dört soru; cevapları ADR-0069, ADR-0070 ve AC-25 metin düzeltmesi oldu (§12.2).
+- **İzlenebilirlik:** §7 matrisinde 35 FR ve 13 NFR'nin her biri tasarıma, göreve ve TC'ye bağlı; 371 TC'nin hepsi matriste.
+
+### 13.4 Açık maddeler
+
+- **Riskler** ([risk kaydı](../risk-register.md), güncel kaynak budur; §6'daki özet 2026-10-31 tarihlidir): R-02, R-03, R-04, R-05, R-11, R-12 gerçek kurulum olmadığı için açık (ADR-0067); R-09 ve R-13'ün azaltması uygulandı, işletimde sürer. Diğerleri kapandı.
+- **SRS açık soruları:** 5 (sunucu donanımı ve işletim sistemi; çapraz platform kısıtıyla karşılandı), 6 (2 yıllık saklama süresinin ve borçlu üyenin anonimleştirmesinin ertelenmesinin KVKK teyidi), 8 (KYGM Koha Z39.50 erişimi; FR-30'un yeniden ele alınması).
+- **Denenmeyenler:** Gerçek barkod okuyucu ve etiket kağıdı (TC-227, TC-228), ikinci bilgisayara şifreli yedekle geri yükleme (TC-226), kurum SMTP'siyle teslim (TC-232), çok günlük kesintisiz çalışma (TC-233), LAN dışından erişim denemesi (TC-229'un kalanı).
+
+### 13.5 Sonraki adımlar
+
+Proje deneme projesi olarak kapandı. Gerçek bir kütüphaneye kurulursa:
+
+1. Kurumdan SMTP gönderen hesabını ve saklama süresi için KVKK teyidini al (R-05, R-11, SRS açık soru 6).
+2. `docs/kurulum.md`'yi hedef sunucuda baştan uygula; güvenlik duvarı kuralını kur, `w32time`'ı Otomatik'e al.
+3. Kapsam dışı TC'leri (TC-226…TC-228, TC-232, TC-233) ve TC-229'u LAN'daki ikinci bir bilgisayardan gerçek donanımla koş.
+4. Haftalık şifreli dışa aktarmanın USB rotasyonunu personelle birlikte başlat (R-04).
