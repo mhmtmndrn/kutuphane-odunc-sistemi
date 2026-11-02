@@ -1910,3 +1910,26 @@ Biçim küçük kararlar 11–14'te. 2026-11-02'de dolduruldu.
 **Özet:** 13 NFR'nin 9'u Geçti, 4'ü Geçti (kısmi, ADR-0067): NFR-03, NFR-05, NFR-08, NFR-11. Kaldı yok.
 
 **Test-plan §7 faz 6 çıkışı:** Must FR'lerin TC'leri geçiyor; her AC'nin kanıtı var; §4 kapsam hedefleri tutuyor; elle TC'ler yapıldı ya da ADR-0067 ile kapsam dışı; §8 hata tablosunda açık hata yok (HT-01 ve HT-02 kapandı). `spec-reviewer` 2026-11-02'de çalıştı: bulgu yok, dört soru (§12.2).
+
+### 12.5 Test ortamı temizliği (2026-11-02)
+
+Faz 6 küçük kararı 9 uyarınca soruldu; karar (kullanıcı, 2026-11-02): kurulan her şey kaldırılır, Firefox da kaldırılır. Komutları kullanıcı Yönetici PowerShell'de çalıştırdı (oturum `C:\Kutuphane`'yi ACL yüzünden okuyamıyordu).
+
+1. **Servisler:** `Stop-Service library-caddy`, `Stop-Service library-app`, ardından iki WinSW ikilisiyle `uninstall`.
+2. **Kök sertifika:** `Cert:\LocalMachine\Root` içinde Subject'i "Caddy Local Authority" olan sertifika önce `Format-List Subject, Thumbprint` ile görüldü, sonra `Remove-Item` ile silindi.
+3. **Servis hesabı:** `Remove-LocalUser library-svc`; profil kaydı için `Get-CimInstance Win32_UserProfile | Where-Object SID -eq $sid | Remove-CimInstance`.
+4. **Klasörler:** `Remove-Item C:\Kutuphane -Recurse -Force` (yük testi veritabanı `C:\Kutuphane\loadtest\` dahil) ve `Remove-Item "C:\Program Files\Python311" -Recurse -Force` (NuGet kurulumu; kayıt defteri ve PATH girdisi yok, ADR-0068).
+5. **Firefox ve Mozilla Maintenance Service:** Ayarlar → Uygulamalar'dan kaldırıldı.
+6. **Dokunulmayanlar:** Güvenlik duvarı kuralı hiç kurulmadı (ADR-0067). `w32time` "El ile" başlangıç türünde kaldı.
+
+**Kontrol:** `Get-Service library-*` boş, `Get-LocalUser library-svc` kullanıcı yok, Caddy kök sertifika süzgeci boş; `Test-Path C:\Kutuphane, "C:\Program Files\Python311"` → `False`, `False`; `py -0p` yalnız kişisel Python 3.11'i (`AppData\Local\Programs\Python\Python311`) gösteriyor.
+
+**Sapma: kilitli profil klasörü.** 3. adımda `Remove-CimInstance` 0x80070020 verdi (dosya başka bir süreç tarafından kullanılıyor). Sonraki kontrolde profil kaydı (Win32_UserProfile ve `ProfileList`) silinmiş bulundu, ama `C:\Users\library-svc` içinde `NTUSER.DAT` ve `UsrClass.dat` kaldı; hesabın hive'ları `HKEY_USERS` altında hâlâ yüklüydü. Önerilen yol yeniden başlatma, ardından hive kontrolü ve klasör silmeydi. Kullanıcı yeniden başlatmadan, aynı gün daha sonra şu komutları çalıştırdı:
+
+```powershell
+Test-Path Registry::HKEY_USERS\S-1-5-21-1652980698-631856192-1471076324-1006   # False
+Remove-Item C:\Users\library-svc -Recurse -Force                                # hatasız
+Test-Path C:\Users\library-svc                                                  # False
+```
+
+Hive'lar bu arada Windows tarafından boşaltılmıştı; silmenin ön koşulu (SID'in `HKEY_USERS`'da olmaması) sağlandığı için yeniden başlatmaya gerek kalmadı. **Sonuç:** Test ortamından makinede iz kalmadı.
