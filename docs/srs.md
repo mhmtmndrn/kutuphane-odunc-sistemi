@@ -1,7 +1,7 @@
 # Yazılım Gereksinim Belirtimi (SRS-lite): Kütüphane Ödünç Sistemi
 
-- **Güncelleme:** 2026-10-31
-- **Durum:** Onaylandı (2026-10-31). Faz 2 değişiklikleri (FR-30 Won't, AC-29) kullanıcı onayıyla işlendi (2026-10-31). Faz 3 değişiklikleri (FR-04 ISBN kuralı, FR-37, FR-38, AC-25 notu, açık soru 3 ve 4) kullanıcı onayıyla işlendi (2026-10-31). Faz 4 değişiklikleri (FR-23 kütüphane adı, FR-24 açık gün kuralı, FR-26 para iadesi ve raf nüshası, FR-39, AC-24, AC-31, AC-32, sözlük) kullanıcı kararlarıyla işlendi (2026-10-31; ADR-0026…0035). Faz 4 5. tur değişiklikleri (FR-03, FR-11, FR-12, FR-16, FR-18, FR-25, FR-26, FR-40…FR-42, AC-03, AC-11, AC-12, AC-16, AC-18, AC-25, AC-33…AC-35, sözlük, açık soru 6) kullanıcı kararlarıyla işlendi (2026-10-31; ADR-0036…0047). FR-40…FR-42'nin öncelikleri plan KL-37'de, onay kapısında onaya sunuluyor.
+- **Güncelleme:** 2026-11-02
+- **Durum:** Onaylandı (2026-10-31). Faz 2 değişiklikleri (FR-30 Won't, AC-29) kullanıcı onayıyla işlendi (2026-10-31). Faz 3 değişiklikleri (FR-04 ISBN kuralı, FR-37, FR-38, AC-25 notu, açık soru 3 ve 4) kullanıcı onayıyla işlendi (2026-10-31). Faz 4 değişiklikleri (FR-23 kütüphane adı, FR-24 açık gün kuralı, FR-26 para iadesi ve raf nüshası, FR-39, AC-24, AC-31, AC-32, sözlük) kullanıcı kararlarıyla işlendi (2026-10-31; ADR-0026…0035). Faz 4 5. tur değişiklikleri (FR-03, FR-11, FR-12, FR-16, FR-18, FR-25, FR-26, FR-40…FR-42, AC-03, AC-11, AC-12, AC-16, AC-18, AC-25, AC-33…AC-35, sözlük, açık soru 6) kullanıcı kararlarıyla işlendi (2026-10-31; ADR-0036…0047). FR-40…FR-42'nin öncelikleri plan KL-37'de onaylandı (2026-10-31). Faz 6 değişiklikleri: AC-25 metni ADR-0018'e uyduruldu; gecikme günü tanımına kapalı son tarih eklendi (ADR-0069); e-posta değişince rıza korunur (ADR-0070) (2026-11-02).
 - **İlgili dokümanlar:** [Görev planı](plans/2026-10-31-kutuphane-odunc-sistemi.md)
 
 ## 1. Amaç ve kapsam

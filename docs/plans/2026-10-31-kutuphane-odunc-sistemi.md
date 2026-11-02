@@ -2,7 +2,7 @@
 
 - **Tarih:** 2026-10-31
 - **İz:** Tam
-- **Durum:** Faz 4 tamamlandı, onay kapısı geçildi. Kararlar alındı (ADR-0026…0048; küçük karar listesi onaylandı, 2026-10-31). Görevler, risk kaydı, test planı (319 TC), izlenebilirlik ve tutarlılık kontrolü yazıldı; inşa kontrolü ayıklandı (§8.1). Plan, test planı ve KL-1…KL-46 onaylandı (2026-10-31); faz 5 başladı: G01 tamam (2026-10-31); G02 kararları ADR-0049, ADR-0050 ve §11'de. Faz 5 tamamlandı (G01–G19, PR #1…#7, 2026-11-01). Faz 6 başladı (2026-11-01): ADR-0067, §12.
+- **Durum:** Tamamlandı (2026-11-02); kapanış notu §13. Tarihçe: Faz 4 tamamlandı, onay kapısı geçildi. Kararlar alındı (ADR-0026…0048; küçük karar listesi onaylandı, 2026-10-31). Görevler, risk kaydı, test planı (319 TC), izlenebilirlik ve tutarlılık kontrolü yazıldı; inşa kontrolü ayıklandı (§8.1). Plan, test planı ve KL-1…KL-46 onaylandı (2026-10-31); faz 5 başladı: G01 tamam (2026-10-31); G02 kararları ADR-0049, ADR-0050 ve §11'de. Faz 5 tamamlandı (G01–G19, PR #1…#7, 2026-11-01). Faz 6 başladı (2026-11-01): ADR-0067, §12. Faz 6 tamamlandı (PR #8, `v1.0.0`, 2026-11-02). Faz 7 kapanışı dal `feature/phase7-closure`, PR #9 (2026-11-02).
 
 ## 1. Süreç uyarlaması
 
@@ -892,7 +892,7 @@ Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve
 |---|---|---|---|
 | FR-01 | `members`: `create_member`, `update_member`, `search_members`; `member` tablosu | G06, G17 | TC-35, TC-44…TC-52, TC-261, TC-342 |
 | FR-02 | `circulation.services.deactivate_member`, `members.services.set_inactive`, `Blocker.MEMBER_INACTIVE` | G06, G10, G11 | TC-53…TC-56, TC-115, TC-126, TC-286 |
-| FR-03 | `consent_event`, `set_consent`, `update_member` (ADR-0022, ADR-0047); S6 rıza koşulu; `docs/kullanim-kilavuzu.md` rıza notu | G06, G13, G17, G19 | TC-57…TC-59, TC-177, TC-254…TC-258, TC-319, TC-351, TC-365 |
+| FR-03 | `consent_event`, `set_consent`, `update_member` (ADR-0022, ADR-0047, ADR-0070); S6 rıza koşulu; `docs/kullanim-kilavuzu.md` rıza notu | G06, G13, G17, G19 | TC-57…TC-59, TC-177, TC-254…TC-258, TC-319, TC-351, TC-365, TC-371 |
 | FR-04 | `catalog.domain`: `parse_isbn`, `normalize_tr`; `create_book`, `search_books`; `book` tablosu | G05, G07 | TC-35, TC-37…TC-43, TC-60…TC-63, TC-66…TC-68, TC-253, TC-264 |
 | FR-05 | `copy` tablosu, `add_copies`, `COPY_TRANSITIONS`, `check_transition` | G07, G10, G12 | TC-64…TC-65, TC-71, TC-163…TC-169, TC-262…TC-263 |
 | FR-06 | `pdf.sheets.render_sheet`, `LABEL_LAYOUT`, `label_pdf`, `copies_for_labels` (ADR-0036) | G08 | TC-69…TC-72, TC-228, TC-265…TC-267, TC-269 |
@@ -901,7 +901,7 @@ Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve
 | FR-09 | `check_in`, iade ekranı | G11 | TC-111, TC-134…TC-135, TC-138, TC-147, TC-283 |
 | FR-10 | `renew_blockers`, `renewed_due_date`, `renew` | G10, G11 | TC-120…TC-123, TC-139…TC-144, TC-148, TC-280, TC-288 |
 | FR-11 | Ödünç ve iade ekranları, `scan.js`, `classify_member_input` (ADR-0046); kılavuzdaki "üyeye adını sor" adımı (ADR-0032) | G10, G11, G19 | TC-128…TC-130, TC-227, TC-279, TC-281…TC-282, TC-319, TC-365 |
-| FR-12 | `late_days` (ADR-0040), `fine`, `loan` oran kopyası (ADR-0023); kılavuzdaki kapalı tarih notu | G10, G11, G12, G17, G19 | TC-13, TC-110…TC-113, TC-132, TC-134, TC-136…TC-137, TC-152, TC-246, TC-276…TC-278, TC-283, TC-319, TC-347, TC-365 |
+| FR-12 | `late_days` (ADR-0040, ADR-0069), `fine`, `loan` oran kopyası (ADR-0023); kılavuzdaki kapalı tarih notu | G10, G11, G12, G17, G19, faz 6 | TC-13, TC-110…TC-113, TC-132, TC-134, TC-136…TC-137, TC-152, TC-246, TC-276…TC-278, TC-283, TC-319, TC-347, TC-365, TC-369…TC-370 |
 | FR-13 | `allocate_fifo`, `record_payment`, `allocation` tablosu (ADR-0017) | G09, G17 | TC-78…TC-85, TC-100, TC-103, TC-290, TC-345 |
 | FR-14 | `waive` (ADR-0021) | G09 | TC-86…TC-90 |
 | FR-15 | `mark_lost`, `mark_damaged`, `post_charge` | G12 | TC-150…TC-152, TC-162, TC-289…TC-290, TC-293 |
@@ -913,7 +913,7 @@ Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve
 | FR-21 | `accounts.services`: `create_staff`, `set_role`, `deactivate_staff`, `reset_password`, `unlock_staff` | G02, G04 | TC-12, TC-27…TC-29, TC-237, TC-252 |
 | FR-22 | `require_role`, `staff_view`, `tests/test_authorization.py` | G02, G03, G04, G15 | TC-01, TC-11, TC-21, TC-31, TC-275, TC-308, TC-334 |
 | FR-23 | `LibrarySettings`, `update_settings`, ayar ekranı | G03, G08, G11 | TC-18…TC-20, TC-73, TC-131 |
-| FR-24 | `WeeklyClosedDay`, `ClosedDate`, `validate_weekly_closed` (ADR-0028) | G03, G10 | TC-22…TC-24, TC-106, TC-246 |
+| FR-24 | `WeeklyClosedDay`, `ClosedDate`, `validate_weekly_closed` (ADR-0028) | G03, G10, faz 6 | TC-22…TC-24, TC-106, TC-246, TC-370 |
 | FR-25 | `anonymize_expired`, `add_years`, `deferred_members`, `Member.display_name` (ADR-0018, ADR-0045, ADR-0055) | G15, G16, G17 | TC-201…TC-208, TC-305…TC-309, TC-330…TC-334, TC-346 |
 | FR-26 | `audit.record_audit`, `AuditEvent`, `/denetim/` | G03, G04, G06, G09, G12 | TC-18, TC-22, TC-26…TC-27, TC-91, TC-93, TC-157…TC-158, TC-170, TC-247, TC-259, TC-273 |
 | FR-27 | Django `LoginView`, django-axes, oturum ayarları (ADR-0009) | G02 | TC-04…TC-10, TC-12, TC-30, TC-237 |
@@ -931,9 +931,9 @@ Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve
 | NFR-04 | `restore_backup` (ADR-0054), `docs/kurulum.md` (ADR-0060, ADR-0064) | G14, G19 | TC-225, TC-320, TC-366 |
 | NFR-05 | `jobs_due_for_catch_up`, `catch_up` (saatlik, ADR-0053), `run_command`, tek işçili zamanlayıcı, `run_job`, `reminder_log` tekrar engeli; servislerin yeniden başlatılması (WinSW `onfailure`, systemd `Restart=on-failure`) | G03, G13, G16, G19 | TC-178…TC-179, TC-209…TC-213, TC-233, TC-310…TC-314, TC-335…TC-339, TC-361, TC-362, TC-364 |
 | NFR-06 | `Argon2PasswordHasher`, Caddy `tls internal` (ADR-0005, ADR-0061) | G01, G19 | TC-03, TC-230, TC-363 |
-| NFR-07 | `require_role`, `tests/test_authorization.py` | G04 | TC-11, TC-31…TC-33 |
+| NFR-07 | `require_role`, `tests/test_authorization.py`, `templates/403.html` | G04, faz 6 | TC-11, TC-31…TC-33, TC-368 |
 | NFR-08 | `member` alanları, anonimleştirme, `reminder_log.error` temizliği (ADR-0055), `Member.display_name`, Caddy LAN bağlaması, Caddy erişim logu yok (ADR-0065), servis hesabı (ADR-0062) | G06, G15, G17, G19 | TC-52, TC-206, TC-229…TC-230, TC-330…TC-331, TC-342, TC-359…TC-364 |
-| NFR-09 | `LANGUAGE_CODE = "tr"`, `TIME_ZONE`, `templates/base.html` | G01, G19 | TC-231, TC-235 |
+| NFR-09 | `LANGUAGE_CODE = "tr"`, `TIME_ZONE`, `templates/base.html`, Türkçe hata sayfaları `templates/400.html`, `403.html`, `403_csrf.html`, `404.html`, `500.html` (B10) | G01, G19, faz 6 | TC-231, TC-235, TC-367…TC-368 |
 | NFR-10 | `normalize_tr`, `search_key` (ADR-0019) | G05, G06, G07 | TC-34, TC-36, TC-47, TC-67 |
 | NFR-11 | Ödünç ekranı odak akışı, `scan.js` | G11, G19 | TC-128, TC-227 |
 | NFR-12 | `administration.money`, tam sayı kuruş (ADR-0016) | G03, G09 | TC-14…TC-17, TC-102, TC-238…TC-240 |
@@ -1647,7 +1647,7 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   2. Ortam ve kapsam kararları tek ADR'de (ADR-0067).
   3. Faz 6 kaydı ayrı plan dosyası yerine bu bölümde; kabul tablosu burada.
   4. TC durumları `docs/test-plan.md`'de "Geçti", "Kaldı" ya da "Kapsam dışı (deneme projesi)".
-  5. Yedek ve dışa aktarma klasörleri `C:\Kutuphaneackups` ve `C:\Kutuphane\exports` (makinede yalnız C: var); uygulama `C:\Kutuphanepp`.
+  5. Yedek ve dışa aktarma klasörleri `C:\Kutuphane\backups` ve `C:\Kutuphane\exports` (makinede yalnız C: var); uygulama `C:\Kutuphane\app`.
   6. `main` üzerine annotated `v1.0.0-rc.1`; push ayrıca onaylanır; zip ADR-0064 komutuyla.
   7. Kurulumda takılınan her adım §12.2'de bulgu olarak kaydedilir; belge düzeltmesi `docs:` commit'iyle, kod değişirse `v1.0.0-rc.2`.
   8. TC-223 `docs/kurulum.md` "Yük testi" notuna göre ayrı bir test veritabanında, `--profile load` ile; `127.0.0.1` `LIBRARY_ALLOWED_HOSTS`'a geçici eklenir, sonra kaldırılır.
@@ -1910,3 +1910,70 @@ Biçim küçük kararlar 11–14'te. 2026-11-02'de dolduruldu.
 **Özet:** 13 NFR'nin 9'u Geçti, 4'ü Geçti (kısmi, ADR-0067): NFR-03, NFR-05, NFR-08, NFR-11. Kaldı yok.
 
 **Test-plan §7 faz 6 çıkışı:** Must FR'lerin TC'leri geçiyor; her AC'nin kanıtı var; §4 kapsam hedefleri tutuyor; elle TC'ler yapıldı ya da ADR-0067 ile kapsam dışı; §8 hata tablosunda açık hata yok (HT-01 ve HT-02 kapandı). `spec-reviewer` 2026-11-02'de çalıştı: bulgu yok, dört soru (§12.2).
+
+### 12.5 Test ortamı temizliği (2026-11-02)
+
+Faz 6 küçük kararı 9 uyarınca soruldu; karar (kullanıcı, 2026-11-02): kurulan her şey kaldırılır, Firefox da kaldırılır. Komutları kullanıcı Yönetici PowerShell'de çalıştırdı (oturum `C:\Kutuphane`'yi ACL yüzünden okuyamıyordu).
+
+1. **Servisler:** `Stop-Service library-caddy`, `Stop-Service library-app`, ardından iki WinSW ikilisiyle `uninstall`.
+2. **Kök sertifika:** `Cert:\LocalMachine\Root` içinde Subject'i "Caddy Local Authority" olan sertifika önce `Format-List Subject, Thumbprint` ile görüldü, sonra `Remove-Item` ile silindi.
+3. **Servis hesabı:** `Remove-LocalUser library-svc`; profil kaydı için `Get-CimInstance Win32_UserProfile | Where-Object SID -eq $sid | Remove-CimInstance`.
+4. **Klasörler:** `Remove-Item C:\Kutuphane -Recurse -Force` (yük testi veritabanı `C:\Kutuphane\loadtest\` dahil) ve `Remove-Item "C:\Program Files\Python311" -Recurse -Force` (NuGet kurulumu; kayıt defteri ve PATH girdisi yok, ADR-0068).
+5. **Firefox ve Mozilla Maintenance Service:** Ayarlar → Uygulamalar'dan kaldırıldı.
+6. **Dokunulmayanlar:** Güvenlik duvarı kuralı hiç kurulmadı (ADR-0067). `w32time` "El ile" başlangıç türünde kaldı.
+
+**Kontrol:** `Get-Service library-*` boş, `Get-LocalUser library-svc` kullanıcı yok, Caddy kök sertifika süzgeci boş; `Test-Path C:\Kutuphane, "C:\Program Files\Python311"` → `False`, `False`; `py -0p` yalnız kişisel Python 3.11'i (`AppData\Local\Programs\Python\Python311`) gösteriyor.
+
+**Sapma: kilitli profil klasörü.** 3. adımda `Remove-CimInstance` 0x80070020 verdi (dosya başka bir süreç tarafından kullanılıyor). Sonraki kontrolde profil kaydı (Win32_UserProfile ve `ProfileList`) silinmiş bulundu, ama `C:\Users\library-svc` içinde `NTUSER.DAT` ve `UsrClass.dat` kaldı; hesabın hive'ları `HKEY_USERS` altında hâlâ yüklüydü. Önerilen yol yeniden başlatma, ardından hive kontrolü ve klasör silmeydi. Kullanıcı yeniden başlatmadan, aynı gün daha sonra şu komutları çalıştırdı:
+
+```powershell
+Test-Path Registry::HKEY_USERS\S-1-5-21-1652980698-631856192-1471076324-1006   # False
+Remove-Item C:\Users\library-svc -Recurse -Force                                # hatasız
+Test-Path C:\Users\library-svc                                                  # False
+```
+
+Hive'lar bu arada Windows tarafından boşaltılmıştı; silmenin ön koşulu (SID'in `HKEY_USERS`'da olmaması) sağlandığı için yeniden başlatmaya gerek kalmadı. **Sonuç:** Test ortamından makinede iz kalmadı.
+
+## 13. Kapanış (2026-11-02)
+
+### 13.1 Ne yapıldı
+
+Küçük bir kütüphanenin personeli için yerel ağda çalışan web tabanlı ödünç sistemi, `v1.0.0` (`66c741c`). Django 5.2 ve SQLite; waitress arkasında Caddy ile yerel CA'lı HTTPS; Windows'ta WinSW, Linux'ta systemd servisleri.
+
+- **İşlev:** Üye yönetimi ve e-posta rızası; kitap ve nüsha kataloğu; barkodla ödünç, iade ve uzatma; kapalı günlere göre son tarih ve gecikme günü; gecikme cezası, FIFO kısmi ödeme, gerekçeli af; kayıp ve hasarlı nüsha; geciken listesi ve e-posta hatırlatması; barkod etiketi ve üye kartı PDF'i; yönetici ve görevli rolleri; ayarlar; KVKK anonimleştirmesi; denetim kaydı; günlük yedek, haftalık şifreli dışa aktarma ve geri yükleme; demo ve yük testi tohum verisi.
+- **Kapsam:** SRS'teki 35 FR (Must ve Should; FR-30 Won't) ve 13 NFR; 35 AC.
+- **Süreç:** eng-process fazları 1–7, 2026-10-31…2026-11-02. Faz 5'te 19 görev grubu (G01–G19) bulut oturumlarında TDD ile uygulandı ve yerelde doğrulandı (PR #1…#7). Faz 6'da tek Windows makinesinde deneme kurulumu, elle TC'ler, spec incelemesi ve 11 bulgu (B1…B11) (PR #8). Faz 7'de yaşayan dokümanlar güncellendi ve test ortamı kaldırıldı (PR #9).
+- **Sürümler:** `v1.0.0-rc.1` (`b3cc2a1`), `v1.0.0-rc.2` (`6cbd3a1`, B10), `v1.0.0-rc.3` (`ed6b855`, B11), `v1.0.0` (`66c741c`). Faz 7 yalnız `docs/` değiştirdiği için yeni etiket yok.
+
+### 13.2 Kararlar
+
+70 ADR ([docs/decisions/](../decisions/), ADR-0001…ADR-0070); listeleri plan §3 ve §11'de, durumları faz 7 taramasında uyumlu bulundu. Kapanışa yön verenler:
+
+- [ADR-0048](../decisions/0048-cloud-sessions-implementation.md): Faz 5 görevleri bulut oturumlarında, yerel doğrulamayla.
+- [ADR-0067](../decisions/0067-phase6-trial-project-single-windows-machine.md): Proje bir deneme projesidir; faz 6 tek Windows makinesinde, gerçek kurulum olmadan. Donanım ve kurum hesabı isteyen TC'ler kapsam dışı.
+- [ADR-0068](../decisions/0068-phase6-python-from-nuget-package.md): Test ortamında tüm kullanıcılar için Python NuGet paketinden.
+- [ADR-0069](../decisions/0069-closed-due-date-not-a-late-day.md): Kapalı son tarih de gecikme gününden düşülür (B11).
+- [ADR-0070](../decisions/0070-email-change-keeps-consent.md): E-posta değişince rıza korunur.
+
+### 13.3 Doğrulama
+
+- **Otomatik:** `coverage run --branch -m pytest -q` → 1051 passed (yerel Windows 11, Python 3.11.9, `29febed`); kapsam eşiklerinin hepsi tuttu: `*/domain.py` %100, servisler %99, yetki %100, `operations` %99, `pdf/sheets.py` %100, proje %97; `makemigrations --check` temiz (§12.3.1).
+- **Test planı:** 371 TC; 366'sı Geçti (TC-229, TC-230 kısmi), 5'i Kapsam dışı (TC-226, 227, 228, 232, 233; ADR-0067). Açık hata yok (HT-01, HT-02 kapandı).
+- **Kabul:** 35 AC'nin 31'i Geçti, 4'ü Geçti (kısmi): AC-06, AC-11, AC-30, AC-31. 13 NFR'nin 9'u Geçti, 4'ü Geçti (kısmi): NFR-03, NFR-05, NFR-08, NFR-11. Kaldı yok (§12.3.2, §12.3.3). Kısmi kalanların hepsi makinede bulunmayan donanıma ya da çok günlük çalışmaya bağlı.
+- **Spec incelemesi:** `spec-reviewer` bulgu yok, dört soru; cevapları ADR-0069, ADR-0070 ve AC-25 metin düzeltmesi oldu (§12.2).
+- **İzlenebilirlik:** §7 matrisinde 35 FR ve 13 NFR'nin her biri tasarıma, göreve ve TC'ye bağlı; 371 TC'nin hepsi matriste.
+
+### 13.4 Açık maddeler
+
+- **Riskler** ([risk kaydı](../risk-register.md), güncel kaynak budur; §6'daki özet 2026-10-31 tarihlidir): R-02, R-03, R-04, R-05, R-11, R-12 gerçek kurulum olmadığı için açık (ADR-0067); R-09 ve R-13'ün azaltması uygulandı, işletimde sürer. Diğerleri kapandı.
+- **SRS açık soruları:** 5 (sunucu donanımı ve işletim sistemi; çapraz platform kısıtıyla karşılandı), 6 (2 yıllık saklama süresinin ve borçlu üyenin anonimleştirmesinin ertelenmesinin KVKK teyidi), 8 (KYGM Koha Z39.50 erişimi; FR-30'un yeniden ele alınması).
+- **Denenmeyenler:** Gerçek barkod okuyucu ve etiket kağıdı (TC-227, TC-228), ikinci bilgisayara şifreli yedekle geri yükleme (TC-226), kurum SMTP'siyle teslim (TC-232), çok günlük kesintisiz çalışma (TC-233), LAN dışından erişim denemesi (TC-229'un kalanı).
+
+### 13.5 Sonraki adımlar
+
+Proje deneme projesi olarak kapandı. Gerçek bir kütüphaneye kurulursa:
+
+1. Kurumdan SMTP gönderen hesabını ve saklama süresi için KVKK teyidini al (R-05, R-11, SRS açık soru 6).
+2. `docs/kurulum.md`'yi hedef sunucuda baştan uygula; güvenlik duvarı kuralını kur, `w32time`'ı Otomatik'e al.
+3. Kapsam dışı TC'leri (TC-226…TC-228, TC-232, TC-233) ve TC-229'u LAN'daki ikinci bir bilgisayardan gerçek donanımla koş.
+4. Haftalık şifreli dışa aktarmanın USB rotasyonunu personelle birlikte başlat (R-04).
