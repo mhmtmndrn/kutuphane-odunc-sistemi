@@ -1647,7 +1647,7 @@ Alt başlık olarak bildirilip uygulayıcıya bırakılanlar: `/nushalar/etiket/
   2. Ortam ve kapsam kararları tek ADR'de (ADR-0067).
   3. Faz 6 kaydı ayrı plan dosyası yerine bu bölümde; kabul tablosu burada.
   4. TC durumları `docs/test-plan.md`'de "Geçti", "Kaldı" ya da "Kapsam dışı (deneme projesi)".
-  5. Yedek ve dışa aktarma klasörleri `C:\Kutuphaneackups` ve `C:\Kutuphane\exports` (makinede yalnız C: var); uygulama `C:\Kutuphanepp`.
+  5. Yedek ve dışa aktarma klasörleri `C:\Kutuphane\backups` ve `C:\Kutuphane\exports` (makinede yalnız C: var); uygulama `C:\Kutuphane\app`.
   6. `main` üzerine annotated `v1.0.0-rc.1`; push ayrıca onaylanır; zip ADR-0064 komutuyla.
   7. Kurulumda takılınan her adım §12.2'de bulgu olarak kaydedilir; belge düzeltmesi `docs:` commit'iyle, kod değişirse `v1.0.0-rc.2`.
   8. TC-223 `docs/kurulum.md` "Yük testi" notuna göre ayrı bir test veritabanında, `--profile load` ile; `127.0.0.1` `LIBRARY_ALLOWED_HOSTS`'a geçici eklenir, sonra kaldırılır.
