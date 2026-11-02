@@ -892,7 +892,7 @@ Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve
 |---|---|---|---|
 | FR-01 | `members`: `create_member`, `update_member`, `search_members`; `member` tablosu | G06, G17 | TC-35, TC-44…TC-52, TC-261, TC-342 |
 | FR-02 | `circulation.services.deactivate_member`, `members.services.set_inactive`, `Blocker.MEMBER_INACTIVE` | G06, G10, G11 | TC-53…TC-56, TC-115, TC-126, TC-286 |
-| FR-03 | `consent_event`, `set_consent`, `update_member` (ADR-0022, ADR-0047); S6 rıza koşulu; `docs/kullanim-kilavuzu.md` rıza notu | G06, G13, G17, G19 | TC-57…TC-59, TC-177, TC-254…TC-258, TC-319, TC-351, TC-365 |
+| FR-03 | `consent_event`, `set_consent`, `update_member` (ADR-0022, ADR-0047, ADR-0070); S6 rıza koşulu; `docs/kullanim-kilavuzu.md` rıza notu | G06, G13, G17, G19 | TC-57…TC-59, TC-177, TC-254…TC-258, TC-319, TC-351, TC-365, TC-371 |
 | FR-04 | `catalog.domain`: `parse_isbn`, `normalize_tr`; `create_book`, `search_books`; `book` tablosu | G05, G07 | TC-35, TC-37…TC-43, TC-60…TC-63, TC-66…TC-68, TC-253, TC-264 |
 | FR-05 | `copy` tablosu, `add_copies`, `COPY_TRANSITIONS`, `check_transition` | G07, G10, G12 | TC-64…TC-65, TC-71, TC-163…TC-169, TC-262…TC-263 |
 | FR-06 | `pdf.sheets.render_sheet`, `LABEL_LAYOUT`, `label_pdf`, `copies_for_labels` (ADR-0036) | G08 | TC-69…TC-72, TC-228, TC-265…TC-267, TC-269 |
@@ -901,7 +901,7 @@ Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve
 | FR-09 | `check_in`, iade ekranı | G11 | TC-111, TC-134…TC-135, TC-138, TC-147, TC-283 |
 | FR-10 | `renew_blockers`, `renewed_due_date`, `renew` | G10, G11 | TC-120…TC-123, TC-139…TC-144, TC-148, TC-280, TC-288 |
 | FR-11 | Ödünç ve iade ekranları, `scan.js`, `classify_member_input` (ADR-0046); kılavuzdaki "üyeye adını sor" adımı (ADR-0032) | G10, G11, G19 | TC-128…TC-130, TC-227, TC-279, TC-281…TC-282, TC-319, TC-365 |
-| FR-12 | `late_days` (ADR-0040), `fine`, `loan` oran kopyası (ADR-0023); kılavuzdaki kapalı tarih notu | G10, G11, G12, G17, G19 | TC-13, TC-110…TC-113, TC-132, TC-134, TC-136…TC-137, TC-152, TC-246, TC-276…TC-278, TC-283, TC-319, TC-347, TC-365 |
+| FR-12 | `late_days` (ADR-0040, ADR-0069), `fine`, `loan` oran kopyası (ADR-0023); kılavuzdaki kapalı tarih notu | G10, G11, G12, G17, G19, faz 6 | TC-13, TC-110…TC-113, TC-132, TC-134, TC-136…TC-137, TC-152, TC-246, TC-276…TC-278, TC-283, TC-319, TC-347, TC-365, TC-369…TC-370 |
 | FR-13 | `allocate_fifo`, `record_payment`, `allocation` tablosu (ADR-0017) | G09, G17 | TC-78…TC-85, TC-100, TC-103, TC-290, TC-345 |
 | FR-14 | `waive` (ADR-0021) | G09 | TC-86…TC-90 |
 | FR-15 | `mark_lost`, `mark_damaged`, `post_charge` | G12 | TC-150…TC-152, TC-162, TC-289…TC-290, TC-293 |
@@ -913,7 +913,7 @@ Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve
 | FR-21 | `accounts.services`: `create_staff`, `set_role`, `deactivate_staff`, `reset_password`, `unlock_staff` | G02, G04 | TC-12, TC-27…TC-29, TC-237, TC-252 |
 | FR-22 | `require_role`, `staff_view`, `tests/test_authorization.py` | G02, G03, G04, G15 | TC-01, TC-11, TC-21, TC-31, TC-275, TC-308, TC-334 |
 | FR-23 | `LibrarySettings`, `update_settings`, ayar ekranı | G03, G08, G11 | TC-18…TC-20, TC-73, TC-131 |
-| FR-24 | `WeeklyClosedDay`, `ClosedDate`, `validate_weekly_closed` (ADR-0028) | G03, G10 | TC-22…TC-24, TC-106, TC-246 |
+| FR-24 | `WeeklyClosedDay`, `ClosedDate`, `validate_weekly_closed` (ADR-0028) | G03, G10, faz 6 | TC-22…TC-24, TC-106, TC-246, TC-370 |
 | FR-25 | `anonymize_expired`, `add_years`, `deferred_members`, `Member.display_name` (ADR-0018, ADR-0045, ADR-0055) | G15, G16, G17 | TC-201…TC-208, TC-305…TC-309, TC-330…TC-334, TC-346 |
 | FR-26 | `audit.record_audit`, `AuditEvent`, `/denetim/` | G03, G04, G06, G09, G12 | TC-18, TC-22, TC-26…TC-27, TC-91, TC-93, TC-157…TC-158, TC-170, TC-247, TC-259, TC-273 |
 | FR-27 | Django `LoginView`, django-axes, oturum ayarları (ADR-0009) | G02 | TC-04…TC-10, TC-12, TC-30, TC-237 |
@@ -931,9 +931,9 @@ Kapsam içindeki 35 FR ve 13 NFR'nin her biri bir tasarım öğesine, göreve ve
 | NFR-04 | `restore_backup` (ADR-0054), `docs/kurulum.md` (ADR-0060, ADR-0064) | G14, G19 | TC-225, TC-320, TC-366 |
 | NFR-05 | `jobs_due_for_catch_up`, `catch_up` (saatlik, ADR-0053), `run_command`, tek işçili zamanlayıcı, `run_job`, `reminder_log` tekrar engeli; servislerin yeniden başlatılması (WinSW `onfailure`, systemd `Restart=on-failure`) | G03, G13, G16, G19 | TC-178…TC-179, TC-209…TC-213, TC-233, TC-310…TC-314, TC-335…TC-339, TC-361, TC-362, TC-364 |
 | NFR-06 | `Argon2PasswordHasher`, Caddy `tls internal` (ADR-0005, ADR-0061) | G01, G19 | TC-03, TC-230, TC-363 |
-| NFR-07 | `require_role`, `tests/test_authorization.py` | G04 | TC-11, TC-31…TC-33 |
+| NFR-07 | `require_role`, `tests/test_authorization.py`, `templates/403.html` | G04, faz 6 | TC-11, TC-31…TC-33, TC-368 |
 | NFR-08 | `member` alanları, anonimleştirme, `reminder_log.error` temizliği (ADR-0055), `Member.display_name`, Caddy LAN bağlaması, Caddy erişim logu yok (ADR-0065), servis hesabı (ADR-0062) | G06, G15, G17, G19 | TC-52, TC-206, TC-229…TC-230, TC-330…TC-331, TC-342, TC-359…TC-364 |
-| NFR-09 | `LANGUAGE_CODE = "tr"`, `TIME_ZONE`, `templates/base.html` | G01, G19 | TC-231, TC-235 |
+| NFR-09 | `LANGUAGE_CODE = "tr"`, `TIME_ZONE`, `templates/base.html`, Türkçe hata sayfaları `templates/400.html`, `403.html`, `403_csrf.html`, `404.html`, `500.html` (B10) | G01, G19, faz 6 | TC-231, TC-235, TC-367…TC-368 |
 | NFR-10 | `normalize_tr`, `search_key` (ADR-0019) | G05, G06, G07 | TC-34, TC-36, TC-47, TC-67 |
 | NFR-11 | Ödünç ekranı odak akışı, `scan.js` | G11, G19 | TC-128, TC-227 |
 | NFR-12 | `administration.money`, tam sayı kuruş (ADR-0016) | G03, G09 | TC-14…TC-17, TC-102, TC-238…TC-240 |

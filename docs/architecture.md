@@ -1,6 +1,6 @@
 # Mimari: Kütüphane Ödünç Sistemi
 
-- **Güncelleme:** 2026-10-31
+- **Güncelleme:** 2026-11-02
 - **İlgili dokümanlar:** [SRS](srs.md), [Veri tasarımı](data-design.md), [ADR'ler](decisions/)
 
 ## 1. Bağlam (C4 seviye 1)
